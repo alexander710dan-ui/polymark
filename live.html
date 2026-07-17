@@ -51,6 +51,10 @@ tr:last-child td { border-bottom:none; }
 .legend span { display:flex; align-items:center; gap:5px; }
 .sw { width:10px; height:3px; border-radius:2px; display:inline-block; }
 #status-line { font-size:11.5px; color:var(--faint); }
+.chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.chip-btn { background:var(--raised); border:1px solid var(--border); color:var(--dim); border-radius:999px;
+  padding:5px 12px; font-size:11.5px; font-weight:600; cursor:pointer; font-family:inherit; }
+.chip-btn.on { background:rgba(201,163,92,.14); border-color:var(--brass); color:var(--brass); }
 @media (max-width:640px) { .hide-m { display:none; } body { padding:18px 10px 50px; } }
 </style>
 </head>
@@ -76,6 +80,13 @@ tr:last-child td { border-bottom:none; }
   <div class="panel">
     <div class="ptitle">Recent settlements</div>
     <div id="recent">…</div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">Open bets — resolving soonest first</div>
+    <div class="chips" id="chips"></div>
+    <p class="meta" id="open-summary" style="margin-bottom:8px"></p>
+    <div id="open">…</div>
   </div>
 
   <p class="foot">
@@ -127,7 +138,46 @@ function render(d){
   document.getElementById("recent").innerHTML = (d.recent&&d.recent.length) ? rec+"</tbody></table>"
     : "<p class='meta'>Nothing settled yet — bets close as real markets resolve.</p>";
 
+  lastData = d;
+  renderOpen();
   drawChart(d);
+}
+
+var lastData = null, openFilter = "all";
+
+function endsIn(iso){
+  var m = (Date.parse(iso)-Date.now())/60000;
+  if (!isFinite(m)) return "?";
+  if (m <= 0) return "awaiting resolution";
+  if (m < 60) return "in "+Math.round(m)+" min";
+  if (m < 2880) return "in "+Math.round(m/60)+" h";
+  return "in "+Math.round(m/1440)+" d";
+}
+
+function renderOpen(){
+  var d = lastData;
+  if (!d) return;
+  var open = d.open || [];
+  var names = ["all"].concat(Object.keys(COLORS));
+  document.getElementById("chips").innerHTML = names.map(function(n){
+    return "<button class='chip-btn"+(openFilter===n?" on":"")+"' onclick='openFilter=\""+n+"\";renderOpen()'>"+n+
+      (n==="all" ? " ("+open.length+")" : "")+"</button>";
+  }).join("");
+  var list = open.filter(function(p){ return openFilter==="all" || p.strategy===openFilter; });
+  var staked = 0, unrealTot = 0;
+  list.forEach(function(p){ staked += p.stake; unrealTot += p.shares*(p.last_mark==null?p.entry:p.last_mark)-p.stake; });
+  document.getElementById("open-summary").textContent =
+    list.length+" open bets · "+money(staked)+" staked · unrealized "+(unrealTot>=0?"+":"")+money(Math.round(unrealTot));
+  if (!list.length){ document.getElementById("open").innerHTML="<p class='meta'>None for this filter.</p>"; return; }
+  var html = "<table><tbody>";
+  list.forEach(function(p){
+    var mark = p.last_mark==null ? p.entry : p.last_mark;
+    var un = p.shares*mark - p.stake;
+    html += "<tr><td><span class='badge "+p.side+"'>"+p.side.toUpperCase()+"</span></td>"+
+      "<td class='q'>"+esc(p.question)+"<br><span class='meta'>"+esc(p.strategy)+" · entry "+Math.round(p.entry*100)+"¢ · now "+Math.round(mark*100)+"¢ · resolves "+endsIn(p.end_date)+"</span></td>"+
+      "<td class='num "+(un>0.5?"pos":un<-0.5?"neg":"")+"'>"+(un>=0?"+":"")+money(Math.round(un))+"</td></tr>";
+  });
+  document.getElementById("open").innerHTML = html+"</tbody></table>";
 }
 
 function drawChart(d){
