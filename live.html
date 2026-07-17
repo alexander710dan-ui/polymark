@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polymark — Live Paper Tester</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,500;1,9..144,600&family=Schibsted+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0b0e13; --panel:#131823; --raised:#10141c; --border:#232b39; --border-soft:#1a2130;
+  --text:#e9e4d8; --dim:#9aa3b2; --faint:#626b7a; --brass:#c9a35c; --yes:#4fb286; --no:#c96f63;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: radial-gradient(1100px 600px at 18% -8%, #131a28 0%, transparent 60%), var(--bg);
+  color: var(--text); font-family:"Schibsted Grotesk",sans-serif; font-size:14px; line-height:1.5;
+  min-height:100vh; padding:28px 18px 60px; -webkit-font-smoothing:antialiased;
+}
+.wrap { max-width:860px; margin:0 auto; }
+.mono { font-family:"Spline Sans Mono",monospace; font-variant-numeric:tabular-nums; }
+.head { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:6px; }
+h1 { font-family:"Fraunces",serif; font-style:italic; font-weight:600; font-size:28px; }
+h1 .p { color:var(--brass); }
+.pill { display:inline-flex; align-items:center; gap:7px; font-size:10.5px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--brass); background:rgba(201,163,92,.14);
+  border:1px solid rgba(201,163,92,.25); border-radius:999px; padding:5px 11px; font-weight:600; }
+.dot { width:6px; height:6px; border-radius:50%; background:var(--brass); animation:pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.sub { color:var(--faint); font-size:12.5px; margin-bottom:24px; }
+.panel { background:var(--panel); border:1px solid var(--border-soft); border-radius:10px; padding:20px; margin-bottom:16px; }
+.ptitle { font-family:"Fraunces",serif; font-size:17px; font-weight:500; margin-bottom:14px; }
+table { width:100%; border-collapse:collapse; font-size:12.5px; }
+th { text-align:left; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint);
+  font-weight:600; padding:8px 10px; border-bottom:1px solid var(--border); }
+td { padding:9px 10px; border-bottom:1px solid var(--border-soft); }
+tr:last-child td { border-bottom:none; }
+.num { text-align:right; font-family:"Spline Sans Mono",monospace; font-variant-numeric:tabular-nums; }
+.pos { color:var(--yes); } .neg { color:var(--no); }
+.badge { font-size:10px; letter-spacing:.1em; font-weight:700; border-radius:4px; padding:2px 7px; }
+.badge.yes { color:var(--yes); background:rgba(79,178,134,.13); }
+.badge.no { color:var(--no); background:rgba(201,111,99,.13); }
+.lead td { background:rgba(201,163,92,.07); }
+.q { color:var(--dim); font-size:12px; }
+.meta { font-size:11px; color:var(--faint); }
+.foot { text-align:center; font-size:11.5px; color:var(--faint); margin-top:24px; }
+.foot a { color:var(--brass); text-decoration:none; }
+.chart-wrap svg { display:block; width:100%; }
+.legend { display:flex; flex-wrap:wrap; gap:12px; font-size:11px; color:var(--dim); margin-top:8px; }
+.legend span { display:flex; align-items:center; gap:5px; }
+.sw { width:10px; height:3px; border-radius:2px; display:inline-block; }
+#status-line { font-size:11.5px; color:var(--faint); }
+@media (max-width:640px) { .hide-m { display:none; } body { padding:18px 10px 50px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1><span class="p">P</span>olymark live</h1>
+    <span class="pill"><span class="dot"></span>Fake money · real markets</span>
+  </div>
+  <p class="sub" id="status-line">Loading…</p>
+
+  <div class="panel">
+    <div class="ptitle">Standings</div>
+    <div id="standings">…</div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">Equity — all strategies</div>
+    <div class="chart-wrap" id="chart"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">Recent settlements</div>
+    <div id="recent">…</div>
+  </div>
+
+  <p class="foot">
+    Data updates every ~15 min via GitHub Actions ·
+    <a href="index.html">analysis desk</a> ·
+    <a href="https://github.com/alexander710dan-ui/polymark">repository</a><br>
+    Simulated stakes only. No wallet, no real orders. Not financial advice.
+  </p>
+</div>
+
+<script>
+"use strict";
+var COLORS = { momentum:"#4fb286", fade_longshot:"#c9a35c", favorite:"#7295c2",
+               longshot:"#c96f63", mean_revert:"#ed93b1", random_control:"#626b7a" };
+function money(v){ return (v<0?"-":"")+"$"+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0}); }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ago(iso){
+  var m = Math.round((Date.now()-Date.parse(iso))/60000);
+  if (!isFinite(m)) return "?";
+  if (m < 1) return "just now";
+  if (m < 60) return m+" min ago";
+  if (m < 2880) return Math.round(m/60)+" h ago";
+  return Math.round(m/1440)+" d ago";
+}
+
+function render(d){
+  document.getElementById("status-line").textContent =
+    "Tick #"+d.ticks+" · last run "+ago(d.last_tick)+" · page refreshes itself every 60s · each strategy started with "+money(d.bankroll);
+
+  var rows = d.strategies.slice().sort(function(a,b){ return b.equity-a.equity; });
+  var best = rows[0] ? rows[0].name : null;
+  var html = "<table><thead><tr><th>Strategy</th><th class='num'>Closed</th><th class='num hide-m'>Win rate</th><th class='num'>Realized</th><th class='num hide-m'>Open</th><th class='num'>Equity</th></tr></thead><tbody>";
+  rows.forEach(function(s){
+    html += "<tr"+(s.name===best?" class='lead'":"")+"><td><strong>"+esc(s.name)+"</strong></td>"+
+      "<td class='num'>"+s.closed+"</td>"+
+      "<td class='num hide-m'>"+(s.winRate===null?"—":s.winRate+"%")+"</td>"+
+      "<td class='num "+(s.realized>0?"pos":s.realized<0?"neg":"")+"'>"+money(s.realized)+"</td>"+
+      "<td class='num hide-m'>"+s.open+"</td>"+
+      "<td class='num "+(s.equity>=d.bankroll?"pos":"neg")+"'>"+money(s.equity)+"</td></tr>";
+  });
+  document.getElementById("standings").innerHTML = html+"</tbody></table>";
+
+  var rec = "<table><tbody>";
+  (d.recent||[]).forEach(function(r){
+    rec += "<tr><td><span class='badge "+r.side+"'>"+r.side.toUpperCase()+"</span></td>"+
+      "<td class='q'>"+esc(r.question)+"<br><span class='meta'>"+esc(r.strategy)+" · entry "+Math.round(r.entry*100)+"¢ · "+ago(r.closed_at)+(r.close_reason!=="resolved"?" · "+esc(r.close_reason):"")+"</span></td>"+
+      "<td class='num "+(r.pnl>0?"pos":"neg")+"'>"+(r.pnl>0?"+":"")+money(r.pnl)+"</td></tr>";
+  });
+  document.getElementById("recent").innerHTML = (d.recent&&d.recent.length) ? rec+"</tbody></table>"
+    : "<p class='meta'>Nothing settled yet — bets close as real markets resolve.</p>";
+
+  drawChart(d);
+}
+
+function drawChart(d){
+  var series = {};
+  (d.equity||[]).forEach(function(e){ (series[e.strategy]=series[e.strategy]||[]).push(e.equity); });
+  var names = Object.keys(series);
+  if (!names.length){ document.getElementById("chart").innerHTML="<p class='meta'>No data yet.</p>"; return; }
+  var all = [];
+  names.forEach(function(n){ all = all.concat(series[n]); });
+  var min = Math.min.apply(null,all), max = Math.max.apply(null,all);
+  var pad = Math.max(20,(max-min)*.15); min-=pad; max+=pad;
+  var W=800, H=200, paths="";
+  names.forEach(function(n){
+    var pts = series[n];
+    if (pts.length<2) return;
+    var dd = "";
+    pts.forEach(function(v,i){
+      dd += (i?"L":"M")+(i/(pts.length-1)*W).toFixed(1)+","+(H-((v-min)/(max-min))*(H-10)-5).toFixed(1);
+    });
+    paths += "<path d='"+dd+"' fill='none' stroke='"+(COLORS[n]||"#888")+"' stroke-width='1.8' opacity='.9'/>";
+  });
+  document.getElementById("chart").innerHTML =
+    "<svg viewBox='0 0 "+W+" "+H+"' preserveAspectRatio='none' height='"+H+"' role='img' aria-label='Equity lines for all strategies over time'>"+paths+"</svg>";
+  document.getElementById("legend").innerHTML = names.map(function(n){
+    return "<span><span class='sw' style='background:"+(COLORS[n]||"#888")+"'></span>"+esc(n)+"</span>";
+  }).join("");
+}
+
+function load(){
+  fetch("tester/data/results.json?t="+Date.now())
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .then(render)
+    .catch(function(e){
+      document.getElementById("status-line").textContent =
+        "Could not load results ("+e.message+"). If you opened this file locally, use the hosted version — the data feed needs the web server.";
+    });
+}
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>

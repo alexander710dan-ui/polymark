@@ -1,6 +1,6 @@
 # Polymark paper-trading results
 
-**Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
+**Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10.000 and bets $100 per position on markets resolving within 45 days.
 
 Ticks: 6 · Last run: 2026-07-17T14:03:50.673Z · Database: `tester/data/polymark.db`
 
@@ -21,4 +21,4 @@ Ticks: 6 · Last run: 2026-07-17T14:03:50.673Z · Database: `tester/data/polymar
 - **mean_revert** — fades ≥8¢ 24h moves
 - **random_control** — coin flips, the baseline every strategy must beat
 
-_Updated automatically by GitHub Actions every 6 hours._
+_Updated automatically by GitHub Actions every 15 minutes. Live view: [alexander710dan-ui.github.io/polymark/live.html](https://alexander710dan-ui.github.io/polymark/live.html)_

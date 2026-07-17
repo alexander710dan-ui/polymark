@@ -319,9 +319,21 @@ function report(db) {
   md.push("- **mean_revert** — fades ≥8¢ 24h moves");
   md.push("- **random_control** — coin flips, the baseline every strategy must beat");
   md.push("");
-  md.push("_Updated automatically by GitHub Actions every 6 hours._");
+  md.push("_Updated automatically by GitHub Actions every 15 minutes. Live view: [alexander710dan-ui.github.io/polymark/live.html](https://alexander710dan-ui.github.io/polymark/live.html)_");
   fs.writeFileSync(RESULTS_PATH, md.join("\n") + "\n");
-  console.log("\nRESULTS.md written.");
+
+  /* JSON feed for the live web view (served via GitHub Pages) */
+  const recent = db.prepare(`SELECT strategy, side, entry, pnl, close_reason, closed_at, question, tag
+    FROM positions WHERE status='closed' ORDER BY closed_at DESC LIMIT 15`).all();
+  const equitySeries = db.prepare("SELECT ts, strategy, equity FROM equity ORDER BY ts").all();
+  fs.writeFileSync(path.join(DATA_DIR, "results.json"), JSON.stringify({
+    generated_at: new Date().toISOString(),
+    ticks: ticks.n, last_tick: ticks.last,
+    bankroll: BANKROLL, stake: STAKE,
+    strategies: rows, recent: recent,
+    equity: equitySeries.slice(-720)
+  }));
+  console.log("\nRESULTS.md + results.json written.");
 }
 
 /* ---------------- main ---------------- */

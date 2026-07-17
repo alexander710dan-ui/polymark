@@ -2,7 +2,7 @@ name: paper-tick
 
 on:
   schedule:
-    - cron: "17 */6 * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -26,7 +26,7 @@ jobs:
         run: |
           git config user.name "polymark-bot"
           git config user.email "polymark-bot@users.noreply.github.com"
-          git add tester/data/polymark.db RESULTS.md
+          git add tester/data/polymark.db tester/data/results.json RESULTS.md
           if git diff --cached --quiet; then
             echo "nothing changed"
           else

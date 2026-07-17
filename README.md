@@ -37,9 +37,11 @@ node tester/index.js report   # print stats, write RESULTS.md
 node tester/index.js reset    # wipe the database
 ```
 
-A GitHub Actions cron runs a tick every 6 hours and commits the updated database
-and [RESULTS.md](RESULTS.md) back to the repo, so the experiment accumulates
-outcome data on its own.
+A GitHub Actions cron runs a tick every ~15 minutes and commits the updated
+database, [RESULTS.md](RESULTS.md) and a JSON feed back to the repo, so the
+experiment accumulates outcome data on its own.
+
+**Live scoreboard:** [alexander710dan-ui.github.io/polymark/live.html](https://alexander710dan-ui.github.io/polymark/live.html)
 
 ## Honest limits
 
