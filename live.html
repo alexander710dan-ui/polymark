@@ -90,7 +90,7 @@ tr:last-child td { border-bottom:none; }
   </div>
 
   <p class="foot">
-    Data updates every ~15 min via GitHub Actions ·
+    Updates when GitHub Actions runs (every 15–120 min, GitHub's scheduler decides) ·
     <a href="index.html">analysis desk</a> ·
     <a href="https://github.com/alexander710dan-ui/polymark">repository</a><br>
     Simulated stakes only. No wallet, no real orders. Not financial advice.
@@ -100,8 +100,16 @@ tr:last-child td { border-bottom:none; }
 <script>
 "use strict";
 var COLORS = { momentum:"#4fb286", fade_longshot:"#c9a35c", favorite:"#7295c2",
-               longshot:"#c96f63", mean_revert:"#ed93b1", random_control:"#626b7a" };
+               longshot:"#c96f63", mean_revert:"#ed93b1", late_favorite:"#6ec6c0",
+               copy_top:"#e8d27c", whale_fade:"#a58fd0", random_control:"#626b7a" };
 function money(v){ return (v<0?"-":"")+"$"+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0}); }
+function pc(v){ var c=v*100; return (c<10?c.toFixed(1):Math.round(c))+"¢"; }
+function badgeFor(p){
+  var label = p.outcome_name && p.outcome_name.toLowerCase()!=="yes" && p.outcome_name.toLowerCase()!=="no"
+    ? p.outcome_name : p.side.toUpperCase();
+  if (label.length > 16) label = label.slice(0,15)+"…";
+  return "<span class='badge "+p.side+"' title='"+esc(p.outcome_name||p.side)+"'>"+esc(label)+"</span>";
+}
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 function ago(iso){
   var m = Math.round((Date.now()-Date.parse(iso))/60000);
@@ -131,8 +139,8 @@ function render(d){
 
   var rec = "<table><tbody>";
   (d.recent||[]).forEach(function(r){
-    rec += "<tr><td><span class='badge "+r.side+"'>"+r.side.toUpperCase()+"</span></td>"+
-      "<td class='q'>"+esc(r.question)+"<br><span class='meta'>"+esc(r.strategy)+" · entry "+Math.round(r.entry*100)+"¢ · "+ago(r.closed_at)+(r.close_reason!=="resolved"?" · "+esc(r.close_reason):"")+"</span></td>"+
+    rec += "<tr><td>"+badgeFor(r)+"</td>"+
+      "<td class='q'>"+esc(r.question)+"<br><span class='meta'>"+esc(r.strategy)+" · entry "+pc(r.entry)+" · "+ago(r.closed_at)+(r.close_reason!=="resolved"?" · "+esc(r.close_reason):"")+"</span></td>"+
       "<td class='num "+(r.pnl>0?"pos":"neg")+"'>"+(r.pnl>0?"+":"")+money(r.pnl)+"</td></tr>";
   });
   document.getElementById("recent").innerHTML = (d.recent&&d.recent.length) ? rec+"</tbody></table>"
@@ -173,8 +181,8 @@ function renderOpen(){
   list.forEach(function(p){
     var mark = p.last_mark==null ? p.entry : p.last_mark;
     var un = p.shares*mark - p.stake;
-    html += "<tr><td><span class='badge "+p.side+"'>"+p.side.toUpperCase()+"</span></td>"+
-      "<td class='q'>"+esc(p.question)+"<br><span class='meta'>"+esc(p.strategy)+" · entry "+Math.round(p.entry*100)+"¢ · now "+Math.round(mark*100)+"¢ · resolves "+endsIn(p.end_date)+"</span></td>"+
+    html += "<tr><td>"+badgeFor(p)+"</td>"+
+      "<td class='q'>"+esc(p.question)+"<br><span class='meta'>"+esc(p.strategy)+" · entry "+pc(p.entry)+" · now "+pc(mark)+" · resolves "+endsIn(p.end_date)+"</span></td>"+
       "<td class='num "+(un>0.5?"pos":un<-0.5?"neg":"")+"'>"+(un>=0?"+":"")+money(Math.round(un))+"</td></tr>";
   });
   document.getElementById("open").innerHTML = html+"</tbody></table>";

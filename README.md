@@ -27,6 +27,9 @@ position and outcome into SQLite:
 | fade_longshot | sell the lottery tickets (buy 90–98¢ side) |
 | momentum | buy the side that moved ≥5¢ in 24h |
 | mean_revert | fade ≥8¢ 24h moves |
+| late_favorite | buy 70–93¢ favourites within 2 days of resolution |
+| copy_top | mirror the top-10 leaderboard wallets' buys from the last 24h |
+| whale_fade | bet against those same whale picks (control) |
 | random_control | coin flips — the baseline |
 
 **Run it:** requires Node ≥ 23.4 (built-in `node:sqlite`).

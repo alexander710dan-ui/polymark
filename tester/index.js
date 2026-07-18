@@ -18,6 +18,7 @@ const DATA_DIR = path.join(__dirname, "data");
 const DB_PATH = path.join(DATA_DIR, "polymark.db");
 const RESULTS_PATH = path.join(__dirname, "..", "RESULTS.md");
 const GAMMA = "https://gamma-api.polymarket.com";
+const DATA_API = "https://data-api.polymarket.com";
 
 const STAKE = 100;          // fake dollars per position
 const BANKROLL = 10000;     // fake dollars per strategy
@@ -34,13 +35,18 @@ const POLITICS_RE = /election|president|senate|parliament|minister|congress|gove
 const CRYPTO_RE = /bitcoin|BTC|ethereum|ETH|solana|crypto|token|\$\d+k/i;
 
 /* Each strategy maps a market snapshot to 'yes' | 'no' | null.
-   m = { yes, bid, ask, change24, liq, vol24, days } */
+   'yes' means the FIRST listed outcome (literally "Yes" in Yes/No markets;
+   team A in team-vs-team markets). ctx carries whale-copy signals.
+   m = { yes, bid, ask, change24, liq, vol24, days, outcomes } */
 const STRATEGIES = {
   favorite:      (m) => (m.yes >= 0.60 && m.yes <= 0.90 ? "yes" : m.yes <= 0.40 && m.yes >= 0.10 ? "no" : null),
   longshot:      (m) => (m.yes <= 0.10 && m.yes >= 0.02 ? "yes" : m.yes >= 0.90 && m.yes <= 0.98 ? "no" : null),
   fade_longshot: (m) => (m.yes <= 0.10 && m.yes >= 0.02 ? "no" : m.yes >= 0.90 && m.yes <= 0.98 ? "yes" : null),
   momentum:      (m) => (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null),
   mean_revert:   (m) => (m.change24 >= 0.08 ? "no" : m.change24 <= -0.08 ? "yes" : null),
+  late_favorite: (m) => (m.days <= 2 ? (m.yes >= 0.70 && m.yes <= 0.93 ? "yes" : m.yes >= 0.07 && m.yes <= 0.30 ? "no" : null) : null),
+  copy_top:      (m, ctx) => (ctx.whale ? (ctx.whale.index === 0 ? "yes" : "no") : null),
+  whale_fade:    (m, ctx) => (ctx.whale ? (ctx.whale.index === 0 ? "no" : "yes") : null),
   random_control:(m) => (Math.random() < 0.12 ? (Math.random() < 0.5 ? "yes" : "no") : null)
 };
 
@@ -79,6 +85,10 @@ function openDb() {
     CREATE INDEX IF NOT EXISTS idx_pos_open ON positions(status, strategy);
     CREATE INDEX IF NOT EXISTS idx_pos_market ON positions(market_id, strategy);
   `);
+  // migrations for columns added after the first release
+  for (const col of ["outcome_name TEXT", "condition_id TEXT"]) {
+    try { db.exec("ALTER TABLE positions ADD COLUMN " + col); } catch (e) { /* exists */ }
+  }
   return db;
 }
 
@@ -119,7 +129,7 @@ function parseMarket(raw) {
     prices = JSON.parse(raw.outcomePrices);
   } catch (e) { return null; }
   if (!Array.isArray(outcomes) || outcomes.length !== 2) return null;
-  if (String(outcomes[0]).toLowerCase() !== "yes") return null; // binary Yes/No only
+  // any two-outcome market qualifies; 'yes' internally = first listed outcome
   const mid = num(prices && prices[0]);
   const bid = num(raw.bestBid), ask = num(raw.bestAsk);
   const yes = bid !== null && ask !== null ? (bid + ask) / 2 : mid;
@@ -132,7 +142,9 @@ function parseMarket(raw) {
   const spread = bid !== null && ask !== null ? ask - bid : null;
   return {
     id: String(raw.id),
+    conditionId: raw.conditionId || "",
     question: raw.question || raw.slug || "?",
+    outcomes: [String(outcomes[0]), String(outcomes[1])],
     yes, bid, ask, spread,
     change24: num(raw.oneDayPriceChange) ?? 0,
     liq, vol24, days,
@@ -154,6 +166,49 @@ async function fetchUniverse() {
       out.push(m);
     }
     await sleep(300);
+  }
+  return out;
+}
+
+/* ---------------- whale signals (for copy_top / whale_fade) ----------------
+   Reads the public leaderboard, then each top wallet's trades from the last
+   24h. A market gets a signal when top traders put >= $500 on one side with
+   >= 70% of their combined flow agreeing. */
+async function fetchWhaleSignals() {
+  const agg = new Map();
+  let lb;
+  try { lb = await fetchJson(DATA_API + "/v1/leaderboard?window=all&limit=10"); }
+  catch (e) { return new Map(); }
+  if (!Array.isArray(lb)) return new Map();
+  const cutoff = Date.now() - 24 * 3600000;
+  for (const u of lb) {
+    if (!u.proxyWallet) continue;
+    let acts;
+    try { acts = await fetchJson(DATA_API + "/activity?user=" + u.proxyWallet + "&limit=100&type=TRADE"); }
+    catch (e) { continue; }
+    await sleep(200);
+    if (!Array.isArray(acts)) continue;
+    for (const a of acts) {
+      if (a.side !== "BUY" || !a.conditionId) continue;
+      const ts = a.timestamp > 1e12 ? a.timestamp : a.timestamp * 1000;
+      if (!ts || ts < cutoff) continue;
+      const idx = Number.isInteger(a.outcomeIndex) && (a.outcomeIndex === 0 || a.outcomeIndex === 1) ? a.outcomeIndex : null;
+      if (idx === null) continue;
+      const usd = num(a.usdcSize) ?? 0;
+      if (usd <= 0) continue;
+      let s = agg.get(a.conditionId);
+      if (!s) { s = { usd: [0, 0], traders: [new Set(), new Set()] }; agg.set(a.conditionId, s); }
+      s.usd[idx] += usd;
+      s.traders[idx].add(u.proxyWallet);
+    }
+  }
+  const out = new Map();
+  for (const [cid, s] of agg) {
+    const total = s.usd[0] + s.usd[1];
+    if (total < 500) continue;
+    const idx = s.usd[0] >= s.usd[1] ? 0 : 1;
+    if (s.usd[idx] / total < 0.7) continue; // whales disagree — no signal
+    out.set(cid, { index: idx, usd: Math.round(s.usd[idx]), traders: s.traders[idx].size });
   }
   return out;
 }
@@ -211,7 +266,7 @@ async function settleOpenPositions(db) {
   return settled;
 }
 
-function openNewPositions(db, universe) {
+function openNewPositions(db, universe, whales) {
   let opened = 0;
   const now = new Date().toISOString();
   for (const [name, pick] of Object.entries(STRATEGIES)) {
@@ -221,7 +276,7 @@ function openNewPositions(db, universe) {
       if (slots <= 0 || budgetLeft < STAKE) break;
       const dup = db.prepare("SELECT 1 FROM positions WHERE strategy=? AND market_id=? AND status='open'").get(name, m.id);
       if (dup) continue;
-      const side = pick(m);
+      const side = pick(m, { whale: (whales && whales.get(m.conditionId)) || null });
       if (!side) continue;
       // buy at the ask of the chosen side when the book is available
       const price = side === "yes"
@@ -229,10 +284,11 @@ function openNewPositions(db, universe) {
         : (m.bid !== null ? 1 - m.bid : 1 - m.yes);
       if (price <= 0.01 || price >= 0.99) continue;
       const shares = STAKE / price;
-      db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares, opened_at, end_date, last_mark)
-                  VALUES(?,?,?,?,?,?,?,?,?,?,?)`)
+      const outcomeName = side === "yes" ? m.outcomes[0] : m.outcomes[1];
+      db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares, opened_at, end_date, last_mark, outcome_name, condition_id)
+                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`)
         .run(name, m.id, m.question, tag(m.question), side, Math.round(price * 10000) / 10000, STAKE,
-             Math.round(shares * 100) / 100, now, m.endDate, Math.round(price * 10000) / 10000);
+             Math.round(shares * 100) / 100, now, m.endDate, Math.round(price * 10000) / 10000, outcomeName, m.conditionId);
       opened++; slots--; budgetLeft -= STAKE;
     }
   }
@@ -258,7 +314,9 @@ async function tick() {
   let note = "";
   try { universe = await fetchUniverse(); }
   catch (e) { note = "universe fetch failed: " + e.message; }
-  const opened = universe.length ? openNewPositions(db, universe) : 0;
+  const whales = await fetchWhaleSignals();
+  if (whales.size) note += (note ? " | " : "") + whales.size + " whale signals";
+  const opened = universe.length ? openNewPositions(db, universe, whales) : 0;
   snapshotEquity(db);
   db.prepare("INSERT INTO ticks(ts, markets_seen, opened, settled, note) VALUES(?,?,?,?,?)")
     .run(new Date().toISOString(), universe.length, opened, settled, note);
@@ -317,15 +375,18 @@ function report(db) {
   md.push("- **fade_longshot** — sells the lottery tickets (buys the 90–98¢ side). What the leaderboard whales do.");
   md.push("- **momentum** — buys whichever side moved ≥5¢ in 24h");
   md.push("- **mean_revert** — fades ≥8¢ 24h moves");
+  md.push("- **late_favorite** — buys 70–93¢ favourites within 2 days of resolution");
+  md.push("- **copy_top** — mirrors what the top-10 leaderboard wallets bought in the last 24h (≥$500, ≥70% agreement)");
+  md.push("- **whale_fade** — bets against those same whale picks (the control for copy_top)");
   md.push("- **random_control** — coin flips, the baseline every strategy must beat");
   md.push("");
-  md.push("_Updated automatically by GitHub Actions every 15 minutes. Live view: [alexander710dan-ui.github.io/polymark/live.html](https://alexander710dan-ui.github.io/polymark/live.html)_");
+  md.push("_Runs on a 15-minute GitHub Actions schedule; GitHub throttles this in practice to roughly every 1–2 hours. Live view: [alexander710dan-ui.github.io/polymark/live.html](https://alexander710dan-ui.github.io/polymark/live.html)_");
   fs.writeFileSync(RESULTS_PATH, md.join("\n") + "\n");
 
   /* JSON feed for the live web view (served via GitHub Pages) */
-  const recent = db.prepare(`SELECT strategy, side, entry, pnl, close_reason, closed_at, question, tag
+  const recent = db.prepare(`SELECT strategy, side, entry, pnl, close_reason, closed_at, question, tag, outcome_name
     FROM positions WHERE status='closed' ORDER BY closed_at DESC LIMIT 15`).all();
-  const openPos = db.prepare(`SELECT strategy, side, entry, stake, shares, opened_at, end_date, last_mark, question, tag
+  const openPos = db.prepare(`SELECT strategy, side, entry, stake, shares, opened_at, end_date, last_mark, question, tag, outcome_name
     FROM positions WHERE status='open' ORDER BY end_date ASC`).all();
   const equitySeries = db.prepare("SELECT ts, strategy, equity FROM equity ORDER BY ts").all();
   fs.writeFileSync(path.join(DATA_DIR, "results.json"), JSON.stringify({
