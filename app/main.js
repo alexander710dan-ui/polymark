@@ -29,7 +29,7 @@ try { config = { ...config, ...JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8").r
 function saveConfig() { fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2)); }
 
 let tray = null, win = null, children = [], blockerId = null, viewerTimer = null;
-let startHead = null;
+let startHead = null, lastSync = 0, lastSyncOk = true;
 function gitHead(cb) {
   const g = spawn("git", ["rev-parse", "HEAD"], { cwd: ROOT });
   let o = "";
@@ -77,6 +77,11 @@ function startServer() {
           }
         });
       });
+      return;
+    }
+    if (req.url && req.url.split("?")[0] === "/__app_status") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ role: config.role, lastSync: lastSync, lastSyncOk: lastSyncOk, children: children.length }));
       return;
     }
     const urlPath = decodeURIComponent((req.url || "/").split("?")[0]);
@@ -161,7 +166,10 @@ function applyRole() {
     log("role: VIEWER — pulling every 60s");
     const pull = () => {
       const git = spawn("git", ["pull", "--rebase", "--autostash", "origin", "main"], { cwd: ROOT });
-      git.on("exit", (code) => { if (code !== 0) log("[sync] git pull failed (" + code + ")"); });
+      git.on("exit", (code) => {
+        lastSync = Date.now(); lastSyncOk = code === 0;
+        if (code !== 0) log("[sync] git pull failed (" + code + ")");
+      });
     };
     pull();
     viewerTimer = setInterval(pull, 60000);

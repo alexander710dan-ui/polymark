@@ -147,17 +147,31 @@ var lastFetch = 0;
 function runnerStatus(d){
   var ageMin = (Date.now() - Date.parse(d.generated_at)) / 60000;
   if (!isFinite(ageMin)) return null;
-  if (ageMin < 25) return { txt: "Runner live", col: "var(--yes)" };
-  if (ageMin < 60) return { txt: "Runner delayed", col: "var(--brass)" };
-  return { txt: "Runner offline · cloud backup only", col: "var(--no)" };
+  if (d.source === "cloud") return { txt: "Cloud backup ticking — runner not pushing", col: "var(--no)" };
+  if (ageMin < 15) return { txt: "Runner live", col: "var(--yes)" };
+  if (ageMin < 45) return { txt: "Runner delayed", col: "var(--brass)" };
+  return { txt: "Runner silent", col: "var(--no)" };
+}
+
+var appStatus = null;
+function loadAppStatus(){
+  if (!/Electron/i.test(navigator.userAgent)) return;
+  fetch("/__app_status").then(function(r){ return r.json(); }).then(function(s){ appStatus = s; }).catch(function(){});
 }
 
 function render(d){
   var t = new Date(d.generated_at);
   var clock = isFinite(t.getTime()) ? t.toLocaleTimeString() : "?";
+  var syncInfo = "";
+  if (appStatus && appStatus.role === "viewer") {
+    var syncAge = appStatus.lastSync ? Math.round((Date.now() - appStatus.lastSync) / 1000) : null;
+    syncInfo = appStatus.lastSyncOk === false
+      ? " · <span style='color:var(--no)'>GitHub sync failing</span>"
+      : syncAge !== null ? " · viewer synced " + (syncAge < 90 ? syncAge + "s" : Math.round(syncAge / 60) + " min") + " ago" : "";
+  }
   document.getElementById("status-line").innerHTML =
     "Data generated <span class='mono' style='color:var(--brass)'>" + clock + "</span>" +
-    " · <span id='data-age'></span>" +
+    " · <span id='data-age'></span>" + syncInfo +
     " · tick #"+d.ticks+" · each strategy started with "+money(d.bankroll);
   var pill = document.getElementById("runner-pill");
   var rs = runnerStatus(d);
@@ -385,8 +399,10 @@ function load(){
         "Could not load results ("+e.message+"). If you opened this file locally, use the hosted version — the data feed needs the web server.";
     });
 }
+loadAppStatus();
 load();
-setInterval(load, 60000);
+setInterval(load, 20000);
+setInterval(loadAppStatus, 20000);
 </script>
 </body>
 </html>

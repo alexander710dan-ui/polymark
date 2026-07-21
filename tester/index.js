@@ -390,6 +390,7 @@ function sh(cmd) {
 
 async function loop(intervalSec) {
   console.log("fast loop: tick every " + intervalSec + "s, pushing when bets open or settle. Ctrl+C stops it.");
+  process.env.PM_SOURCE = "runner"; // stamps the feed so viewers can tell runner data from cloud-backup data
   let lastPush = 0;
   for (;;) {
     const pull = sh("git pull --rebase --autostash origin main");
@@ -401,7 +402,7 @@ async function loop(intervalSec) {
     try { counts = await tick(); } catch (e) { console.error("tick failed:", e.message); }
     // push on activity, or a heartbeat push every 20 min so the cloud cron
     // knows a live Runner exists and skips its own tick
-    if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 20 * 60000) {
+    if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 10 * 60000) {
       sh("git add tester/data/polymark.db tester/data/results.json RESULTS.md");
       sh("git add collector/data/whales.db"); // whale/latency data, when the collector runs
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');
@@ -493,6 +494,7 @@ function report(db) {
   const equitySeries = db.prepare("SELECT ts, strategy, equity FROM equity ORDER BY ts").all();
   fs.writeFileSync(path.join(DATA_DIR, "results.json"), JSON.stringify({
     generated_at: new Date().toISOString(),
+    source: process.env.PM_SOURCE || "cloud",
     ticks: ticks.n, last_tick: ticks.last,
     bankroll: BANKROLL, stake: STAKE,
     strategies: rows, recent: recent, open: openPos,
