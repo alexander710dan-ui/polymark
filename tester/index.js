@@ -216,7 +216,7 @@ async function fetchWhaleData() {
   for (const w of activity.keys()) {
     try { activity.set(w, await fetchJson(DATA_API + "/activity?user=" + w + "&limit=100&type=TRADE")); }
     catch (e) { /* skip this wallet this tick */ }
-    await sleep(200);
+    await sleep(150);
   }
   const out = {};
   for (const g of groups) {
@@ -275,7 +275,7 @@ async function settleOpenPositions(db) {
     let raw;
     try { raw = await fetchJson(GAMMA + "/markets/" + row.market_id); }
     catch (e) { continue; } // transient failure: try again next tick
-    await sleep(150);
+    await sleep(100);
     if (!raw || Array.isArray(raw)) continue;
     let prices = null;
     try { prices = JSON.parse(raw.outcomePrices); } catch (e) {}
@@ -487,7 +487,7 @@ function report(db) {
 
   /* JSON feed for the live web view (served via GitHub Pages) */
   const recent = db.prepare(`SELECT strategy, side, entry, pnl, close_reason, closed_at, question, tag, outcome_name
-    FROM positions WHERE status='closed' ORDER BY closed_at DESC LIMIT 15`).all();
+    FROM positions WHERE status='closed' ORDER BY closed_at DESC LIMIT 1000`).all();
   const openPos = db.prepare(`SELECT strategy, side, entry, stake, shares, opened_at, end_date, last_mark, question, tag, outcome_name
     FROM positions WHERE status='open' ORDER BY end_date ASC`).all();
   const equitySeries = db.prepare("SELECT ts, strategy, equity FROM equity ORDER BY ts").all();

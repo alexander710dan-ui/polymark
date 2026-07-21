@@ -74,6 +74,7 @@ tr:last-child td { border-bottom:none; }
   <div class="head">
     <h1><span class="p">P</span>olymark live</h1>
     <span class="pill"><span class="dot"></span>Fake money · real markets</span>
+    <span class="pill" id="runner-pill" style="display:none"></span>
     <span style="margin-left:auto;display:flex;gap:8px;">
       <button class="chip-btn" id="btn-theme" title="Light / dark">◐</button>
       <button class="chip-btn" id="btn-update" style="display:none" title="Pull the latest version from GitHub and restart">⟳ Update</button>
@@ -93,8 +94,10 @@ tr:last-child td { border-bottom:none; }
   </div>
 
   <div class="panel">
-    <div class="ptitle">Recent settlements</div>
+    <div class="ptitle">Settlements</div>
+    <div id="recent-pager-top"></div>
     <div id="recent">…</div>
+    <div id="recent-pager-bottom"></div>
   </div>
 
   <div class="panel">
@@ -137,9 +140,31 @@ function ago(iso){
   return Math.round(m/1440)+" d ago";
 }
 
+var lastFetch = 0;
+
+function runnerStatus(d){
+  var ageMin = (Date.now() - Date.parse(d.generated_at)) / 60000;
+  if (!isFinite(ageMin)) return null;
+  if (ageMin < 25) return { txt: "Runner live", col: "var(--yes)" };
+  if (ageMin < 60) return { txt: "Runner delayed", col: "var(--brass)" };
+  return { txt: "Runner offline · cloud backup only", col: "var(--no)" };
+}
+
 function render(d){
-  document.getElementById("status-line").textContent =
-    "Tick #"+d.ticks+" · last run "+ago(d.last_tick)+" · page refreshes itself every 60s · each strategy started with "+money(d.bankroll);
+  var t = new Date(d.generated_at);
+  var clock = isFinite(t.getTime()) ? t.toLocaleTimeString() : "?";
+  document.getElementById("status-line").innerHTML =
+    "Data generated <span class='mono' style='color:var(--brass)'>" + clock + "</span>" +
+    " · <span id='data-age'></span>" +
+    " · tick #"+d.ticks+" · each strategy started with "+money(d.bankroll);
+  var pill = document.getElementById("runner-pill");
+  var rs = runnerStatus(d);
+  if (rs) {
+    pill.style.display = "";
+    pill.style.color = rs.col;
+    pill.style.borderColor = rs.col;
+    pill.innerHTML = "<span class='dot' style='background:"+rs.col+"'></span>" + rs.txt + " · " + ago(d.generated_at);
+  }
 
   var rows = d.strategies.slice().sort(function(a,b){ return b.equity-a.equity; });
   var best = rows[0] ? rows[0].name : null;
@@ -154,18 +179,56 @@ function render(d){
   });
   document.getElementById("standings").innerHTML = html+"</tbody></table>";
 
+  lastData = d;
+  renderRecent();
+  renderOpen();
+  drawChart(d);
+}
+
+/* ---- settlements with pagination (default 50 per page) ---- */
+var recentPage = 0;
+var recentSize = parseInt(localStorage.getItem("pm_psize") || "50", 10);
+function setRecentSize(v){ recentSize = v; recentPage = 0; localStorage.setItem("pm_psize", String(v)); renderRecent(); }
+function setRecentPage(p, scroll){
+  recentPage = p; renderRecent();
+  if (scroll) document.getElementById("recent-pager-top").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+function pagerHtml(total, pages, shownFrom, shownTo){
+  var sizes = [10, 20, 50, 100, 300, 500, -1];
+  var sel = "<select class='chip-btn' onchange='setRecentSize(parseInt(this.value,10))' style='padding:5px 8px'>" +
+    sizes.map(function(s){
+      return "<option value='"+s+"'"+(recentSize===s?" selected":"")+">"+(s===-1?"All":s)+" per page</option>";
+    }).join("") + "</select>";
+  return "<div style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0'>" + sel +
+    "<button class='chip-btn' "+(recentPage<=0?"disabled style='opacity:.4'":"")+" onclick='setRecentPage("+(recentPage-1)+", true)'>← Prev</button>" +
+    "<button class='chip-btn' "+(recentPage>=pages-1?"disabled style='opacity:.4'":"")+" onclick='setRecentPage("+(recentPage+1)+", true)'>Next →</button>" +
+    "<span class='meta'>"+shownFrom+"–"+shownTo+" of "+total+" · page "+(recentPage+1)+"/"+pages+"</span></div>";
+}
+function renderRecent(){
+  var d = lastData;
+  if (!d) return;
+  var all = d.recent || [];
+  if (!all.length){
+    document.getElementById("recent").innerHTML = "<p class='meta'>Nothing settled yet — bets close as real markets resolve.</p>";
+    document.getElementById("recent-pager-top").innerHTML = "";
+    document.getElementById("recent-pager-bottom").innerHTML = "";
+    return;
+  }
+  var size = recentSize === -1 ? all.length : recentSize;
+  var pages = Math.max(1, Math.ceil(all.length / size));
+  if (recentPage >= pages) recentPage = pages - 1;
+  var start = recentPage * size;
+  var rows = all.slice(start, start + size);
   var rec = "<table><tbody>";
-  (d.recent||[]).forEach(function(r){
+  rows.forEach(function(r){
     rec += "<tr><td>"+badgeFor(r)+"</td>"+
       "<td class='q'>"+esc(r.question)+"<br><span class='meta'>"+esc(r.strategy)+" · entry "+pc(r.entry)+" · "+ago(r.closed_at)+(r.close_reason!=="resolved"?" · "+esc(r.close_reason):"")+"</span></td>"+
       "<td class='num "+(r.pnl>0?"pos":"neg")+"'>"+(r.pnl>0?"+":"")+money(r.pnl)+"</td></tr>";
   });
-  document.getElementById("recent").innerHTML = (d.recent&&d.recent.length) ? rec+"</tbody></table>"
-    : "<p class='meta'>Nothing settled yet — bets close as real markets resolve.</p>";
-
-  lastData = d;
-  renderOpen();
-  drawChart(d);
+  document.getElementById("recent").innerHTML = rec + "</tbody></table>";
+  var pager = pagerHtml(all.length, pages, start + 1, Math.min(start + size, all.length));
+  document.getElementById("recent-pager-top").innerHTML = pager;
+  document.getElementById("recent-pager-bottom").innerHTML = pager;
 }
 
 var lastData = null, openFilter = "all";
@@ -271,10 +334,15 @@ function drawChart(d){
   }).join("");
 }
 
+setInterval(function(){
+  var el = document.getElementById("data-age");
+  if (el && lastFetch) el.textContent = "checked " + Math.max(0, Math.round((Date.now() - lastFetch) / 1000)) + "s ago";
+}, 1000);
+
 function load(){
   fetch("tester/data/results.json?t="+Date.now())
     .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
-    .then(render)
+    .then(function(d){ lastFetch = Date.now(); render(d); })
     .catch(function(e){
       document.getElementById("status-line").textContent =
         "Could not load results ("+e.message+"). If you opened this file locally, use the hosted version — the data feed needs the web server.";

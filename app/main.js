@@ -130,7 +130,7 @@ function applyRole() {
   clearInterval(viewerTimer);
   if (config.role === "runner") {
     log("role: RUNNER — betting, collecting, pushing");
-    startChild("loop", [path.join(ROOT, "tester", "index.js"), "loop", "120"]);
+    startChild("loop", [path.join(ROOT, "tester", "index.js"), "loop", "60"]);
     startChild("whales", [path.join(ROOT, "collector", "index.js"), "run"]);
   } else {
     log("role: VIEWER — pulling every 60s");
