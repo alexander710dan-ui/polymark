@@ -400,6 +400,7 @@ async function loop(intervalSec) {
     try { counts = await tick(); } catch (e) { console.error("tick failed:", e.message); }
     if (counts.opened > 0 || counts.settled > 0) {
       sh("git add tester/data/polymark.db tester/data/results.json RESULTS.md");
+      sh("git add collector/data/whales.db"); // whale/latency data, when the collector runs
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');
       let push = sh("git push origin main");
       if (!push.ok) {
