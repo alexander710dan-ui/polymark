@@ -11,6 +11,7 @@
 "use strict";
 
 const { DatabaseSync } = require("node:sqlite");
+const { execSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -373,6 +374,43 @@ async function tick() {
     .run(new Date().toISOString(), universe.length, opened, settled, note);
   console.log(`tick done: ${universe.length} markets seen, ${opened} positions opened, ${settled} settled${note ? " | " + note : ""}`);
   report(db);
+  return { opened, settled };
+}
+
+/* ---------------- fast loop (run on your own machine / a VPS) ----------------
+   Ticks continuously. Pushes to the repo only when a bet opened or settled,
+   so the live page updates within seconds of real activity. Safe alongside
+   the GitHub Actions cron: ticks are idempotent replays, so on any git
+   conflict we reset to the remote and simply re-tick. */
+const REPO_DIR = path.join(__dirname, "..");
+function sh(cmd) {
+  try { return { ok: true, out: execSync(cmd, { cwd: REPO_DIR, stdio: "pipe" }).toString() }; }
+  catch (e) { return { ok: false, out: String((e.stderr || e.stdout || e.message)) }; }
+}
+
+async function loop(intervalSec) {
+  console.log("fast loop: tick every " + intervalSec + "s, pushing when bets open or settle. Ctrl+C stops it.");
+  for (;;) {
+    const pull = sh("git pull --rebase --autostash origin main");
+    if (!pull.ok) {
+      console.log("pull failed, resetting to remote:", pull.out.slice(0, 120));
+      sh("git fetch origin main"); sh("git reset --hard origin/main");
+    }
+    let counts = { opened: 0, settled: 0 };
+    try { counts = await tick(); } catch (e) { console.error("tick failed:", e.message); }
+    if (counts.opened > 0 || counts.settled > 0) {
+      sh("git add tester/data/polymark.db tester/data/results.json RESULTS.md");
+      sh('git commit -m "tick: ' + new Date().toISOString() + '"');
+      let push = sh("git push origin main");
+      if (!push.ok) {
+        sh("git pull --rebase -X theirs origin main"); // keep our freshly-ticked db
+        push = sh("git push origin main");
+        if (!push.ok) { console.log("push conflict, resetting; next tick replays"); sh("git fetch origin main"); sh("git reset --hard origin/main"); }
+      }
+      if (push.ok) console.log("pushed — live view updates in ~1 min");
+    }
+    await sleep(intervalSec * 1000);
+  }
 }
 
 /* ---------------- report ---------------- */
@@ -459,6 +497,9 @@ function report(db) {
 const cmd = process.argv[2] || "tick";
 if (cmd === "tick") {
   tick().catch((e) => { console.error("tick failed:", e); process.exit(1); });
+} else if (cmd === "loop") {
+  const interval = Math.max(60, parseInt(process.argv[3] || "120", 10));
+  loop(interval).catch((e) => { console.error("loop crashed:", e); process.exit(1); });
 } else if (cmd === "report") {
   report();
 } else if (cmd === "reset") {
