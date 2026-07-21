@@ -19,7 +19,7 @@ const PORT = 17888;
 const SMOKE = process.argv.includes("--smoke");
 
 let config = { role: "viewer", keepAwake: false, openAtLogin: false };
-try { config = { ...config, ...JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8")) }; } catch (e) {}
+try { config = { ...config, ...JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8").replace(/^﻿/, "")) }; } catch (e) {}
 function saveConfig() { fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2)); }
 
 let tray = null, win = null, children = [], blockerId = null, viewerTimer = null;
