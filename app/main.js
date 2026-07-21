@@ -18,11 +18,25 @@ const CONFIG_PATH = path.join(__dirname, "config.json");
 const PORT = 17888;
 const SMOKE = process.argv.includes("--smoke");
 
+// macOS GUI apps get a stripped PATH; make sure git/gh/node from the usual
+// install locations are reachable for every child we spawn
+if (process.platform === "darwin") {
+  process.env.PATH = (process.env.PATH || "/usr/bin:/bin:/usr/sbin:/sbin") + ":/usr/local/bin:/opt/homebrew/bin";
+}
+
 let config = { role: "viewer", keepAwake: false, openAtLogin: false };
 try { config = { ...config, ...JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8").replace(/^﻿/, "")) }; } catch (e) {}
 function saveConfig() { fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2)); }
 
 let tray = null, win = null, children = [], blockerId = null, viewerTimer = null;
+let startHead = null;
+function gitHead(cb) {
+  const g = spawn("git", ["rev-parse", "HEAD"], { cwd: ROOT });
+  let o = "";
+  g.stdout.on("data", (d) => (o += d));
+  g.on("exit", (c) => cb(c === 0 ? o.trim() : null));
+  g.on("error", () => cb(null));
+}
 const logBuf = [];
 function log(line) {
   const entry = new Date().toISOString().slice(11, 19) + " " + line;
@@ -41,16 +55,27 @@ function startServer() {
     if (req.method === "POST" && req.url === "/__update") {
       log("update requested — pulling from GitHub");
       const git = spawn("git", ["pull", "--rebase", "--autostash", "origin", "main"], { cwd: ROOT });
-      let out = "";
-      git.stdout.on("data", (d) => (out += d));
+      let errOut = "";
+      git.stderr.on("data", (d) => (errOut += d));
       git.on("exit", (code) => {
-        const current = out.includes("Already up to date");
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ status: code !== 0 ? "error" : current ? "current" : "updated" }));
-        if (code === 0 && !current) {
-          log("updated — restarting app in 2s");
-          setTimeout(() => { app.relaunch(); app.isQuittingForReal = true; app.exit(0); }, 2000);
+        if (code !== 0) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ status: "error", detail: errOut.slice(0, 300) }));
+          log("update pull failed: " + errOut.slice(0, 200));
+          return;
         }
+        // restart if the running code differs from the repo — even when the
+        // pull itself was a no-op (the Runner's loop pulls constantly, so the
+        // repo is often already current while the app still runs old code)
+        gitHead((head) => {
+          const updated = head && startHead && head !== startHead;
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ status: updated ? "updated" : "current" }));
+          if (updated) {
+            log("new version " + head.slice(0, 7) + " — restarting in 2s");
+            setTimeout(() => { app.relaunch(); app.isQuittingForReal = true; app.exit(0); }, 2000);
+          }
+        });
       });
       return;
     }
@@ -216,6 +241,17 @@ app.whenReady().then(() => {
   tray.on("double-click", showWindow);
   refreshMenu();
   setInterval(refreshMenu, 60000);
+  gitHead((h) => { startHead = h; if (h) log("running version " + h.slice(0, 7)); });
+  // self-update: whenever the repo (auto-pulled by loop or viewer sync)
+  // differs from the running code, restart into the new version
+  setInterval(() => {
+    gitHead((h) => {
+      if (h && startHead && h !== startHead) {
+        log("new version " + h.slice(0, 7) + " pulled — auto-restarting");
+        app.relaunch(); app.isQuittingForReal = true; app.exit(0);
+      }
+    });
+  }, 5 * 60000);
   applyRole();
   if (config.openAtLogin) app.setLoginItemSettings({ openAtLogin: true });
   if (!SMOKE) showWindow();
