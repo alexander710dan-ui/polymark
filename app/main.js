@@ -73,7 +73,7 @@ function startServer() {
           res.end(JSON.stringify({ status: updated ? "updated" : "current" }));
           if (updated) {
             log("new version " + head.slice(0, 7) + " — restarting in 2s");
-            setTimeout(() => { app.relaunch(); app.isQuittingForReal = true; app.exit(0); }, 2000);
+            setTimeout(() => { stopChildren(); app.relaunch(); app.isQuittingForReal = true; app.exit(0); }, 2000);
           }
         });
       });
@@ -155,8 +155,8 @@ function applyRole() {
   clearInterval(viewerTimer);
   if (config.role === "runner") {
     log("role: RUNNER — betting, collecting, pushing");
-    startChild("loop", [path.join(ROOT, "tester", "index.js"), "loop", "60"]);
-    startChild("whales", [path.join(ROOT, "collector", "index.js"), "run"]);
+    startChild("loop", [path.join(ROOT, "tester", "index.js"), "loop", "60", "--managed"]);
+    startChild("whales", [path.join(ROOT, "collector", "index.js"), "run", "--managed"]);
   } else {
     log("role: VIEWER — pulling every 60s");
     const pull = () => {
@@ -248,7 +248,7 @@ app.whenReady().then(() => {
     gitHead((h) => {
       if (h && startHead && h !== startHead) {
         log("new version " + h.slice(0, 7) + " pulled — auto-restarting");
-        app.relaunch(); app.isQuittingForReal = true; app.exit(0);
+        stopChildren(); app.relaunch(); app.isQuittingForReal = true; app.exit(0);
       }
     });
   }, 5 * 60000);

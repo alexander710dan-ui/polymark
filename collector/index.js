@@ -254,6 +254,15 @@ function analyze() {
   console.log("\nchase cost = what a copier pays above the whale's price. drift = whether whale trades predict the price's next move.");
 }
 
+/* When spawned by the desk app, die if the app dies — no zombie collectors */
+if (process.argv.includes("--managed")) {
+  const parentPid = process.ppid;
+  setInterval(() => {
+    try { process.kill(parentPid, 0); }
+    catch (e) { console.log("parent app gone — exiting"); process.exit(0); }
+  }, 30000);
+}
+
 const cmd = process.argv[2] || "run";
 if (cmd === "run") run().catch((e) => { console.error("collector crashed:", e); process.exit(1); });
 else if (cmd === "stats") stats();

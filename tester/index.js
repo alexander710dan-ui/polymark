@@ -503,6 +503,16 @@ function report(db) {
 
 /* ---------------- main ---------------- */
 
+/* When spawned by the desk app, die if the app dies — no zombie loops
+   overwriting data with stale code after an app update */
+if (process.argv.includes("--managed")) {
+  const parentPid = process.ppid;
+  setInterval(() => {
+    try { process.kill(parentPid, 0); }
+    catch (e) { console.log("parent app gone — exiting"); process.exit(0); }
+  }, 30000);
+}
+
 const cmd = process.argv[2] || "tick";
 if (cmd === "tick") {
   tick().catch((e) => { console.error("tick failed:", e); process.exit(1); });
