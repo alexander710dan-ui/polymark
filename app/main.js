@@ -68,20 +68,49 @@ function startServer() {
   return srv;
 }
 
-/* ---------- child processes (Runner role) ---------- */
-function nodeEnv() { return { ...process.env, ELECTRON_RUN_AS_NODE: "1" }; }
+/* ---------- child processes (Runner role) ----------
+   Electron bundles its own (older) Node without node:sqlite, so the bot
+   children must run on the SYSTEM Node installed from nodejs.org. */
+let systemNodeCache;
+function findSystemNode() {
+  if (systemNodeCache !== undefined) return systemNodeCache;
+  const { spawnSync } = require("node:child_process");
+  const candidates = process.platform === "win32"
+    ? ["node", "C:\\Program Files\\nodejs\\node.exe"]
+    : ["/usr/local/bin/node", "/opt/homebrew/bin/node", "/usr/bin/node", "node"];
+  for (const c of candidates) {
+    try {
+      const r = spawnSync(c, ["-e", "require('node:sqlite')"], { timeout: 10000 });
+      if (r.status === 0) { systemNodeCache = c; log("system node: " + c); return c; }
+    } catch (e) { /* try next */ }
+  }
+  systemNodeCache = null;
+  return null;
+}
 
+const quickFails = {};
 function startChild(label, args) {
-  const child = spawn(process.execPath, args, { cwd: ROOT, env: nodeEnv(), stdio: ["ignore", "pipe", "pipe"] });
+  const nodeBin = findSystemNode();
+  if (!nodeBin) {
+    log("[" + label + "] CANNOT START: no Node 22+ with node:sqlite found — install the LTS from nodejs.org, then switch role off and on");
+    return null;
+  }
+  const startedAt = Date.now();
+  const child = spawn(nodeBin, args, { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] });
   const tag = (d) => String(d).trim().split("\n").forEach((l) => l && log("[" + label + "] " + l.slice(0, 160)));
   child.stdout.on("data", tag);
   child.stderr.on("data", (d) => { if (!String(d).includes("Experimental")) tag(d); });
   child.on("exit", (code) => {
     log("[" + label + "] exited (" + code + ")");
-    if (children.includes(child) && config.role === "runner") {
-      log("[" + label + "] restarting in 15s");
-      setTimeout(() => { if (config.role === "runner") replaceChild(child, label, args); }, 15000);
+    if (!children.includes(child) || config.role !== "runner") return;
+    if (Date.now() - startedAt < 10000) quickFails[label] = (quickFails[label] || 0) + 1;
+    else quickFails[label] = 0;
+    if (quickFails[label] >= 5) {
+      log("[" + label + "] crashed 5x fast — giving up; fix the cause, then toggle the role to retry");
+      return;
     }
+    log("[" + label + "] restarting in 15s");
+    setTimeout(() => { if (config.role === "runner") replaceChild(child, label, args); }, 15000);
   });
   children.push(child);
   return child;
@@ -174,8 +203,13 @@ if (!app.requestSingleInstanceLock()) {
   app.on("second-instance", () => showWindow());
 }
 
+app.setName("Polymark Desk");
+
 app.whenReady().then(() => {
   if (!app.hasSingleInstanceLock()) return;
+  if (process.platform === "darwin" && app.dock) {
+    app.dock.setIcon(nativeImage.createFromPath(path.join(__dirname, "assets", "icon.png")));
+  }
   startServer();
   const trayIcon = nativeImage.createFromPath(path.join(__dirname, "assets", "tray.png"));
   tray = new Tray(process.platform === "darwin" ? trayIcon.resize({ width: 18, height: 18 }) : trayIcon);

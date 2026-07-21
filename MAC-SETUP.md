@@ -31,6 +31,18 @@ gh repo clone alexander710dan-ui/polymark ~/polymark && cd ~/polymark/app && npm
 - After a minute the **Polymark Desk window opens** and a brass **P** appears
   in the menu bar (top right of the screen).
 
+Then quit that instance (menu-bar P → Quit) and paste one more line — it
+builds a real Mac app so Terminal is never needed again:
+
+```
+cd ~/polymark/app && bash make-mac-app.sh
+```
+
+Open **Finder → Home → Applications → right-click "Polymark Desk" → Open**
+(the right-click is only needed the first time). Drag it to the Dock to pin
+it. Add it under **System Settings → General → Login Items** so it starts on
+boot. Close Terminal forever.
+
 ## Step 3 — three clicks in the menu-bar P
 
 Click the brass **P** in the menu bar:
