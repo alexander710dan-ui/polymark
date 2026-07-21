@@ -79,8 +79,76 @@ function makePng(size) {
   ]);
 }
 
+/* Windows .ico: BMP DIB entries for 16/32/48 + PNG entry for 256 */
+function makePixels(size) {
+  // re-render just the RGBA pixel buffer (same drawing as makePng)
+  const px = Buffer.alloc(size * size * 4);
+  const r = size * 0.22;
+  const brass = [201, 163, 92], dark = [20, 16, 10];
+  const gw = P_GLYPH[0].length, gh = P_GLYPH.length;
+  const scale = (size * 0.55) / gh;
+  const gx0 = (size - gw * scale) / 2 + size * 0.02, gy0 = (size - gh * scale) / 2;
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const cx = Math.max(r - x, x - (size - 1 - r), 0);
+    const cy = Math.max(r - y, y - (size - 1 - r), 0);
+    if (cx * cx + cy * cy > r * r) continue;
+    const i = (y * size + x) * 4;
+    let col = brass;
+    const gx = Math.floor((x - gx0) / scale), gy = Math.floor((y - gy0) / scale);
+    if (gy >= 0 && gy < gh && gx >= 0 && gx < gw && P_GLYPH[gy][gx] === "1") col = dark;
+    px[i] = col[0]; px[i + 1] = col[1]; px[i + 2] = col[2]; px[i + 3] = 255;
+  }
+  return px;
+}
+
+function makeDib(size) {
+  const px = makePixels(size);
+  const header = Buffer.alloc(40);
+  header.writeUInt32LE(40, 0);
+  header.writeInt32LE(size, 4);
+  header.writeInt32LE(size * 2, 8); // XOR + AND heights
+  header.writeUInt16LE(1, 12);
+  header.writeUInt16LE(32, 14);
+  const xor = Buffer.alloc(size * size * 4); // bottom-up BGRA
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const src = (y * size + x) * 4;
+    const dst = ((size - 1 - y) * size + x) * 4;
+    xor[dst] = px[src + 2]; xor[dst + 1] = px[src + 1]; xor[dst + 2] = px[src]; xor[dst + 3] = px[src + 3];
+  }
+  const maskRow = Math.ceil(size / 32) * 4;
+  const and = Buffer.alloc(maskRow * size); // all zero = fully visible (alpha rules)
+  return Buffer.concat([header, xor, and]);
+}
+
+function makeIco() {
+  const images = [
+    { size: 16, data: makeDib(16) },
+    { size: 32, data: makeDib(32) },
+    { size: 48, data: makeDib(48) },
+    { size: 256, data: makePng(256) } // PNG compression allowed at 256
+  ];
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(1, 2); // type: icon
+  header.writeUInt16LE(images.length, 4);
+  const entries = [];
+  let offset = 6 + images.length * 16;
+  for (const img of images) {
+    const e = Buffer.alloc(16);
+    e[0] = img.size === 256 ? 0 : img.size;
+    e[1] = img.size === 256 ? 0 : img.size;
+    e.writeUInt16LE(1, 4);  // planes
+    e.writeUInt16LE(32, 6); // bpp
+    e.writeUInt32LE(img.data.length, 8);
+    e.writeUInt32LE(offset, 12);
+    offset += img.data.length;
+    entries.push(e);
+  }
+  return Buffer.concat([header, ...entries, ...images.map((i) => i.data)]);
+}
+
 const dir = path.join(__dirname, "assets");
 fs.mkdirSync(dir, { recursive: true });
 fs.writeFileSync(path.join(dir, "tray.png"), makePng(32));
 fs.writeFileSync(path.join(dir, "icon.png"), makePng(256));
-console.log("icons written to app/assets/");
+fs.writeFileSync(path.join(dir, "icon.ico"), makeIco());
+console.log("icons written to app/assets/ (tray.png, icon.png, icon.ico)");

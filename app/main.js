@@ -34,6 +34,10 @@ function log(line) {
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".md": "text/plain", ".db": "application/octet-stream" };
 function startServer() {
   const srv = http.createServer((req, res) => {
+    handle(req, res);
+  });
+  srv.on("error", (e) => log("server: " + e.message + " (another instance may hold the port)"));
+  function handle(req, res) {
     const urlPath = decodeURIComponent((req.url || "/").split("?")[0]);
     let rel = urlPath === "/" ? "/live.html" : urlPath;
     const file = path.normalize(path.join(ROOT, rel));
@@ -43,7 +47,7 @@ function startServer() {
       res.writeHead(200, { "Content-Type": MIME[path.extname(file)] || "application/octet-stream", "Cache-Control": "no-store" });
       res.end(data);
     });
-  });
+  }
   srv.listen(PORT, "127.0.0.1");
   return srv;
 }
@@ -147,7 +151,15 @@ function refreshMenu() {
 }
 
 /* ---------- boot ---------- */
+app.setAppUserModelId("dk.polymark.desk"); // Windows: own taskbar identity + icon
+if (!app.requestSingleInstanceLock()) {
+  app.quit(); // an instance already runs in the tray — just surface it
+} else {
+  app.on("second-instance", () => showWindow());
+}
+
 app.whenReady().then(() => {
+  if (!app.hasSingleInstanceLock()) return;
   startServer();
   const trayIcon = nativeImage.createFromPath(path.join(__dirname, "assets", "tray.png"));
   tray = new Tray(process.platform === "darwin" ? trayIcon.resize({ width: 18, height: 18 }) : trayIcon);
