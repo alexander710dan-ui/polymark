@@ -104,7 +104,9 @@ tr:last-child td { border-bottom:none; }
     <div class="ptitle">Open bets — resolving soonest first</div>
     <div class="chips" id="chips"></div>
     <p class="meta" id="open-summary" style="margin-bottom:8px"></p>
+    <div id="open-pager-top"></div>
     <div id="open">…</div>
+    <div id="open-pager-bottom"></div>
   </div>
 
   <p class="foot">
@@ -248,7 +250,7 @@ function renderOpen(){
   var open = d.open || [];
   var names = ["all"].concat(Object.keys(COLORS));
   document.getElementById("chips").innerHTML = names.map(function(n){
-    return "<button class='chip-btn"+(openFilter===n?" on":"")+"' onclick='openFilter=\""+n+"\";renderOpen()'>"+n+
+    return "<button class='chip-btn"+(openFilter===n?" on":"")+"' onclick='openFilter=\""+n+"\";openPage=0;renderOpen()'>"+n+
       (n==="all" ? " ("+open.length+")" : "")+"</button>";
   }).join("");
   var list = open.filter(function(p){ return openFilter==="all" || p.strategy===openFilter; });
@@ -256,33 +258,68 @@ function renderOpen(){
   list.forEach(function(p){ staked += p.stake; unrealTot += p.shares*(p.last_mark==null?p.entry:p.last_mark)-p.stake; });
   document.getElementById("open-summary").textContent =
     list.length+" open bets · "+money(staked)+" staked · unrealized "+(unrealTot>=0?"+":"")+money(Math.round(unrealTot));
-  if (!list.length){ document.getElementById("open").innerHTML="<p class='meta'>None for this filter.</p>"; return; }
+  if (!list.length){
+    document.getElementById("open").innerHTML="<p class='meta'>None for this filter.</p>";
+    document.getElementById("open-pager-top").innerHTML = "";
+    document.getElementById("open-pager-bottom").innerHTML = "";
+    return;
+  }
 
-  // grouped by when they resolve, not one endless list
-  var buckets = [
-    { label: "Awaiting resolution", test: function(h){ return h <= 0; } },
-    { label: "Resolving today", test: function(h){ return h > 0 && h <= 24; } },
-    { label: "Tomorrow", test: function(h){ return h > 24 && h <= 48; } },
-    { label: "This week", test: function(h){ return h > 48 && h <= 168; } },
-    { label: "Later", test: function(h){ return h > 168; } }
-  ];
-  var html = "<table><tbody>";
-  buckets.forEach(function(b){
-    var rows = list.filter(function(p){
-      var h = (Date.parse(p.end_date) - Date.now()) / 3600000;
-      return isFinite(h) ? b.test(h) : b.label === "Later";
-    });
-    if (!rows.length) return;
-    html += "<tr><td colspan='3' style='padding-top:16px'><span class='meta' style='letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--brass)'>"+b.label+" · "+rows.length+"</span></td></tr>";
-    rows.forEach(function(p){
-      var mark = p.last_mark==null ? p.entry : p.last_mark;
-      var un = p.shares*mark - p.stake;
-      html += "<tr><td>"+badgeFor(p)+"</td>"+
-        "<td class='q'>"+esc(p.question)+"<br><span class='meta'>"+esc(p.strategy)+" · entry "+pc(p.entry)+" · now "+pc(mark)+" · resolves "+endsIn(p.end_date)+"</span></td>"+
-        "<td class='num "+(un>0.5?"pos":un<-0.5?"neg":"")+"'>"+(un>=0?"+":"")+money(Math.round(un))+"</td></tr>";
-    });
+  // grouped by resolve time AND paginated (list arrives sorted by end date,
+  // which is exactly bucket order, so pages slice cleanly through the groups)
+  function bucketOf(p){
+    var h = (Date.parse(p.end_date) - Date.now()) / 3600000;
+    if (!isFinite(h) || h > 168) return "Later";
+    if (h <= 0) return "Awaiting resolution";
+    if (h <= 24) return "Resolving today";
+    if (h <= 48) return "Tomorrow";
+    return "This week";
+  }
+  var counts = {};
+  list.forEach(function(p){ var b = bucketOf(p); counts[b] = (counts[b] || 0) + 1; });
+
+  var size = openSize === -1 ? list.length : openSize;
+  var pages = Math.max(1, Math.ceil(list.length / size));
+  if (openPage >= pages) openPage = pages - 1;
+  var start = openPage * size;
+  var pageRows = list.slice(start, start + size);
+
+  var html = "<table><tbody>", lastBucket = null;
+  pageRows.forEach(function(p){
+    var b = bucketOf(p);
+    if (b !== lastBucket){
+      lastBucket = b;
+      html += "<tr><td colspan='3' style='padding-top:16px'><span class='meta' style='letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--brass)'>"+b+" · "+counts[b]+"</span></td></tr>";
+    }
+    var mark = p.last_mark==null ? p.entry : p.last_mark;
+    var un = p.shares*mark - p.stake;
+    html += "<tr><td>"+badgeFor(p)+"</td>"+
+      "<td class='q'>"+esc(p.question)+"<br><span class='meta'>"+esc(p.strategy)+" · entry "+pc(p.entry)+" · now "+pc(mark)+" · resolves "+endsIn(p.end_date)+"</span></td>"+
+      "<td class='num "+(un>0.5?"pos":un<-0.5?"neg":"")+"'>"+(un>=0?"+":"")+money(Math.round(un))+"</td></tr>";
   });
   document.getElementById("open").innerHTML = html+"</tbody></table>";
+  var pager = openPagerHtml(list.length, pages, start + 1, Math.min(start + size, list.length));
+  document.getElementById("open-pager-top").innerHTML = pager;
+  document.getElementById("open-pager-bottom").innerHTML = pager;
+}
+
+var openPage = 0;
+var openSize = parseInt(localStorage.getItem("pm_osize") || "50", 10);
+function setOpenSize(v){ openSize = v; openPage = 0; localStorage.setItem("pm_osize", String(v)); renderOpen(); }
+function setOpenPage(p, scroll){
+  openPage = p; renderOpen();
+  if (scroll) document.getElementById("open-pager-top").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+function openPagerHtml(total, pages, shownFrom, shownTo){
+  var sizes = [10, 20, 50, 100, 300, 500, -1];
+  var sel = "<select class='chip-btn' onchange='setOpenSize(parseInt(this.value,10))' style='padding:5px 8px'>" +
+    sizes.map(function(s){
+      return "<option value='"+s+"'"+(openSize===s?" selected":"")+">"+(s===-1?"All":s)+" per page</option>";
+    }).join("") + "</select>";
+  return "<div style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0'>" + sel +
+    "<button class='chip-btn' "+(openPage<=0?"disabled style='opacity:.4'":"")+" onclick='setOpenPage("+(openPage-1)+", true)'>← Prev</button>" +
+    "<button class='chip-btn' "+(openPage>=pages-1?"disabled style='opacity:.4'":"")+" onclick='setOpenPage("+(openPage+1)+", true)'>Next →</button>" +
+    "<span class='meta'>"+shownFrom+"–"+shownTo+" of "+total+" · page "+(openPage+1)+"/"+pages+"</span></div>";
 }
 
 /* theme toggle + in-app update */
