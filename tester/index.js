@@ -390,6 +390,7 @@ function sh(cmd) {
 
 async function loop(intervalSec) {
   console.log("fast loop: tick every " + intervalSec + "s, pushing when bets open or settle. Ctrl+C stops it.");
+  let lastPush = 0;
   for (;;) {
     const pull = sh("git pull --rebase --autostash origin main");
     if (!pull.ok) {
@@ -398,7 +399,9 @@ async function loop(intervalSec) {
     }
     let counts = { opened: 0, settled: 0 };
     try { counts = await tick(); } catch (e) { console.error("tick failed:", e.message); }
-    if (counts.opened > 0 || counts.settled > 0) {
+    // push on activity, or a heartbeat push every 20 min so the cloud cron
+    // knows a live Runner exists and skips its own tick
+    if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 20 * 60000) {
       sh("git add tester/data/polymark.db tester/data/results.json RESULTS.md");
       sh("git add collector/data/whales.db"); // whale/latency data, when the collector runs
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');
@@ -408,7 +411,7 @@ async function loop(intervalSec) {
         push = sh("git push origin main");
         if (!push.ok) { console.log("push conflict, resetting; next tick replays"); sh("git fetch origin main"); sh("git reset --hard origin/main"); }
       }
-      if (push.ok) console.log("pushed — live view updates in ~1 min");
+      if (push.ok) { lastPush = Date.now(); console.log("pushed — live view updates in ~1 min"); }
     }
     await sleep(intervalSec * 1000);
   }

@@ -38,6 +38,22 @@ function startServer() {
   });
   srv.on("error", (e) => log("server: " + e.message + " (another instance may hold the port)"));
   function handle(req, res) {
+    if (req.method === "POST" && req.url === "/__update") {
+      log("update requested — pulling from GitHub");
+      const git = spawn("git", ["pull", "--rebase", "--autostash", "origin", "main"], { cwd: ROOT });
+      let out = "";
+      git.stdout.on("data", (d) => (out += d));
+      git.on("exit", (code) => {
+        const current = out.includes("Already up to date");
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: code !== 0 ? "error" : current ? "current" : "updated" }));
+        if (code === 0 && !current) {
+          log("updated — restarting app in 2s");
+          setTimeout(() => { app.relaunch(); app.isQuittingForReal = true; app.exit(0); }, 2000);
+        }
+      });
+      return;
+    }
     const urlPath = decodeURIComponent((req.url || "/").split("?")[0]);
     let rel = urlPath === "/" ? "/live.html" : urlPath;
     const file = path.normalize(path.join(ROOT, rel));

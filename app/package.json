@@ -5,9 +5,11 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "icon": "node gen-icon.js"
+    "icon": "node gen-icon.js",
+    "brand": "node brand.js"
   },
   "devDependencies": {
-    "electron": "^31.0.0"
+    "electron": "^31.0.0",
+    "rcedit": "^5.0.2"
   }
 }

@@ -20,8 +20,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Run paper-trading tick
-        run: node tester/index.js tick
+      - name: Run paper-trading tick (unless a live Runner is active)
+        run: |
+          AGE_MIN=$(node -e "try{const j=require('./tester/data/results.json');console.log(Math.round((Date.now()-Date.parse(j.generated_at))/60000))}catch(e){console.log(9999)}")
+          echo "last data heartbeat: ${AGE_MIN} min ago"
+          if [ "$AGE_MIN" -lt 30 ]; then
+            echo "a Runner machine is active — cloud tick skipped"
+          else
+            node tester/index.js tick
+          fi
       - name: Commit results
         run: |
           git config user.name "polymark-bot"
