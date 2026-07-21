@@ -1,0 +1,13 @@
+{
+  "name": "polymark-desk",
+  "version": "0.1.0",
+  "description": "Polymark Desk — tray app for the fake-money Polymarket strategy lab",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "icon": "node gen-icon.js"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0"
+  }
+}
