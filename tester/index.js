@@ -422,11 +422,14 @@ function strategyStats(db, name) {
     FROM positions WHERE strategy=? AND status='closed'`).get(name);
   const os = openStake(db, name);
   const mv = db.prepare("SELECT COALESCE(SUM(shares * COALESCE(last_mark, entry)),0) v FROM positions WHERE strategy=? AND status='open'").get(name).v;
+  const topWin = db.prepare("SELECT COALESCE(MAX(pnl),0) t FROM positions WHERE strategy=? AND status='closed'").get(name).t;
   return {
     name, closed: c.n, wins: c.wins || 0,
     winRate: c.n ? Math.round(100 * (c.wins || 0) / c.n) : null,
     realized: r2(c.pnl),
     roiClosed: c.staked ? r2(100 * c.pnl / c.staked) : null,
+    topWin: r2(topWin),
+    exTopWin: r2(c.pnl - topWin), // profit with the single best trade removed — luck detector
     open: os.n, openValue: r2(mv), openStake: r2(os.stake),
     equity: r2(BANKROLL + c.pnl - os.stake + mv)
   };
@@ -452,11 +455,13 @@ function report(db) {
   md.push("");
   md.push("Ticks: " + ticks.n + " · Last run: " + (ticks.last || "never") + " · Database: `tester/data/polymark.db`");
   md.push("");
-  md.push("| Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | Open | Equity |");
-  md.push("|---|---|---|---|---|---|---|---|");
+  md.push("| Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |");
+  md.push("|---|---|---|---|---|---|---|---|---|");
   for (const s of rows) {
-    md.push(`| ${s.name} | ${s.closed} | ${s.wins} | ${s.winRate === null ? "—" : s.winRate + "%"} | $${s.realized} | ${s.roiClosed === null ? "—" : s.roiClosed + "%"} | ${s.open} | $${s.equity} |`);
+    md.push(`| ${s.name} | ${s.closed} | ${s.wins} | ${s.winRate === null ? "—" : s.winRate + "%"} | $${s.realized} | ${s.roiClosed === null ? "—" : s.roiClosed + "%"} | $${s.exTopWin} | ${s.open} | $${s.equity} |`);
   }
+  md.push("");
+  md.push("**Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.");
   md.push("");
   md.push("### Strategies");
   md.push("- **favorite** — buys the likely side (60–90¢)");
