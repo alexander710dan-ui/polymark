@@ -2,23 +2,23 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 65 · Last run: 2026-07-21T15:12:53.539Z · Database: `tester/data/polymark.db`
+Ticks: 66 · Last run: 2026-07-21T16:47:41.014Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | Open | Equity |
 |---|---|---|---|---|---|---|---|
-| copy_top | 111 | 60 | 54% | $792.62 | 7.14% | 17 | $10741.41 |
-| copy_pro | 6 | 2 | 33% | $-366.23 | -43.09% | 6 | $10342.4 |
-| mid_momentum | 7 | 4 | 57% | $45.01 | 6.43% | 25 | $10098.39 |
-| momentum | 56 | 42 | 75% | $98.24 | 1.75% | 25 | $10068.71 |
-| fade_longshot | 36 | 35 | 97% | $52.63 | 1.46% | 25 | $10058.17 |
-| strong_dip | 1 | 0 | 0% | $-100 | -100% | 7 | $9883.5 |
-| copy_month | 6 | 2 | 33% | $-383.73 | -63.95% | 6 | $9592.5 |
-| random_control | 39 | 20 | 51% | $-673.26 | -17.26% | 25 | $9550.96 |
-| mean_revert | 55 | 13 | 24% | $-632.86 | -11.51% | 25 | $9521.15 |
-| favorite | 45 | 29 | 64% | $-492.39 | -10.94% | 25 | $9345.79 |
-| late_favorite | 85 | 64 | 75% | $-739.13 | -8.7% | 25 | $9071.79 |
-| whale_fade | 111 | 51 | 46% | $-859.34 | -7.74% | 17 | $9034.98 |
-| longshot | 36 | 1 | 3% | $-2191.55 | -60.88% | 25 | $7487.65 |
+| copy_pro | 9 | 5 | 56% | $1030.83 | 68.72% | 7 | $11040.49 |
+| copy_top | 112 | 61 | 54% | $856.55 | 7.65% | 20 | $10869.41 |
+| fade_longshot | 37 | 36 | 97% | $61.33 | 1.66% | 25 | $10064 |
+| momentum | 57 | 43 | 75% | $183.43 | 3.22% | 25 | $10013.45 |
+| strong_dip | 2 | 1 | 50% | $-11.32 | -5.66% | 7 | $10010.49 |
+| mid_momentum | 14 | 8 | 57% | $-1.71 | -0.12% | 23 | $9841.69 |
+| copy_month | 7 | 3 | 43% | $-319.8 | -45.69% | 9 | $9707.3 |
+| mean_revert | 56 | 13 | 23% | $-732.86 | -13.09% | 25 | $9688.42 |
+| random_control | 39 | 20 | 51% | $-673.26 | -17.26% | 25 | $9523.44 |
+| favorite | 46 | 30 | 65% | $-445.33 | -9.68% | 25 | $9271.48 |
+| late_favorite | 91 | 68 | 75% | $-882.62 | -9.7% | 24 | $9032.09 |
+| whale_fade | 112 | 51 | 46% | $-959.34 | -8.57% | 20 | $8785.59 |
+| longshot | 37 | 1 | 3% | $-2291.55 | -61.93% | 25 | $7454.07 |
 
 ### Strategies
 - **favorite** — buys the likely side (60–90¢)
