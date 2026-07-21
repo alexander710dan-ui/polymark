@@ -101,7 +101,9 @@ tr:last-child td { border-bottom:none; }
 "use strict";
 var COLORS = { momentum:"#4fb286", fade_longshot:"#c9a35c", favorite:"#7295c2",
                longshot:"#c96f63", mean_revert:"#ed93b1", late_favorite:"#6ec6c0",
-               copy_top:"#e8d27c", whale_fade:"#a58fd0", random_control:"#626b7a" };
+               copy_top:"#e8d27c", copy_pro:"#f0d060", copy_month:"#e09f7d",
+               whale_fade:"#a58fd0", mid_momentum:"#9fd06a", strong_dip:"#8aa8e8",
+               random_control:"#626b7a" };
 function money(v){ return (v<0?"-":"")+"$"+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0}); }
 function pc(v){ var c=v*100; return (c<10?c.toFixed(1):Math.round(c))+"¢"; }
 function badgeFor(p){

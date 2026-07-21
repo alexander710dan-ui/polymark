@@ -29,7 +29,11 @@ position and outcome into SQLite:
 | mean_revert | fade ≥8¢ 24h moves |
 | late_favorite | buy 70–93¢ favourites within 2 days of resolution |
 | copy_top | mirror the top-10 leaderboard wallets' buys from the last 24h |
-| whale_fade | bet against those same whale picks (control) |
+| copy_pro | copy trading, max features: filtered wallets, 6h freshness, no chasing, conviction-sized stakes |
+| copy_month | copy_top's rules on the monthly leaderboard's top-10 |
+| whale_fade | bet against copy_top's picks (control) |
+| mid_momentum | momentum, but only at 30–70¢ where payoffs are symmetric |
+| strong_dip | buy sides knocked down ≥10¢ that are still favourites |
 | random_control | coin flips — the baseline |
 
 **Run it:** requires Node ≥ 23.4 (built-in `node:sqlite`).

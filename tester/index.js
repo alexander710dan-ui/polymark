@@ -47,6 +47,29 @@ const STRATEGIES = {
   late_favorite: (m) => (m.days <= 2 ? (m.yes >= 0.70 && m.yes <= 0.93 ? "yes" : m.yes >= 0.07 && m.yes <= 0.30 ? "no" : null) : null),
   copy_top:      (m, ctx) => (ctx.whale ? (ctx.whale.index === 0 ? "yes" : "no") : null),
   whale_fade:    (m, ctx) => (ctx.whale ? (ctx.whale.index === 0 ? "no" : "yes") : null),
+  /* copy_top variant 1 — every improvement at once: efficiency-filtered wallet
+     pool, 6h freshness, refuses to chase a price that ran >5¢ past the whales'
+     own average entry, and sizes stake ($100-250) by conviction. */
+  copy_pro: (m, ctx) => {
+    const s = ctx.pro;
+    if (!s) return null;
+    const cur = s.index === 0 ? m.yes : 1 - m.yes;
+    if (s.avgPrice !== null && cur - s.avgPrice > 0.05) return null; // too late — whales got a better price
+    let stake = STAKE;
+    if (s.traders >= 2) stake += 50;
+    if (s.usd >= 3000) stake += 50;
+    if (s.usd >= 8000) stake += 50;
+    return { side: s.index === 0 ? "yes" : "no", stake: Math.min(250, stake) };
+  },
+  /* copy_top variant 2 — identical rules, different wallet group: the top-10
+     of the MONTHLY leaderboard (in-form traders) instead of all-time. */
+  copy_month:    (m, ctx) => (ctx.month ? (ctx.month.index === 0 ? "yes" : "no") : null),
+  /* momentum, repaired: only trade where payoffs are symmetric (30-70¢).
+     Plain momentum won 75% of its bets and still lost money buying 95¢ sides. */
+  mid_momentum:  (m) => (m.yes >= 0.30 && m.yes <= 0.70 ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null),
+  /* mean_revert, repaired: only buy a knocked-down side that is STILL the
+     favourite. Plain mean_revert died buying dying longshots. */
+  strong_dip:    (m) => (m.change24 <= -0.10 && m.yes >= 0.50 ? "yes" : m.change24 >= 0.10 && m.yes <= 0.50 ? "no" : null),
   random_control:(m) => (Math.random() < 0.12 ? (Math.random() < 0.5 ? "yes" : "no") : null)
 };
 
@@ -170,45 +193,65 @@ async function fetchUniverse() {
   return out;
 }
 
-/* ---------------- whale signals (for copy_top / whale_fade) ----------------
-   Reads the public leaderboard, then each top wallet's trades from the last
-   24h. A market gets a signal when top traders put >= $500 on one side with
-   >= 70% of their combined flow agreeing. */
-async function fetchWhaleSignals() {
-  const agg = new Map();
-  let lb;
-  try { lb = await fetchJson(DATA_API + "/v1/leaderboard?window=all&limit=10"); }
-  catch (e) { return new Map(); }
-  if (!Array.isArray(lb)) return new Map();
-  const cutoff = Date.now() - 24 * 3600000;
-  for (const u of lb) {
-    if (!u.proxyWallet) continue;
-    let acts;
-    try { acts = await fetchJson(DATA_API + "/activity?user=" + u.proxyWallet + "&limit=100&type=TRADE"); }
-    catch (e) { continue; }
+/* ---------------- whale signals (copy_top / whale_fade / copy_pro / copy_month)
+   Three signal groups built from public leaderboards + wallet trade history:
+   - top:   top-10 all-time,  last 24h, >= $500 one-sided flow (>= 70% agreement)
+   - pro:   top-25 all-time filtered by pnl/volume efficiency >= 3%,
+            last 6h only, >= $1000 flow, tracks the whales' avg entry price
+   - month: top-10 of the MONTHLY board, same rules as `top` (in-form traders) */
+async function fetchWhaleData() {
+  let allBoard = [], monthBoard = [];
+  try { allBoard = await fetchJson(DATA_API + "/v1/leaderboard?window=all&limit=25"); } catch (e) {}
+  try { monthBoard = await fetchJson(DATA_API + "/v1/leaderboard?window=month&limit=10"); } catch (e) {}
+  if (!Array.isArray(allBoard)) allBoard = [];
+  if (!Array.isArray(monthBoard)) monthBoard = [];
+  const groups = [
+    { key: "top", wallets: allBoard.slice(0, 10), hours: 24, minUsd: 500 },
+    { key: "pro", wallets: allBoard.filter((u) => num(u.pnl) > 0 && num(u.vol) > 0 && u.pnl / u.vol >= 0.03), hours: 6, minUsd: 1000 },
+    { key: "month", wallets: monthBoard, hours: 24, minUsd: 500 }
+  ];
+  const activity = new Map();
+  for (const g of groups) for (const u of g.wallets) if (u.proxyWallet) activity.set(u.proxyWallet, null);
+  for (const w of activity.keys()) {
+    try { activity.set(w, await fetchJson(DATA_API + "/activity?user=" + w + "&limit=100&type=TRADE")); }
+    catch (e) { /* skip this wallet this tick */ }
     await sleep(200);
-    if (!Array.isArray(acts)) continue;
-    for (const a of acts) {
-      if (a.side !== "BUY" || !a.conditionId) continue;
-      const ts = a.timestamp > 1e12 ? a.timestamp : a.timestamp * 1000;
-      if (!ts || ts < cutoff) continue;
-      const idx = Number.isInteger(a.outcomeIndex) && (a.outcomeIndex === 0 || a.outcomeIndex === 1) ? a.outcomeIndex : null;
-      if (idx === null) continue;
-      const usd = num(a.usdcSize) ?? 0;
-      if (usd <= 0) continue;
-      let s = agg.get(a.conditionId);
-      if (!s) { s = { usd: [0, 0], traders: [new Set(), new Set()] }; agg.set(a.conditionId, s); }
-      s.usd[idx] += usd;
-      s.traders[idx].add(u.proxyWallet);
-    }
   }
-  const out = new Map();
-  for (const [cid, s] of agg) {
-    const total = s.usd[0] + s.usd[1];
-    if (total < 500) continue;
-    const idx = s.usd[0] >= s.usd[1] ? 0 : 1;
-    if (s.usd[idx] / total < 0.7) continue; // whales disagree — no signal
-    out.set(cid, { index: idx, usd: Math.round(s.usd[idx]), traders: s.traders[idx].size });
+  const out = {};
+  for (const g of groups) {
+    const agg = new Map();
+    const cutoff = Date.now() - g.hours * 3600000;
+    for (const u of g.wallets) {
+      const acts = activity.get(u.proxyWallet);
+      if (!Array.isArray(acts)) continue;
+      for (const a of acts) {
+        if (a.side !== "BUY" || !a.conditionId) continue;
+        const ts = a.timestamp > 1e12 ? a.timestamp : a.timestamp * 1000;
+        if (!ts || ts < cutoff) continue;
+        const idx = a.outcomeIndex === 0 || a.outcomeIndex === 1 ? a.outcomeIndex : null;
+        if (idx === null) continue;
+        const usd = num(a.usdcSize) ?? 0;
+        if (usd <= 0) continue;
+        let s = agg.get(a.conditionId);
+        if (!s) { s = { usd: [0, 0], pxUsd: [0, 0], traders: [new Set(), new Set()] }; agg.set(a.conditionId, s); }
+        s.usd[idx] += usd;
+        s.traders[idx].add(u.proxyWallet);
+        const px = num(a.price);
+        if (px) s.pxUsd[idx] += px * usd;
+      }
+    }
+    const map = new Map();
+    for (const [cid, s] of agg) {
+      const total = s.usd[0] + s.usd[1];
+      if (total < g.minUsd) continue;
+      const idx = s.usd[0] >= s.usd[1] ? 0 : 1;
+      if (s.usd[idx] / total < 0.7) continue; // whales disagree — no signal
+      map.set(cid, {
+        index: idx, usd: Math.round(s.usd[idx]), traders: s.traders[idx].size,
+        avgPrice: s.pxUsd[idx] > 0 ? s.pxUsd[idx] / s.usd[idx] : null
+      });
+    }
+    out[g.key] = map;
   }
   return out;
 }
@@ -276,20 +319,28 @@ function openNewPositions(db, universe, whales) {
       if (slots <= 0 || budgetLeft < STAKE) break;
       const dup = db.prepare("SELECT 1 FROM positions WHERE strategy=? AND market_id=? AND status='open'").get(name, m.id);
       if (dup) continue;
-      const side = pick(m, { whale: (whales && whales.get(m.conditionId)) || null });
-      if (!side) continue;
+      const ctx = {
+        whale: (whales.top && whales.top.get(m.conditionId)) || null,
+        pro: (whales.pro && whales.pro.get(m.conditionId)) || null,
+        month: (whales.month && whales.month.get(m.conditionId)) || null
+      };
+      const res = pick(m, ctx);
+      if (!res) continue;
+      const side = typeof res === "string" ? res : res.side;
+      const stakeAmt = typeof res === "object" && res.stake ? res.stake : STAKE;
+      if (!side || budgetLeft < stakeAmt) continue;
       // buy at the ask of the chosen side when the book is available
       const price = side === "yes"
         ? (m.ask !== null ? m.ask : m.yes)
         : (m.bid !== null ? 1 - m.bid : 1 - m.yes);
       if (price <= 0.01 || price >= 0.99) continue;
-      const shares = STAKE / price;
+      const shares = stakeAmt / price;
       const outcomeName = side === "yes" ? m.outcomes[0] : m.outcomes[1];
       db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares, opened_at, end_date, last_mark, outcome_name, condition_id)
                   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-        .run(name, m.id, m.question, tag(m.question), side, Math.round(price * 10000) / 10000, STAKE,
+        .run(name, m.id, m.question, tag(m.question), side, Math.round(price * 10000) / 10000, stakeAmt,
              Math.round(shares * 100) / 100, now, m.endDate, Math.round(price * 10000) / 10000, outcomeName, m.conditionId);
-      opened++; slots--; budgetLeft -= STAKE;
+      opened++; slots--; budgetLeft -= stakeAmt;
     }
   }
   return opened;
@@ -314,8 +365,8 @@ async function tick() {
   let note = "";
   try { universe = await fetchUniverse(); }
   catch (e) { note = "universe fetch failed: " + e.message; }
-  const whales = await fetchWhaleSignals();
-  if (whales.size) note += (note ? " | " : "") + whales.size + " whale signals";
+  const whales = await fetchWhaleData();
+  note += (note ? " | " : "") + "whale signals top/pro/month: " + whales.top.size + "/" + whales.pro.size + "/" + whales.month.size;
   const opened = universe.length ? openNewPositions(db, universe, whales) : 0;
   snapshotEquity(db);
   db.prepare("INSERT INTO ticks(ts, markets_seen, opened, settled, note) VALUES(?,?,?,?,?)")
@@ -377,7 +428,11 @@ function report(db) {
   md.push("- **mean_revert** — fades ≥8¢ 24h moves");
   md.push("- **late_favorite** — buys 70–93¢ favourites within 2 days of resolution");
   md.push("- **copy_top** — mirrors what the top-10 leaderboard wallets bought in the last 24h (≥$500, ≥70% agreement)");
-  md.push("- **whale_fade** — bets against those same whale picks (the control for copy_top)");
+  md.push("- **copy_pro** — copy trading with everything turned on: efficiency-filtered top-25 wallets, 6h freshness, refuses to chase prices that ran >5¢ past the whales' entry, conviction-scaled stakes ($100–250)");
+  md.push("- **copy_month** — copy_top's exact rules, but following the top-10 of the MONTHLY leaderboard (in-form traders)");
+  md.push("- **whale_fade** — bets against copy_top's picks (the control for copy_top)");
+  md.push("- **mid_momentum** — momentum restricted to 30–70¢ where payoffs are symmetric (momentum won 75% of bets and still lost money buying 95¢ sides)");
+  md.push("- **strong_dip** — buys a side knocked down ≥10¢ that is still the favourite (mean_revert died buying dying longshots; this only catches falling *leaders*)");
   md.push("- **random_control** — coin flips, the baseline every strategy must beat");
   md.push("");
   md.push("_Runs on a 15-minute GitHub Actions schedule; GitHub throttles this in practice to roughly every 1–2 hours. Live view: [alexander710dan-ui.github.io/polymark/live.html](https://alexander710dan-ui.github.io/polymark/live.html)_");
