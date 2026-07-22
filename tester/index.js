@@ -46,14 +46,18 @@ const STRATEGIES = {
   momentum:      (m) => (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null),
   mean_revert:   (m) => (m.change24 >= 0.08 ? "no" : m.change24 <= -0.08 ? "yes" : null),
   late_favorite: (m) => (m.days <= 2 ? (m.yes >= 0.70 && m.yes <= 0.93 ? "yes" : m.yes >= 0.07 && m.yes <= 0.30 ? "no" : null) : null),
-  copy_top:      (m, ctx) => (ctx.whale ? (ctx.whale.index === 0 ? "yes" : "no") : null),
-  whale_fade:    (m, ctx) => (ctx.whale ? (ctx.whale.index === 0 ? "no" : "yes") : null),
+  /* In-play guard on all copy strategies (and the fade control, to stay its
+     exact mirror): live-game whale trades proved uncopyable in week one —
+     every copy-family loss came from live sports, where the whale edge is
+     seconds-scale game state that is gone before any copier arrives. */
+  copy_top:      (m, ctx) => (ctx.whale && !m.inPlay ? (ctx.whale.index === 0 ? "yes" : "no") : null),
+  whale_fade:    (m, ctx) => (ctx.whale && !m.inPlay ? (ctx.whale.index === 0 ? "no" : "yes") : null),
   /* copy_top variant 1 — every improvement at once: efficiency-filtered wallet
      pool, 6h freshness, refuses to chase a price that ran >5¢ past the whales'
      own average entry, and sizes stake ($100-250) by conviction. */
   copy_pro: (m, ctx) => {
     const s = ctx.pro;
-    if (!s) return null;
+    if (!s || m.inPlay) return null;
     const cur = s.index === 0 ? m.yes : 1 - m.yes;
     if (s.avgPrice !== null && cur - s.avgPrice > 0.05) return null; // too late — whales got a better price
     let stake = STAKE;
@@ -64,7 +68,7 @@ const STRATEGIES = {
   },
   /* copy_top variant 2 — identical rules, different wallet group: the top-10
      of the MONTHLY leaderboard (in-form traders) instead of all-time. */
-  copy_month:    (m, ctx) => (ctx.month ? (ctx.month.index === 0 ? "yes" : "no") : null),
+  copy_month:    (m, ctx) => (ctx.month && !m.inPlay ? (ctx.month.index === 0 ? "yes" : "no") : null),
   /* momentum, repaired: only trade where payoffs are symmetric (30-70¢).
      Plain momentum won 75% of its bets and still lost money buying 95¢ sides. */
   mid_momentum:  (m) => (m.yes >= 0.30 && m.yes <= 0.70 ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null),
@@ -164,9 +168,11 @@ function parseMarket(raw) {
   if (!Number.isFinite(end)) return null;
   const days = (end - Date.now()) / 86400000;
   const spread = bid !== null && ask !== null ? ask - bid : null;
+  const gameStart = raw.gameStartTime ? Date.parse(raw.gameStartTime) : null;
   return {
     id: String(raw.id),
     conditionId: raw.conditionId || "",
+    inPlay: Number.isFinite(gameStart) ? Date.now() > gameStart : false,
     question: raw.question || raw.slug || "?",
     outcomes: [String(outcomes[0]), String(outcomes[1])],
     yes, bid, ask, spread,
@@ -404,7 +410,7 @@ async function loop(intervalSec) {
     // knows a live Runner exists and skips its own tick
     if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 10 * 60000) {
       sh("git add tester/data/polymark.db tester/data/results.json RESULTS.md");
-      sh("git add collector/data/whales.db"); // whale/latency data, when the collector runs
+      sh("git add collector/data/whales-sync.db"); // whale/latency snapshot, when the collector runs
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');
       let push = sh("git push origin main");
       if (!push.ok) {

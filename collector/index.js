@@ -20,6 +20,7 @@ const path = require("node:path");
 
 const DATA_DIR = path.join(__dirname, "data");
 const DB_PATH = path.join(DATA_DIR, "whales.db");
+const SYNC_PATH = path.join(DATA_DIR, "whales-sync.db"); // atomic snapshot for git — WAL db files tear when copied mid-write
 const WS_URL = "wss://ws-live-data.polymarket.com";
 const DATA_API = "https://data-api.polymarket.com";
 const CLOB = "https://clob.polymarket.com";
@@ -175,6 +176,14 @@ async function run() {
     msgs = 0;
   }, 60000);
 
+  // consistent snapshot for git sync (the live WAL db must never be committed)
+  setInterval(() => {
+    try {
+      fs.rmSync(SYNC_PATH, { force: true });
+      db.exec("VACUUM INTO '" + SYNC_PATH.replace(/'/g, "''") + "'");
+    } catch (e) { console.error("snapshot failed:", e.message); }
+  }, 5 * 60000);
+
   function connect(attempt) {
     ws = new WebSocket(WS_URL);
     ws.onopen = () => {
@@ -219,8 +228,20 @@ async function run() {
 
 /* ---------------- reporting ---------------- */
 
+/* read commands work on the live db when healthy, else the synced snapshot
+   (viewers only ever have the snapshot) */
+function openReadDb() {
+  try {
+    const d = new DatabaseSync(DB_PATH);
+    d.prepare("SELECT COUNT(*) n FROM whale_trades").get();
+    return d;
+  } catch (e) {
+    return new DatabaseSync(SYNC_PATH);
+  }
+}
+
 function stats() {
-  const db = openDb();
+  const db = openReadDb();
   const t = db.prepare("SELECT COUNT(*) n, COUNT(DISTINCT wallet) w, MIN(detected_ts) first, MAX(detected_ts) last FROM whale_trades").get();
   const bySrc = db.prepare("SELECT source, COUNT(*) n FROM whale_trades GROUP BY source").all();
   const snapped = db.prepare("SELECT COUNT(DISTINCT trade_id) n FROM snaps").get();
@@ -233,7 +254,7 @@ function stats() {
 }
 
 function analyze() {
-  const db = openDb();
+  const db = openReadDb();
   console.log("Cost of copying late — buy-side whale trades, ask price at each delay vs the whale's own fill:");
   const rows = db.prepare(`
     SELECT s.delay_s, COUNT(*) n,

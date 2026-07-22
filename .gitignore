@@ -3,6 +3,7 @@ node_modules/
 .DS_Store
 *.db-wal
 *.db-shm
+collector/data/whales.db
 app/node_modules/
 app/config.json
 app/dist/

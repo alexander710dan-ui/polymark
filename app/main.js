@@ -178,6 +178,17 @@ function applyRole() {
   refreshMenu();
 }
 
+/* Windows login items launch the exe WITHOUT arguments by default, which
+   boots Electron's welcome screen instead of Polymark — always register
+   the app-directory argument explicitly. */
+function setLoginItem(enable) {
+  if (process.platform === "win32") {
+    app.setLoginItemSettings({ openAtLogin: enable, path: process.execPath, args: [__dirname] });
+  } else {
+    app.setLoginItemSettings({ openAtLogin: enable });
+  }
+}
+
 function applyKeepAwake() {
   if (config.keepAwake && config.role === "runner") {
     if (blockerId === null) { blockerId = powerSaveBlocker.start("prevent-app-suspension"); log("keep-awake ON"); }
@@ -222,7 +233,7 @@ function refreshMenu() {
     { label: "Viewer (mirror only)", type: "radio", checked: config.role === "viewer", click: () => { config.role = "viewer"; saveConfig(); applyRole(); } },
     { type: "separator" },
     { label: "Keep machine awake (runner)", type: "checkbox", checked: config.keepAwake, click: (i) => { config.keepAwake = i.checked; saveConfig(); applyKeepAwake(); } },
-    { label: "Start at login", type: "checkbox", checked: config.openAtLogin, click: (i) => { config.openAtLogin = i.checked; saveConfig(); app.setLoginItemSettings({ openAtLogin: i.checked }); } },
+    { label: "Start at login", type: "checkbox", checked: config.openAtLogin, click: (i) => { config.openAtLogin = i.checked; saveConfig(); setLoginItem(i.checked); } },
     { type: "separator" },
     { label: "Quit", click: () => { app.isQuittingForReal = true; app.quit(); } }
   ]));
@@ -261,7 +272,7 @@ app.whenReady().then(() => {
     });
   }, 5 * 60000);
   applyRole();
-  if (config.openAtLogin) app.setLoginItemSettings({ openAtLogin: true });
+  if (config.openAtLogin) setLoginItem(true);
   if (!SMOKE) showWindow();
   if (SMOKE) { log("SMOKE OK"); setTimeout(() => { app.isQuittingForReal = true; app.quit(); }, 1500); }
 });
