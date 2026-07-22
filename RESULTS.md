@@ -2,22 +2,22 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 328 · Last run: 2026-07-22T04:31:30.503Z · Database: `tester/data/polymark.db`
+Ticks: 330 · Last run: 2026-07-22T04:34:06.459Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
-| momentum | 64 | 48 | 75% | $189.76 | 2.97% | $-67.38 | 25 | $10166.95 |
+| momentum | 64 | 48 | 75% | $189.76 | 2.97% | $-67.38 | 25 | $10166.94 |
 | fade_longshot | 40 | 39 | 98% | $67.77 | 1.69% | $57.88 | 25 | $10069.73 |
-| mid_momentum | 33 | 20 | 61% | $164.09 | 4.97% | $25.99 | 25 | $10060.9 |
-| strong_dip | 4 | 1 | 25% | $-115.16 | -28.79% | $-203.84 | 13 | $9897.74 |
-| copy_top | 130 | 67 | 52% | $158.45 | 1.22% | $-1170.12 | 19 | $9874.78 |
-| copy_pro | 31 | 14 | 45% | $22.93 | 0.44% | $-686.16 | 10 | $9832.03 |
+| mid_momentum | 34 | 21 | 62% | $242.66 | 7.14% | $104.56 | 25 | $10063.18 |
+| strong_dip | 4 | 1 | 25% | $-115.16 | -28.79% | $-203.84 | 13 | $9898.4 |
+| copy_top | 131 | 67 | 51% | $58.45 | 0.45% | $-1270.12 | 18 | $9874.78 |
+| copy_pro | 32 | 14 | 44% | $-127.07 | -2.38% | $-836.16 | 9 | $9831.87 |
 | random_control | 39 | 20 | 51% | $-673.26 | -17.26% | $-1287.55 | 25 | $9683.23 |
-| whale_fade | 130 | 63 | 48% | $-483.74 | -3.72% | $-818.52 | 19 | $9641.92 |
+| whale_fade | 131 | 64 | 49% | $-391.43 | -2.99% | $-726.21 | 18 | $9640.8 |
 | favorite | 54 | 34 | 63% | $-675.86 | -12.52% | $-737.41 | 25 | $9328.15 |
-| late_favorite | 116 | 89 | 77% | $-830.75 | -7.16% | $-871.6 | 18 | $9305.28 |
-| mean_revert | 67 | 15 | 22% | $-961.64 | -14.35% | $-2270.09 | 25 | $8974.52 |
-| copy_month | 32 | 13 | 41% | $-1208.62 | -37.77% | $-1386.4 | 9 | $8556.2 |
+| late_favorite | 116 | 89 | 77% | $-830.75 | -7.16% | $-871.6 | 18 | $9306.69 |
+| mean_revert | 67 | 15 | 22% | $-961.64 | -14.35% | $-2270.09 | 25 | $8981.22 |
+| copy_month | 33 | 13 | 39% | $-1308.62 | -39.66% | $-1486.4 | 8 | $8556.1 |
 | longshot | 40 | 1 | 3% | $-2591.55 | -64.79% | $-3900 | 25 | $7247.08 |
 
 **Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
