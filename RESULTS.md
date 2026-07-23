@@ -2,23 +2,23 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 1367 · Last run: 2026-07-23T02:18:30.172Z · Database: `tester/data/polymark.db`
+Ticks: 1368 · Last run: 2026-07-23T02:19:50.564Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
 | mean_revert | 78 | 19 | 24% | $810.45 | 10.39% | $-1217.21 | 25 | $10718.03 |
 | momentum | 74 | 55 | 74% | $216.49 | 2.93% | $-40.65 | 25 | $10412.08 |
 | copy_top | 144 | 72 | 50% | $83.12 | 0.58% | $-1245.45 | 21 | $10230.48 |
-| random_control | 39 | 20 | 51% | $-673.26 | -17.26% | $-1287.55 | 25 | $10068.71 |
+| random_control | 39 | 20 | 51% | $-673.26 | -17.26% | $-1287.55 | 25 | $10070.07 |
 | fade_longshot | 49 | 47 | 96% | $15.82 | 0.32% | $5.93 | 25 | $9963.08 |
 | whale_fade | 144 | 72 | 50% | $-197.01 | -1.37% | $-531.79 | 21 | $9849.93 |
-| strong_dip | 23 | 13 | 57% | $-110.97 | -4.82% | $-203.28 | 24 | $9810 |
-| mid_momentum | 56 | 33 | 59% | $51.71 | 0.92% | $-86.39 | 25 | $9657.78 |
+| strong_dip | 23 | 13 | 57% | $-110.97 | -4.82% | $-203.28 | 24 | $9811.56 |
+| mid_momentum | 56 | 33 | 59% | $51.71 | 0.92% | $-86.39 | 25 | $9655.08 |
 | longshot | 49 | 2 | 4% | $-1491.55 | -30.44% | $-3391.55 | 25 | $9313.57 |
 | favorite | 67 | 43 | 64% | $-639.54 | -9.55% | $-703.47 | 25 | $9251.14 |
 | late_favorite | 172 | 134 | 78% | $-869.11 | -5.05% | $-909.96 | 21 | $9154.93 |
-| copy_pro | 75 | 31 | 41% | $-1313.8 | -10.55% | $-2163.8 | 23 | $9055.54 |
-| copy_month | 57 | 23 | 40% | $-1518.06 | -26.63% | $-2084.73 | 20 | $8490.63 |
+| copy_pro | 75 | 31 | 41% | $-1313.8 | -10.55% | $-2163.8 | 23 | $9045.88 |
+| copy_month | 58 | 23 | 40% | $-1618.06 | -27.9% | $-2184.73 | 19 | $8490.54 |
 
 **Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
 
