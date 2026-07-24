@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 2590 · Last run: 2026-07-24T03:50:45.244Z · Database: `tester/data/polymark.db`
+Ticks: 2591 · Last run: 2026-07-24T03:52:02.498Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
@@ -18,7 +18,7 @@ Ticks: 2590 · Last run: 2026-07-24T03:50:45.244Z · Database: `tester/data/poly
 | longshot | 51 | 2 | 4% | $-1691.55 | -33.17% | $-3591.55 | 25 | $9460.63 |
 | copy_month | 87 | 39 | 45% | $-887.05 | -10.2% | $-1453.72 | 13 | $9424.74 |
 | favorite | 77 | 49 | 64% | $-888.6 | -11.54% | $-952.53 | 25 | $9024.06 |
-| late_favorite | 234 | 181 | 77% | $-1225.08 | -5.24% | $-1265.93 | 22 | $8423.65 |
+| late_favorite | 234 | 181 | 77% | $-1225.08 | -5.24% | $-1265.93 | 23 | $8423.65 |
 
 **Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
 
