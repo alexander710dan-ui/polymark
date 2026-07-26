@@ -39,13 +39,39 @@ const CRYPTO_RE = /bitcoin|BTC|ethereum|ETH|solana|crypto|token|\$\d+k/i;
    'yes' means the FIRST listed outcome (literally "Yes" in Yes/No markets;
    team A in team-vs-team markets). ctx carries whale-copy signals.
    m = { yes, bid, ask, change24, liq, vol24, days, outcomes } */
+/* RETIRED after ~900 settled bets (2026-07-22) — kept in the database and
+   standings as history, but they place no new bets:
+   - longshot      2% wr, -$3,092: the lottery graveyard, empirically settled
+   - mean_revert  21% wr, -$1,262: buying dying longshots; strong_dip is its repair
+   - late_favorite 78% wr, -$817:  payoff asymmetry disease
+   - favorite     66% wr, -$438:   same disease, milder
+   - copy_month   41% wr, -$1,450: monthly-board whales are live-game traders, worst copy targets
+   random_control stays: red, but it is the yardstick everything must beat. */
 const STRATEGIES = {
-  favorite:      (m) => (m.yes >= 0.60 && m.yes <= 0.90 ? "yes" : m.yes <= 0.40 && m.yes >= 0.10 ? "no" : null),
-  longshot:      (m) => (m.yes <= 0.10 && m.yes >= 0.02 ? "yes" : m.yes >= 0.90 && m.yes <= 0.98 ? "no" : null),
   fade_longshot: (m) => (m.yes <= 0.10 && m.yes >= 0.02 ? "no" : m.yes >= 0.90 && m.yes <= 0.98 ? "yes" : null),
   momentum:      (m) => (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null),
-  mean_revert:   (m) => (m.change24 >= 0.08 ? "no" : m.change24 <= -0.08 ? "yes" : null),
-  late_favorite: (m) => (m.days <= 2 ? (m.yes >= 0.70 && m.yes <= 0.93 ? "yes" : m.yes >= 0.07 && m.yes <= 0.30 ? "no" : null) : null),
+  /* THE SUPER — the best empirical part of every strategy in one:
+     30-70c only (mid_momentum's payoff symmetry), never in-play (copy
+     family's hard lesson), momentum OR pregame-whale signal with veto
+     when they disagree, copy_pro's no-chase guard, conviction-sized
+     stakes when independent signals stack. */
+  super: (m, ctx) => {
+    if (m.inPlay || m.yes < 0.30 || m.yes > 0.70) return null;
+    const mom = m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null;
+    const whale = ctx.whale ? (ctx.whale.index === 0 ? "yes" : "no") : null;
+    if (whale && mom && whale !== mom) return null; // signals conflict — pass
+    const side = whale || mom;
+    if (!side) return null;
+    if (ctx.whale && ctx.whale.avgPrice !== null) {
+      const cur = ctx.whale.index === 0 ? m.yes : 1 - m.yes;
+      if (cur - ctx.whale.avgPrice > 0.05) return null; // never chase
+    }
+    let stake = STAKE;
+    if (whale && mom) stake += 50;                       // independent agreement
+    if (ctx.whale && ctx.whale.usd >= 3000) stake += 50; // whale conviction
+    if (ctx.whale && ctx.whale.traders >= 2) stake += 50;
+    return { side, stake: Math.min(250, stake) };
+  },
   /* In-play guard on all copy strategies (and the fade control, to stay its
      exact mirror): live-game whale trades proved uncopyable in week one —
      every copy-family loss came from live sports, where the whale edge is
@@ -66,9 +92,6 @@ const STRATEGIES = {
     if (s.usd >= 8000) stake += 50;
     return { side: s.index === 0 ? "yes" : "no", stake: Math.min(250, stake) };
   },
-  /* copy_top variant 2 — identical rules, different wallet group: the top-10
-     of the MONTHLY leaderboard (in-form traders) instead of all-time. */
-  copy_month:    (m, ctx) => (ctx.month && !m.inPlay ? (ctx.month.index === 0 ? "yes" : "no") : null),
   /* momentum, repaired: only trade where payoffs are symmetric (30-70¢).
      Plain momentum won 75% of its bets and still lost money buying 95¢ sides. */
   mid_momentum:  (m) => (m.yes >= 0.30 && m.yes <= 0.70 ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null),
@@ -449,8 +472,11 @@ function strategyStats(db, name) {
 function report(db) {
   db = db || openDb();
   const ticks = db.prepare("SELECT COUNT(*) n, MAX(ts) last FROM ticks").get();
-  const rows = Object.keys(STRATEGIES).map((n) => strategyStats(db, n))
-    .sort((a, b) => b.equity - a.equity);
+  const active = Object.keys(STRATEGIES);
+  const inDb = db.prepare("SELECT DISTINCT strategy s FROM positions").all().map((r) => r.s);
+  const allNames = [...new Set([...active, ...inDb])];
+  const rows = allNames.map((n) => ({ ...strategyStats(db, n), retired: !active.includes(n) }))
+    .sort((a, b) => (a.retired === b.retired ? b.equity - a.equity : a.retired ? 1 : -1));
 
   const pad = (s, w) => String(s).padEnd(w);
   console.log("\nstrategy          closed wins  wr    realized   roi     open  equity");
@@ -469,25 +495,23 @@ function report(db) {
   md.push("| Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |");
   md.push("|---|---|---|---|---|---|---|---|---|");
   for (const s of rows) {
-    md.push(`| ${s.name} | ${s.closed} | ${s.wins} | ${s.winRate === null ? "—" : s.winRate + "%"} | $${s.realized} | ${s.roiClosed === null ? "—" : s.roiClosed + "%"} | $${s.exTopWin} | ${s.open} | $${s.equity} |`);
+    md.push(`| ${s.name}${s.retired ? " (retired)" : ""} | ${s.closed} | ${s.wins} | ${s.winRate === null ? "—" : s.winRate + "%"} | $${s.realized} | ${s.roiClosed === null ? "—" : s.roiClosed + "%"} | $${s.exTopWin} | ${s.open} | $${s.equity} |`);
   }
   md.push("");
   md.push("**Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.");
   md.push("");
-  md.push("### Strategies");
-  md.push("- **favorite** — buys the likely side (60–90¢)");
-  md.push("- **longshot** — buys cheap lottery tickets (2–10¢). The favorite-longshot bias predicts this loses.");
-  md.push("- **fade_longshot** — sells the lottery tickets (buys the 90–98¢ side). What the leaderboard whales do.");
+  md.push("### Active strategies");
+  md.push("- **super** — the best empirical part of every earlier strategy: 30–70¢ only, never in-play, momentum or pregame-whale signal (veto on disagreement), no chasing, conviction-sized stakes ($100–250)");
+  md.push("- **mid_momentum** — momentum restricted to 30–70¢ where payoffs are symmetric");
   md.push("- **momentum** — buys whichever side moved ≥5¢ in 24h");
-  md.push("- **mean_revert** — fades ≥8¢ 24h moves");
-  md.push("- **late_favorite** — buys 70–93¢ favourites within 2 days of resolution");
-  md.push("- **copy_top** — mirrors what the top-10 leaderboard wallets bought in the last 24h (≥$500, ≥70% agreement)");
-  md.push("- **copy_pro** — copy trading with everything turned on: efficiency-filtered top-25 wallets, 6h freshness, refuses to chase prices that ran >5¢ past the whales' entry, conviction-scaled stakes ($100–250)");
-  md.push("- **copy_month** — copy_top's exact rules, but following the top-10 of the MONTHLY leaderboard (in-form traders)");
-  md.push("- **whale_fade** — bets against copy_top's picks (the control for copy_top)");
-  md.push("- **mid_momentum** — momentum restricted to 30–70¢ where payoffs are symmetric (momentum won 75% of bets and still lost money buying 95¢ sides)");
-  md.push("- **strong_dip** — buys a side knocked down ≥10¢ that is still the favourite (mean_revert died buying dying longshots; this only catches falling *leaders*)");
+  md.push("- **fade_longshot** — sells the lottery tickets (buys the 90–98¢ side)");
+  md.push("- **strong_dip** — buys a side knocked down ≥10¢ that is still the favourite");
+  md.push("- **copy_top** — mirrors top-10 leaderboard wallets' pregame buys (in-play skipped)");
+  md.push("- **copy_pro** — copy trading with all refinements: filtered wallets, 6h freshness, no chasing, conviction stakes");
+  md.push("- **whale_fade** — bets against copy_top's picks (its control)");
   md.push("- **random_control** — coin flips, the baseline every strategy must beat");
+  md.push("");
+  md.push("Retired (history kept, no new bets): longshot, mean_revert, late_favorite, favorite, copy_month — each empirically buried by its own ledger.");
   md.push("");
   md.push("_Runs on a 15-minute GitHub Actions schedule; GitHub throttles this in practice to roughly every 1–2 hours. Live view: [alexander710dan-ui.github.io/polymark/live.html](https://alexander710dan-ui.github.io/polymark/live.html)_");
   fs.writeFileSync(RESULTS_PATH, md.join("\n") + "\n");

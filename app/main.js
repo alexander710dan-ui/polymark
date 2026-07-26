@@ -73,7 +73,7 @@ function startServer() {
           res.end(JSON.stringify({ status: updated ? "updated" : "current" }));
           if (updated) {
             log("new version " + head.slice(0, 7) + " — restarting in 2s");
-            setTimeout(() => { stopChildren(); app.relaunch(); app.isQuittingForReal = true; app.exit(0); }, 2000);
+            setTimeout(relaunchSelf, 2000);
           }
         });
       });
@@ -180,13 +180,25 @@ function applyRole() {
 
 /* Windows login items launch the exe WITHOUT arguments by default, which
    boots Electron's welcome screen instead of Polymark — always register
-   the app-directory argument explicitly. */
+   the app-directory argument explicitly, plus --hidden so login starts
+   stay in the tray without popping the window. */
 function setLoginItem(enable) {
   if (process.platform === "win32") {
-    app.setLoginItemSettings({ openAtLogin: enable, path: process.execPath, args: [__dirname] });
+    app.setLoginItemSettings({ openAtLogin: enable, path: process.execPath, args: [__dirname, "--hidden"] });
   } else {
-    app.setLoginItemSettings({ openAtLogin: enable });
+    app.setLoginItemSettings({ openAtLogin: enable, openAsHidden: true });
   }
+}
+
+/* restart into the new version quietly: kill children first (no zombies),
+   keep --hidden so self-updates never pop the window in your face */
+function relaunchSelf() {
+  stopChildren();
+  const args = process.argv.slice(1).filter((a) => a !== "--hidden");
+  args.push("--hidden");
+  app.relaunch({ args: args });
+  app.isQuittingForReal = true;
+  app.exit(0);
 }
 
 function applyKeepAwake() {
@@ -267,13 +279,15 @@ app.whenReady().then(() => {
     gitHead((h) => {
       if (h && startHead && h !== startHead) {
         log("new version " + h.slice(0, 7) + " pulled — auto-restarting");
-        stopChildren(); app.relaunch(); app.isQuittingForReal = true; app.exit(0);
+        relaunchSelf();
       }
     });
   }, 5 * 60000);
   applyRole();
   if (config.openAtLogin) setLoginItem(true);
-  if (!SMOKE) showWindow();
+  const startHidden = process.argv.includes("--hidden") ||
+    (process.platform === "darwin" && app.getLoginItemSettings().wasOpenedAtLogin);
+  if (!SMOKE && !startHidden) showWindow();
   if (SMOKE) { log("SMOKE OK"); setTimeout(() => { app.isQuittingForReal = true; app.quit(); }, 1500); }
 });
 

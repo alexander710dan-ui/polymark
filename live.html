@@ -76,6 +76,7 @@ tr:last-child td { border-bottom:none; }
     <span class="pill"><span class="dot"></span>Fake money · real markets</span>
     <span class="pill" id="runner-pill" style="display:none"></span>
     <span style="margin-left:auto;display:flex;gap:8px;">
+      <a class="chip-btn" href="lab.html" style="opacity:.35;text-decoration:none" title="experimental sizing lab — no effect on real bets">◦</a>
       <button class="chip-btn" id="btn-theme" title="Light / dark">◐</button>
       <button class="chip-btn" id="btn-update" style="display:none" title="Pull the latest version from GitHub and restart">⟳ Update</button>
     </span>
@@ -88,7 +89,17 @@ tr:last-child td { border-bottom:none; }
   </div>
 
   <div class="panel">
-    <div class="ptitle">Equity — all strategies</div>
+    <div class="ptitle">Equity — active strategies</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+      <span class="meta">Stake per trade:</span>
+      <select class="chip-btn" id="chart-stake" style="padding:5px 8px">
+        <option value="10">$10</option><option value="50">$50</option>
+        <option value="100" selected>$100 (actual)</option><option value="250">$250</option>
+        <option value="500">$500</option><option value="1000">$1,000</option>
+      </select>
+      <span class="meta">click a name below to single it out</span>
+      <span class="meta mono" id="chart-range" style="margin-left:auto"></span>
+    </div>
     <div class="chart-wrap" id="chart"></div>
     <div class="legend" id="legend"></div>
   </div>
@@ -119,7 +130,7 @@ tr:last-child td { border-bottom:none; }
 
 <script>
 "use strict";
-var COLORS = { momentum:"#4fb286", fade_longshot:"#c9a35c", favorite:"#7295c2",
+var COLORS = { super:"#f5b85c", momentum:"#4fb286", fade_longshot:"#c9a35c", favorite:"#7295c2",
                longshot:"#c96f63", mean_revert:"#ed93b1", late_favorite:"#6ec6c0",
                copy_top:"#e8d27c", copy_pro:"#f0d060", copy_month:"#e09f7d",
                whale_fade:"#a58fd0", mid_momentum:"#9fd06a", strong_dip:"#8aa8e8",
@@ -182,11 +193,15 @@ function render(d){
     pill.innerHTML = "<span class='dot' style='background:"+rs.col+"'></span>" + rs.txt + " · " + ago(d.generated_at);
   }
 
-  var rows = d.strategies.slice().sort(function(a,b){ return b.equity-a.equity; });
-  var best = rows[0] ? rows[0].name : null;
+  var rows = d.strategies.slice().sort(function(a,b){
+    if (!!a.retired !== !!b.retired) return a.retired ? 1 : -1;
+    return b.equity-a.equity;
+  });
+  var firstActive = rows.filter(function(s){ return !s.retired; })[0];
+  var best = firstActive ? firstActive.name : null;
   var html = "<table><thead><tr><th>Strategy</th><th class='num'>Closed</th><th class='num hide-m'>Win rate</th><th class='num'>Realized</th><th class='num hide-m'>Open</th><th class='num'>Equity</th></tr></thead><tbody>";
   rows.forEach(function(s){
-    html += "<tr"+(s.name===best?" class='lead'":"")+"><td><strong>"+esc(s.name)+"</strong></td>"+
+    html += "<tr"+(s.name===best?" class='lead'":s.retired?" style='opacity:.45'":"")+"><td><strong>"+esc(s.name)+"</strong>"+(s.retired?" <span class='meta'>retired</span>":"")+"</td>"+
       "<td class='num'>"+s.closed+"</td>"+
       "<td class='num hide-m'>"+(s.winRate===null?"—":s.winRate+"%")+"</td>"+
       "<td class='num "+(s.realized>0?"pos":s.realized<0?"neg":"")+"'>"+money(s.realized)+"</td>"+
@@ -359,31 +374,55 @@ function openPagerHtml(total, pages, shownFrom, shownTo){
   }
 })();
 
+var chartSel = null;
+var chartStake = 100;
+function chartToggle(n){ chartSel = chartSel === n ? null : n; if (lastData) drawChart(lastData); }
+
 function drawChart(d){
+  var retired = {};
+  (d.strategies||[]).forEach(function(s){ if (s.retired) retired[s.name] = true; });
   var series = {};
-  (d.equity||[]).forEach(function(e){ (series[e.strategy]=series[e.strategy]||[]).push(e.equity); });
+  (d.equity||[]).forEach(function(e){
+    if (retired[e.strategy]) return;
+    (series[e.strategy]=series[e.strategy]||[]).push(e.equity);
+  });
   var names = Object.keys(series);
   if (!names.length){ document.getElementById("chart").innerHTML="<p class='meta'>No data yet.</p>"; return; }
+  var shown = chartSel && series[chartSel] ? [chartSel] : names;
+  var k = chartStake / 100;
+  var scale = function(v){ return 10000 + (v - 10000) * k; };
   var all = [];
-  names.forEach(function(n){ all = all.concat(series[n]); });
+  shown.forEach(function(n){ series[n].forEach(function(v){ all.push(scale(v)); }); });
   var min = Math.min.apply(null,all), max = Math.max.apply(null,all);
-  var pad = Math.max(20,(max-min)*.15); min-=pad; max+=pad;
-  var W=800, H=200, paths="";
-  names.forEach(function(n){
+  var pad = Math.max(15,(max-min)*.12); min-=pad; max+=pad;
+  var W=800, H=220, paths="";
+  // baseline at starting bankroll
+  var by = H-((10000-min)/(max-min))*(H-10)-5;
+  if (by > 0 && by < H) paths += "<line x1='0' y1='"+by.toFixed(1)+"' x2='"+W+"' y2='"+by.toFixed(1)+"' stroke='var(--border)' stroke-dasharray='4 4'/>";
+  shown.forEach(function(n){
     var pts = series[n];
     if (pts.length<2) return;
     var dd = "";
     pts.forEach(function(v,i){
-      dd += (i?"L":"M")+(i/(pts.length-1)*W).toFixed(1)+","+(H-((v-min)/(max-min))*(H-10)-5).toFixed(1);
+      dd += (i?"L":"M")+(i/(pts.length-1)*W).toFixed(1)+","+(H-((scale(v)-min)/(max-min))*(H-10)-5).toFixed(1);
     });
-    paths += "<path d='"+dd+"' fill='none' stroke='"+(COLORS[n]||"#888")+"' stroke-width='1.8' opacity='.9'/>";
+    paths += "<path d='"+dd+"' fill='none' stroke='"+(COLORS[n]||"#888")+"' stroke-width='"+(shown.length===1?2.6:1.8)+"' opacity='.92'/>";
   });
   document.getElementById("chart").innerHTML =
-    "<svg viewBox='0 0 "+W+" "+H+"' preserveAspectRatio='none' height='"+H+"' role='img' aria-label='Equity lines for all strategies over time'>"+paths+"</svg>";
+    "<svg viewBox='0 0 "+W+" "+H+"' preserveAspectRatio='none' height='"+H+"' role='img' aria-label='Equity lines over time'>"+paths+"</svg>";
+  document.getElementById("chart-range").textContent = money(Math.round(min))+" – "+money(Math.round(max));
   document.getElementById("legend").innerHTML = names.map(function(n){
-    return "<span><span class='sw' style='background:"+(COLORS[n]||"#888")+"'></span>"+esc(n)+"</span>";
+    var on = !chartSel || chartSel === n;
+    var last = series[n][series[n].length-1];
+    return "<span style='cursor:pointer;opacity:"+(on?1:.35)+"' onclick='chartToggle(\""+n+"\")'>"+
+      "<span class='sw' style='background:"+(COLORS[n]||"#888")+"'></span>"+esc(n)+
+      " <span class='mono'>"+money(Math.round(scale(last)))+"</span></span>";
   }).join("");
 }
+document.getElementById("chart-stake").onchange = function(){
+  chartStake = parseInt(this.value, 10);
+  if (lastData) drawChart(lastData);
+};
 
 setInterval(function(){
   var el = document.getElementById("data-age");
