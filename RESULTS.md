@@ -2,24 +2,24 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 5744 · Last run: 2026-07-26T22:10:20.512Z · Database: `tester/data/polymark.db`
+Ticks: 5748 · Last run: 2026-07-26T22:15:20.870Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
-| copy_top | 209 | 109 | 52% | $1046.67 | 5.01% | $-281.9 | 25 | $11313.27 |
-| random_control | 56 | 30 | 54% | $-150.58 | -2.69% | $-764.87 | 25 | $10381.25 |
-| super | 1 | 0 | 0% | $-100 | -100% | $0 | 25 | $10355.25 |
-| copy_pro | 182 | 89 | 49% | $-746.28 | -2.62% | $-1596.28 | 25 | $10202.15 |
-| momentum | 120 | 87 | 73% | $388.72 | 3.24% | $-99.52 | 25 | $10127.34 |
-| fade_longshot | 59 | 57 | 97% | $86.04 | 1.46% | $76.15 | 25 | $10077.14 |
-| strong_dip | 49 | 26 | 53% | $-551.83 | -11.26% | $-644.14 | 25 | $9733.14 |
-| mid_momentum | 103 | 59 | 57% | $231.48 | 2.25% | $18 | 25 | $9615.07 |
-| whale_fade | 209 | 99 | 47% | $-986.43 | -4.72% | $-1321.21 | 25 | $8123.16 |
-| copy_month (retired) | 144 | 69 | 48% | $-83.46 | -0.58% | $-892.55 | 21 | $10049.63 |
-| mean_revert (retired) | 122 | 29 | 24% | $-624.26 | -5.12% | $-2651.92 | 25 | $9094.64 |
-| favorite (retired) | 113 | 73 | 65% | $-1232.54 | -10.91% | $-1296.47 | 23 | $8828.45 |
-| late_favorite (retired) | 397 | 306 | 77% | $-1824.87 | -4.6% | $-1865.72 | 12 | $8290.69 |
-| longshot (retired) | 59 | 2 | 3% | $-2491.55 | -42.23% | $-4391.55 | 25 | $7438.42 |
+| copy_top | 209 | 109 | 52% | $1046.67 | 5.01% | $-281.9 | 25 | $11335.03 |
+| random_control | 56 | 30 | 54% | $-150.58 | -2.69% | $-764.87 | 25 | $10421.25 |
+| super | 1 | 0 | 0% | $-100 | -100% | $0 | 25 | $10327.07 |
+| copy_pro | 182 | 89 | 49% | $-746.28 | -2.62% | $-1596.28 | 25 | $10275.89 |
+| momentum | 120 | 87 | 73% | $388.72 | 3.24% | $-99.52 | 25 | $10150.71 |
+| fade_longshot | 59 | 57 | 97% | $86.04 | 1.46% | $76.15 | 25 | $10073.77 |
+| strong_dip | 49 | 26 | 53% | $-551.83 | -11.26% | $-644.14 | 25 | $9722.89 |
+| mid_momentum | 103 | 59 | 57% | $231.48 | 2.25% | $18 | 25 | $9619.65 |
+| whale_fade | 209 | 99 | 47% | $-986.43 | -4.72% | $-1321.21 | 25 | $8124.26 |
+| copy_month (retired) | 144 | 69 | 48% | $-83.46 | -0.58% | $-892.55 | 21 | $10078.68 |
+| mean_revert (retired) | 122 | 29 | 24% | $-624.26 | -5.12% | $-2651.92 | 25 | $9089.97 |
+| favorite (retired) | 113 | 73 | 65% | $-1232.54 | -10.91% | $-1296.47 | 23 | $8826.13 |
+| late_favorite (retired) | 397 | 306 | 77% | $-1824.87 | -4.6% | $-1865.72 | 12 | $8293.67 |
+| longshot (retired) | 59 | 2 | 3% | $-2491.55 | -42.23% | $-4391.55 | 25 | $7518.99 |
 
 **Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
 
