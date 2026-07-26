@@ -2,20 +2,20 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 5771 · Last run: 2026-07-26T22:44:18.622Z · Database: `tester/data/polymark.db`
+Ticks: 5772 · Last run: 2026-07-26T22:45:22.173Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
-| copy_top | 214 | 112 | 52% | $1155.52 | 5.4% | $-173.05 | 25 | $11373.46 |
-| super | 7 | 3 | 43% | $-1.22 | -0.12% | $-193.38 | 25 | $10478.59 |
+| copy_top | 214 | 112 | 52% | $1155.52 | 5.4% | $-173.05 | 25 | $11374.41 |
+| super | 7 | 3 | 43% | $-1.22 | -0.12% | $-193.38 | 25 | $10482.85 |
 | random_control | 56 | 30 | 54% | $-150.58 | -2.69% | $-764.87 | 25 | $10430.03 |
-| copy_pro | 183 | 90 | 49% | $-590.16 | -2.06% | $-1440.16 | 25 | $10365.54 |
+| copy_pro | 183 | 90 | 49% | $-590.16 | -2.06% | $-1440.16 | 25 | $10363.06 |
 | momentum | 120 | 87 | 73% | $388.72 | 3.24% | $-99.52 | 25 | $10146.16 |
 | fade_longshot | 59 | 57 | 97% | $86.04 | 1.46% | $76.15 | 25 | $10069.41 |
 | strong_dip | 49 | 26 | 53% | $-551.83 | -11.26% | $-644.14 | 25 | $9749.94 |
-| mid_momentum | 104 | 60 | 58% | $287.73 | 2.77% | $74.25 | 25 | $9675.31 |
-| whale_fade | 214 | 101 | 47% | $-1154.85 | -5.4% | $-1489.63 | 25 | $8090.62 |
-| copy_month (retired) | 149 | 72 | 48% | $25.39 | 0.17% | $-783.7 | 16 | $10102.08 |
+| mid_momentum | 104 | 60 | 58% | $287.73 | 2.77% | $74.25 | 25 | $9670.54 |
+| whale_fade | 214 | 101 | 47% | $-1154.85 | -5.4% | $-1489.63 | 25 | $8083.8 |
+| copy_month (retired) | 149 | 72 | 48% | $25.39 | 0.17% | $-783.7 | 16 | $10104.25 |
 | mean_revert (retired) | 122 | 29 | 24% | $-624.26 | -5.12% | $-2651.92 | 25 | $9141.01 |
 | favorite (retired) | 113 | 73 | 65% | $-1232.54 | -10.91% | $-1296.47 | 23 | $8815.98 |
 | late_favorite (retired) | 397 | 306 | 77% | $-1824.87 | -4.6% | $-1865.72 | 12 | $8283.84 |
