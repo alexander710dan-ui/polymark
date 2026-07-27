@@ -79,6 +79,11 @@ function startServer() {
       });
       return;
     }
+    if (req.url && req.url.split("?")[0] === "/__log") {
+      res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+      res.end("Polymark Desk log (last " + logBuf.length + " lines)\nrole: " + config.role + "\n\n" + logBuf.join("\n"));
+      return;
+    }
     if (req.url && req.url.split("?")[0] === "/__app_status") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ role: config.role, lastSync: lastSync, lastSyncOk: lastSyncOk, children: children.length }));
@@ -160,7 +165,7 @@ function applyRole() {
   clearInterval(viewerTimer);
   if (config.role === "runner") {
     log("role: RUNNER — betting, collecting, pushing");
-    startChild("loop", [path.join(ROOT, "tester", "index.js"), "loop", "30", "--managed"]);
+    startChild("loop", [path.join(ROOT, "tester", "index.js"), "loop", "15", "--managed"]);
     startChild("whales", [path.join(ROOT, "collector", "index.js"), "run", "--managed"]);
   } else {
     log("role: VIEWER — pulling every 60s");
