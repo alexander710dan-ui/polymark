@@ -76,6 +76,7 @@ tr:last-child td { border-bottom:none; }
     <span class="pill"><span class="dot"></span>Fake money · real markets</span>
     <span class="pill" id="runner-pill" style="display:none"></span>
     <span style="margin-left:auto;display:flex;gap:8px;">
+      <a class="chip-btn" href="ai.html" style="opacity:.35;text-decoration:none" title="local AI reasoning — experimental">✦</a>
       <a class="chip-btn" href="lab.html" style="opacity:.35;text-decoration:none" title="experimental sizing lab — no effect on real bets">◦</a>
       <button class="chip-btn" id="btn-theme" title="Light / dark">◐</button>
       <button class="chip-btn" id="btn-update" style="display:none" title="Pull the latest version from GitHub and restart">⟳ Update</button>
@@ -130,7 +131,7 @@ tr:last-child td { border-bottom:none; }
 
 <script>
 "use strict";
-var COLORS = { super:"#f5b85c", momentum:"#4fb286", fade_longshot:"#c9a35c", favorite:"#7295c2",
+var COLORS = { super:"#f5b85c", ai_judge:"#66c7d6", momentum:"#4fb286", fade_longshot:"#c9a35c", favorite:"#7295c2",
                longshot:"#c96f63", mean_revert:"#ed93b1", late_favorite:"#6ec6c0",
                copy_top:"#e8d27c", copy_pro:"#f0d060", copy_month:"#e09f7d",
                whale_fade:"#a58fd0", mid_momentum:"#9fd06a", strong_dip:"#8aa8e8",

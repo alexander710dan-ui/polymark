@@ -167,6 +167,7 @@ function applyRole() {
     log("role: RUNNER — betting, collecting, pushing");
     startChild("loop", [path.join(ROOT, "tester", "index.js"), "loop", "15", "--managed"]);
     startChild("whales", [path.join(ROOT, "collector", "index.js"), "run", "--managed"]);
+    startChild("reason", [path.join(ROOT, "reasoner", "index.js"), "run", "--managed"]);
   } else {
     log("role: VIEWER — pulling every 60s");
     const pull = () => {

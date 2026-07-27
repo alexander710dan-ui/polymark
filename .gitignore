@@ -5,6 +5,7 @@ node_modules/
 *.db-shm
 collector/data/whales.db
 collector/data/whales-sync.db
+reasoner/data/ai.db
 app/node_modules/
 app/config.json
 app/dist/

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polymark — AI Reasoning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,600&family=Schibsted+Grotesk:wght@400;600;700&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0b0e13; --panel:#131823; --raised:#10141c; --border:#232b39; --border-soft:#1a2130;
+  --text:#e9e4d8; --dim:#9aa3b2; --faint:#626b7a; --brass:#c9a35c; --yes:#4fb286; --no:#c96f63; --scroll:#2a3342; --ai:#66c7d6; }
+body.light { --bg:#f4f1e8; --panel:#ffffff; --raised:#edeade; --border:#d9d3c3; --border-soft:#e5dfd0;
+  --text:#28231a; --dim:#5c6570; --faint:#8b93a0; --brass:#a07d35; --yes:#237a54; --no:#ab4437; --scroll:#cdc6b4; --ai:#1f7d8c; }
+* { margin:0; padding:0; box-sizing:border-box; }
+::-webkit-scrollbar { width:10px; } ::-webkit-scrollbar-thumb { background:var(--scroll); border-radius:5px; }
+body { background: radial-gradient(1100px 600px at 18% -8%, #131a28 0%, transparent 60%), var(--bg);
+  color:var(--text); font-family:"Schibsted Grotesk",sans-serif; font-size:14px; line-height:1.5;
+  min-height:100vh; padding:28px 18px 60px; -webkit-font-smoothing:antialiased; }
+body.light { background: var(--bg); }
+.wrap { max-width:860px; margin:0 auto; }
+.mono { font-family:"Spline Sans Mono",monospace; font-variant-numeric:tabular-nums; }
+.head { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+h1 { font-family:"Fraunces",serif; font-style:italic; font-weight:600; font-size:26px; margin-bottom:4px; }
+h1 .p { color:var(--ai); }
+.sub { color:var(--faint); font-size:12.5px; margin-bottom:20px; }
+.panel { background:var(--panel); border:1px solid var(--border-soft); border-radius:10px; padding:20px; margin-bottom:16px; }
+.ptitle { font-family:"Fraunces",serif; font-size:16px; margin-bottom:12px; }
+table { width:100%; border-collapse:collapse; font-size:12.5px; }
+td { padding:9px 8px; border-bottom:1px solid var(--border-soft); vertical-align:top; }
+tr:last-child td { border-bottom:none; }
+.num { text-align:right; font-family:"Spline Sans Mono",monospace; white-space:nowrap; }
+.pos { color:var(--yes); } .neg { color:var(--no); }
+.q { color:var(--dim); font-size:12px; }
+.meta { font-size:11px; color:var(--faint); }
+.reason { font-size:12px; color:var(--text); font-style:italic; }
+.warn { font-size:11.5px; color:var(--brass); border:1px solid rgba(201,163,92,.3); background:rgba(201,163,92,.08);
+  border-radius:8px; padding:10px 14px; margin-bottom:16px; line-height:1.5; }
+a { color:var(--brass); }
+.chip-btn { background:var(--raised); border:1px solid var(--border); color:var(--dim); border-radius:999px;
+  padding:5px 12px; font-size:11.5px; font-weight:600; cursor:pointer; font-family:inherit; }
+.badge { font-size:10px; letter-spacing:.08em; font-weight:700; border-radius:4px; padding:2px 7px; white-space:nowrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1><span class="p">A</span>I reasoning</h1>
+    <span style="margin-left:auto"><button class="chip-btn" id="btn-theme">◐</button></span>
+  </div>
+  <p class="sub"><a href="live.html">← back to live</a> · a small model running locally on the runner Mac · no cloud, no keys</p>
+  <div class="warn">The model's opinions are <strong>tested, not trusted</strong>: the <span class="mono">ai_judge</span> strategy paper-bets only where the model disagrees with the market by more than 4¢ after costs — and its results sit on the main scoreboard next to everything else. If the AI is smart, the ledger will say so.</div>
+  <div class="panel">
+    <div class="ptitle">Latest opinions <span class="meta" id="gen"></span></div>
+    <div id="list">Loading…</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+if (localStorage.getItem("pm_theme") === "light") document.body.classList.add("light");
+document.getElementById("btn-theme").onclick = function(){
+  document.body.classList.toggle("light");
+  localStorage.setItem("pm_theme", document.body.classList.contains("light") ? "light" : "dark");
+};
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ago(ts){ var m = Math.round((Date.now()-ts)/60000); return m<1?"just now":m<60?m+" min ago":Math.round(m/60)+" h ago"; }
+
+function load(){
+  fetch("reasoner/data/ai-scores.json?t="+Date.now())
+    .then(function(r){ if(!r.ok) throw new Error("no data"); return r.json(); })
+    .then(function(d){
+      document.getElementById("gen").textContent = "· updated " + new Date(d.generated_at).toLocaleTimeString();
+      var rows = (d.scores||[]).map(function(s){
+        var edge = Math.round((s.ai - s.yes) * 100);
+        var strong = Math.abs(edge) >= 6;
+        return "<tr>"+
+          "<td><span class='q'>"+esc(s.q)+"</span><br><span class='reason'>“"+esc(s.reason)+"”</span><br>"+
+          "<span class='meta'>"+esc(s.model)+" · "+(s.ms/1000).toFixed(1)+"s · "+ago(s.ts)+"</span></td>"+
+          "<td class='num'>market "+Math.round(s.yes*100)+"%<br><span style='color:var(--ai)'>model "+Math.round(s.ai*100)+"%</span></td>"+
+          "<td class='num "+(edge>0?"pos":"neg")+"'>"+(edge>0?"+":"")+edge+"¢"+(strong?"<br><span class='badge' style='color:var(--ai);background:rgba(102,199,214,.12)'>AI BET ZONE</span>":"")+"</td>"+
+        "</tr>";
+      }).join("");
+      document.getElementById("list").innerHTML = rows
+        ? "<table><tbody>"+rows+"</tbody></table>"
+        : "<p class='meta'>No opinions yet.</p>";
+    })
+    .catch(function(){
+      document.getElementById("list").innerHTML =
+        "<p class='meta'>No AI scores yet. On the runner Mac, install the local model once:<br><br>" +
+        "<span class='mono'>brew install ollama && brew services start ollama && ollama pull qwen3:4b</span><br><br>" +
+        "The reasoner detects it automatically within 5 minutes — no restarts needed.</p>";
+    });
+}
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>

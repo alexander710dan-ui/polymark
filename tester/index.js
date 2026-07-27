@@ -98,6 +98,19 @@ const STRATEGIES = {
   /* mean_revert, repaired: only buy a knocked-down side that is STILL the
      favourite. Plain mean_revert died buying dying longshots. */
   strong_dip:    (m) => (m.change24 <= -0.10 && m.yes >= 0.50 ? "yes" : m.change24 >= 0.10 && m.yes <= 0.50 ? "no" : null),
+  /* Local-AI shadow strategy: bets only when the on-Mac model's probability
+     estimate disagrees with the market by more than costs + 4c. The model's
+     skill gets judged by the same scoreboard as everyone else. */
+  ai_judge: (m, ctx) => {
+    const a = ctx.ai;
+    if (!a || m.inPlay) return null;
+    if (Date.now() - a.ts > 45 * 60000) return null; // stale opinion
+    const costs = (m.spread !== null ? m.spread / 2 : 0.02) + 0.01;
+    const edge = a.ai - m.yes;
+    if (edge > costs + 0.04) return "yes";
+    if (-edge > costs + 0.04) return "no";
+    return null;
+  },
   random_control:(m) => (Math.random() < 0.12 ? (Math.random() < 0.5 ? "yes" : "no") : null)
 };
 
@@ -366,7 +379,8 @@ function openNewPositions(db, universe, whales) {
       const ctx = {
         whale: (whales.top && whales.top.get(m.conditionId)) || null,
         pro: (whales.pro && whales.pro.get(m.conditionId)) || null,
-        month: (whales.month && whales.month.get(m.conditionId)) || null
+        month: (whales.month && whales.month.get(m.conditionId)) || null,
+        ai: (whales.ai && whales.ai.get(m.conditionId)) || null
       };
       const res = pick(m, ctx);
       if (!res) continue;
@@ -414,7 +428,13 @@ async function tick() {
   try { universe = await fetchUniverse(); }
   catch (e) { note = "universe fetch failed: " + e.message; }
   const whales = await fetchWhaleData();
-  note += (note ? " | " : "") + "whale signals top/pro/month: " + whales.top.size + "/" + whales.pro.size + "/" + whales.month.size;
+  // local-AI opinions, if the reasoner is running on this machine
+  whales.ai = new Map();
+  try {
+    const aj = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "reasoner", "data", "ai-scores.json"), "utf8"));
+    for (const s of aj.scores || []) if (s.conditionId) whales.ai.set(s.conditionId, s);
+  } catch (e) { /* reasoner not running — ai_judge simply stays quiet */ }
+  note += (note ? " | " : "") + "whale signals top/pro/month/ai: " + whales.top.size + "/" + whales.pro.size + "/" + whales.month.size + "/" + whales.ai.size;
   const opened = universe.length ? openNewPositions(db, universe, whales) : 0;
   snapshotEquity(db);
   db.prepare("INSERT INTO ticks(ts, markets_seen, opened, settled, note) VALUES(?,?,?,?,?)")
@@ -461,6 +481,7 @@ async function loop(intervalSec) {
     if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 10 * 60000) {
       sh("git add tester/data/polymark.db tester/data/results.json RESULTS.md");
       sh("git add collector/data/latency.json collector/data/collector-status.json"); // latency report + health (raw db stays local)
+      sh("git add reasoner/data/ai-scores.json"); // local-AI opinions for the AI tab
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');
       let push = sh("git push origin main");
       if (!push.ok) {
@@ -543,6 +564,7 @@ function report(db) {
   md.push("- **copy_top** — mirrors top-10 leaderboard wallets' pregame buys (in-play skipped)");
   md.push("- **copy_pro** — copy trading with all refinements: filtered wallets, 6h freshness, no chasing, conviction stakes");
   md.push("- **whale_fade** — bets against copy_top's picks (its control)");
+  md.push("- **ai_judge** — bets when a local model (Ollama on the runner) disagrees with the market by >4¢ after costs; the AI's skill is judged like any other strategy");
   md.push("- **random_control** — coin flips, the baseline every strategy must beat");
   md.push("");
   md.push("Retired (history kept, no new bets): longshot, mean_revert, late_favorite, favorite, copy_month — each empirically buried by its own ledger.");
