@@ -6,7 +6,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const src = path.join(__dirname, "node_modules", "electron", "dist", "electron.exe");
 const dst = path.join(__dirname, "node_modules", "electron", "dist", "Polymark Desk.exe");
-fs.copyFileSync(src, dst);
+try { fs.copyFileSync(src, dst); }
+catch (e) { console.log("exe copy skipped (" + e.code + ") — likely running; loader still updates"); }
 const m = require("rcedit");
 const rcedit = m.default || m;
 // resources/app loader: makes even an ARGUMENT-LESS launch of the exe load
