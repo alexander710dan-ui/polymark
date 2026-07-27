@@ -434,11 +434,20 @@ async function loop(intervalSec) {
   console.log("fast loop: tick every " + intervalSec + "s, pushing when bets open or settle. Ctrl+C stops it.");
   process.env.PM_SOURCE = "runner"; // stamps the feed so viewers can tell runner data from cloud-backup data
   let lastPush = 0;
+  const headRes = sh("git rev-parse HEAD");
+  const loopStartHead = headRes.ok ? headRes.out.trim() : null;
   for (;;) {
     const pull = sh("git pull --rebase --autostash origin main");
     if (!pull.ok) {
       console.log("pull failed, resetting to remote:", pull.out.slice(0, 120));
       sh("git fetch origin main"); sh("git reset --hard origin/main");
+    }
+    // self-refresh: if the pull brought new code, exit — the app restarts us
+    // on the new version within 15s. Works even when app-level restart fails.
+    const nowHead = sh("git rev-parse HEAD");
+    if (loopStartHead && nowHead.ok && nowHead.out.trim() !== loopStartHead) {
+      console.log("new code pulled (" + nowHead.out.trim().slice(0, 7) + ") — exiting for restart");
+      process.exit(0);
     }
     let counts = { opened: 0, settled: 0 };
     try { counts = await tick(); } catch (e) { console.error("tick failed:", e.message); }
@@ -456,7 +465,14 @@ async function loop(intervalSec) {
       }
       if (push.ok) { lastPush = Date.now(); console.log("pushed — live view updates in ~1 min"); }
     }
-    await sleep(intervalSec * 1000);
+    // interval override from repo file — cadence changes ship via git,
+    // no app update needed
+    let iv = intervalSec;
+    try {
+      const t = parseInt(fs.readFileSync(path.join(REPO_DIR, "tester", "interval.txt"), "utf8"), 10);
+      if (t >= 10 && t <= 600) iv = t;
+    } catch (e) { /* no override file */ }
+    await sleep(iv * 1000);
   }
 }
 

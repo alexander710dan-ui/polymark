@@ -162,6 +162,18 @@ async function reconcile(db) {
 
 async function run() {
   const db = openDb();
+  // self-refresh: exit when the repo gains new code — the app restarts us
+  try {
+    const { execSync } = require("node:child_process");
+    const repo = path.join(__dirname, "..");
+    const startHead = execSync("git rev-parse HEAD", { cwd: repo }).toString().trim();
+    setInterval(() => {
+      try {
+        const h = execSync("git rev-parse HEAD", { cwd: repo }).toString().trim();
+        if (h !== startHead) { console.log("new code pulled — exiting for restart"); process.exit(0); }
+      } catch (e) { /* git hiccup — try next check */ }
+    }, 10 * 60000);
+  } catch (e) { /* not a git checkout — fine */ }
   await refreshWhales();
   if (!WHALES.size) { console.error("no whale wallets loaded — check network"); process.exit(1); }
   setInterval(refreshWhales, WHALE_REFRESH_MS);
