@@ -188,36 +188,34 @@ async function run() {
     msgs = 0;
   }, 60000);
 
-  // consistent snapshot for git sync (the live WAL db must never be committed)
-  let lastSnapshot = null, lastSnapshotErr = null;
+  // The raw whale db is far too big for git (first real day ≈ 200MB, GitHub
+  // hard-rejects >100MB). Sync the ANSWERS instead: compute the latency-lab
+  // aggregates here and ship a tiny JSON. Raw data stays local to the runner.
   setInterval(() => {
-    const tmp = SYNC_PATH + ".tmp";
     try {
-      fs.rmSync(tmp, { force: true });
-      db.exec("VACUUM INTO '" + tmp.replace(/'/g, "''") + "'");
-      fs.rmSync(SYNC_PATH, { force: true });
-      fs.renameSync(tmp, SYNC_PATH);
-      lastSnapshot = Date.now(); lastSnapshotErr = null;
-    } catch (e) { lastSnapshotErr = e.message; console.error("snapshot failed:", e.message); }
-  }, 2 * 60000);
+      const rows = latencyRows(db);
+      const n = db.prepare("SELECT COUNT(*) n FROM whale_trades").get().n;
+      fs.writeFileSync(path.join(DATA_DIR, "latency.json"), JSON.stringify({
+        generated_at: new Date().toISOString(), whaleTrades: n, byDelay: rows
+      }));
+    } catch (e) { console.error("latency export failed:", e.message); }
+  }, 5 * 60000);
 
   // status file synced through git so any machine can see collector health
   setInterval(() => {
     try {
       const n = db.prepare("SELECT COUNT(*) n FROM whale_trades").get().n;
       fs.writeFileSync(path.join(DATA_DIR, "collector-status.json"), JSON.stringify({
-        ts: new Date().toISOString(), whaleTrades: n, wallets: WHALES.size,
-        lastSnapshot: lastSnapshot ? new Date(lastSnapshot).toISOString() : null,
-        snapshotError: lastSnapshotErr
+        ts: new Date().toISOString(), whaleTrades: n, wallets: WHALES.size
       }));
     } catch (e) { /* best effort */ }
   }, 60000);
 
-  // prune so the synced file stays far below GitHub's 100MB hard limit
+  // prune the local db so it doesn't grow forever
   setInterval(() => {
     try {
-      db.prepare("DELETE FROM snaps WHERE ts < ?").run(Date.now() - 14 * 86400000);
-      db.prepare("DELETE FROM whale_trades WHERE detected_ts < ?").run(Date.now() - 30 * 86400000);
+      db.prepare("DELETE FROM snaps WHERE ts < ?").run(Date.now() - 7 * 86400000);
+      db.prepare("DELETE FROM whale_trades WHERE detected_ts < ?").run(Date.now() - 14 * 86400000);
     } catch (e) { /* next sweep */ }
   }, 3600000);
 
@@ -290,9 +288,38 @@ function stats() {
   for (const r of top) console.log("  " + String(r.name).padEnd(24), r.n, "trades  $" + r.usd);
 }
 
+function latencyRows(db) {
+  return db.prepare(`
+    SELECT s.delay_s, COUNT(*) n,
+           ROUND(AVG((s.best_ask - t.price) * 100), 2) avg_chase_cents,
+           ROUND(AVG(CASE WHEN s0.mid IS NOT NULL AND s.mid IS NOT NULL
+                 THEN (CASE WHEN t.side='BUY' THEN s.mid - s0.mid ELSE s0.mid - s.mid END) * 100 END), 2) avg_drift_cents
+    FROM snaps s
+    JOIN whale_trades t ON t.id = s.trade_id
+    LEFT JOIN snaps s0 ON s0.trade_id = s.trade_id AND s0.delay_s = 0
+    WHERE t.side = 'BUY' AND s.best_ask IS NOT NULL
+    GROUP BY s.delay_s ORDER BY s.delay_s`).all();
+}
+
+function printLatency(rows) {
+  console.log("delay    trades   chase cost (avg)   price drift in whale's direction");
+  for (const r of rows) {
+    const d = r.delay_s === 0 ? "instant" : r.delay_s < 60 ? "+" + r.delay_s + "s" : "+" + Math.round(r.delay_s / 60) + "min";
+    console.log(d.padEnd(9), String(r.n).padEnd(8), (r.avg_chase_cents + "c").padEnd(18), r.avg_drift_cents === null ? "—" : r.avg_drift_cents + "c");
+  }
+  console.log("\nchase cost = what a copier pays above the whale's price. drift = whether whale trades predict the price's next move.");
+}
+
 function analyze() {
-  const db = openReadDb();
   console.log("Cost of copying late — buy-side whale trades, ask price at each delay vs the whale's own fill:");
+  // prefer the synced report (any machine); fall back to the local raw db
+  try {
+    const j = JSON.parse(fs.readFileSync(path.join(DATA_DIR, "latency.json"), "utf8"));
+    console.log("from synced report, generated " + j.generated_at + ", " + j.whaleTrades + " whale trades\n");
+    printLatency(j.byDelay);
+    return;
+  } catch (e) { /* no synced report — try raw db below */ }
+  const db = openReadDb();
   const rows = db.prepare(`
     SELECT s.delay_s, COUNT(*) n,
            ROUND(AVG((s.best_ask - t.price) * 100), 2) avg_chase_cents,
@@ -304,12 +331,7 @@ function analyze() {
     WHERE t.side = 'BUY' AND s.best_ask IS NOT NULL
     GROUP BY s.delay_s ORDER BY s.delay_s`).all();
   if (!rows.length) { console.log("no data yet — let the collector run"); return; }
-  console.log("delay    trades   chase cost (avg)   price drift in whale's direction");
-  for (const r of rows) {
-    const d = r.delay_s === 0 ? "instant" : r.delay_s < 60 ? "+" + r.delay_s + "s" : "+" + Math.round(r.delay_s / 60) + "min";
-    console.log(d.padEnd(9), String(r.n).padEnd(8), (r.avg_chase_cents + "c").padEnd(18), r.avg_drift_cents === null ? "—" : r.avg_drift_cents + "c");
-  }
-  console.log("\nchase cost = what a copier pays above the whale's price. drift = whether whale trades predict the price's next move.");
+  printLatency(rows);
 }
 
 /* When spawned by the desk app, die if the app dies — no zombie collectors */

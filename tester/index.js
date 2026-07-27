@@ -455,7 +455,7 @@ async function loop(intervalSec) {
     // knows a live Runner exists and skips its own tick
     if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 10 * 60000) {
       sh("git add tester/data/polymark.db tester/data/results.json RESULTS.md");
-      sh("git add collector/data/whales-sync.db collector/data/collector-status.json"); // whale/latency data + health
+      sh("git add collector/data/latency.json collector/data/collector-status.json"); // latency report + health (raw db stays local)
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');
       let push = sh("git push origin main");
       if (!push.ok) {

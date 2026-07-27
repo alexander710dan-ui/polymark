@@ -4,6 +4,7 @@ node_modules/
 *.db-wal
 *.db-shm
 collector/data/whales.db
+collector/data/whales-sync.db
 app/node_modules/
 app/config.json
 app/dist/
