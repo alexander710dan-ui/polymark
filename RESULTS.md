@@ -2,21 +2,21 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 7013 · Last run: 2026-07-27T18:42:44.573Z · Database: `tester/data/polymark.db`
+Ticks: 7014 · Last run: 2026-07-27T18:43:13.945Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
-| copy_top | 227 | 117 | 52% | $805.27 | 3.55% | $-523.3 | 25 | $11147.52 |
-| copy_pro | 196 | 97 | 49% | $-463.87 | -1.51% | $-1313.87 | 25 | $10700.56 |
+| copy_top | 227 | 117 | 52% | $805.27 | 3.55% | $-523.3 | 25 | $11150.65 |
+| copy_pro | 196 | 97 | 49% | $-463.87 | -1.51% | $-1313.87 | 25 | $10709.86 |
 | momentum | 126 | 92 | 73% | $482.15 | 3.83% | $-6.09 | 25 | $10472.8 |
 | random_control | 57 | 31 | 54% | $-146.61 | -2.57% | $-760.9 | 25 | $10461.75 |
 | super | 27 | 14 | 52% | $186.33 | 5.4% | $-5.83 | 25 | $10280.58 |
 | fade_longshot | 59 | 57 | 97% | $86.04 | 1.46% | $76.15 | 25 | $10077.54 |
-| mid_momentum | 110 | 64 | 58% | $330.61 | 3.01% | $117.13 | 25 | $9957.66 |
+| mid_momentum | 110 | 64 | 58% | $330.61 | 3.01% | $117.13 | 25 | $9967.19 |
 | ai_judge | 0 | 0 | — | $0 | — | $0 | 9 | $9852.77 |
 | strong_dip | 49 | 26 | 53% | $-551.83 | -11.26% | $-644.14 | 25 | $9489.06 |
-| whale_fade | 227 | 108 | 48% | $-932.68 | -4.11% | $-1267.46 | 25 | $8508.82 |
-| copy_month (retired) | 150 | 72 | 48% | $-74.61 | -0.5% | $-883.7 | 15 | $10201.81 |
+| whale_fade | 227 | 108 | 48% | $-932.68 | -4.11% | $-1267.46 | 25 | $8508.23 |
+| copy_month (retired) | 150 | 72 | 48% | $-74.61 | -0.5% | $-883.7 | 15 | $10204.93 |
 | mean_revert (retired) | 122 | 29 | 24% | $-624.26 | -5.12% | $-2651.92 | 25 | $8807.42 |
 | favorite (retired) | 114 | 74 | 65% | $-1228.57 | -10.78% | $-1292.5 | 22 | $8712.59 |
 | late_favorite (retired) | 402 | 310 | 77% | $-1864.85 | -4.64% | $-1905.7 | 7 | $8272.49 |
