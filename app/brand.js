@@ -9,6 +9,15 @@ const dst = path.join(__dirname, "node_modules", "electron", "dist", "Polymark D
 fs.copyFileSync(src, dst);
 const m = require("rcedit");
 const rcedit = m.default || m;
+// resources/app junction: makes even an ARGUMENT-LESS launch of the exe load
+// Polymark instead of Electron's welcome screen (Windows app-restart after
+// reboot resurrects the exe without args)
+const resApp = path.join(__dirname, "node_modules", "electron", "dist", "resources", "app");
+try {
+  if (!fs.existsSync(resApp)) fs.symlinkSync(__dirname, resApp, "junction");
+  console.log("resources/app junction ok");
+} catch (e) { console.error("junction failed:", e.message); }
+
 rcedit(dst, {
   icon: path.join(__dirname, "assets", "icon.ico"),
   "version-string": { ProductName: "Polymark Desk", FileDescription: "Polymark Desk", CompanyName: "Polymark" },

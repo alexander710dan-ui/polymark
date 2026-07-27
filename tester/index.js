@@ -162,6 +162,22 @@ async function fetchJson(url, tries) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/* bounded-concurrency map — the documented rate limits are enormous, the
+   old one-request-at-a-time politeness was costing a minute per tick */
+async function pmap(items, limit, fn) {
+  const results = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    for (;;) {
+      const idx = next++;
+      if (idx >= items.length) return;
+      try { results[idx] = await fn(items[idx], idx); } catch (e) { results[idx] = null; }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker));
+  return results;
+}
 const num = (x) => { const v = typeof x === "string" ? parseFloat(x) : x; return Number.isFinite(v) ? v : null; };
 
 function tag(question) {
@@ -206,10 +222,11 @@ function parseMarket(raw) {
 }
 
 async function fetchUniverse() {
+  const pages = await pmap([0, 1, 2], 3, (page) =>
+    fetchJson(GAMMA + "/markets?closed=false&order=volume24hr&ascending=false&limit=100&offset=" + page * 100));
   const out = [];
-  for (let page = 0; page < 3; page++) {
-    const batch = await fetchJson(GAMMA + "/markets?closed=false&order=volume24hr&ascending=false&limit=100&offset=" + page * 100);
-    if (!Array.isArray(batch) || !batch.length) break;
+  for (const batch of pages) {
+    if (!Array.isArray(batch)) continue;
     for (const raw of batch) {
       const m = parseMarket(raw);
       if (!m) continue;
@@ -218,7 +235,6 @@ async function fetchUniverse() {
       if (m.days < 0.02 || m.days > MAX_DAYS) continue;
       out.push(m);
     }
-    await sleep(300);
   }
   return out;
 }
@@ -242,11 +258,9 @@ async function fetchWhaleData() {
   ];
   const activity = new Map();
   for (const g of groups) for (const u of g.wallets) if (u.proxyWallet) activity.set(u.proxyWallet, null);
-  for (const w of activity.keys()) {
-    try { activity.set(w, await fetchJson(DATA_API + "/activity?user=" + w + "&limit=100&type=TRADE")); }
-    catch (e) { /* skip this wallet this tick */ }
-    await sleep(150);
-  }
+  const wallets = [...activity.keys()];
+  const acts = await pmap(wallets, 8, (w) => fetchJson(DATA_API + "/activity?user=" + w + "&limit=100&type=TRADE"));
+  wallets.forEach((w, i) => activity.set(w, acts[i]));
   const out = {};
   for (const g of groups) {
     const agg = new Map();
@@ -300,11 +314,10 @@ function openStake(db, strategy) {
 async function settleOpenPositions(db) {
   const open = db.prepare("SELECT DISTINCT market_id FROM positions WHERE status='open'").all();
   let settled = 0;
-  for (const row of open) {
-    let raw;
-    try { raw = await fetchJson(GAMMA + "/markets/" + row.market_id); }
-    catch (e) { continue; } // transient failure: try again next tick
-    await sleep(100);
+  const raws = await pmap(open, 10, (row) => fetchJson(GAMMA + "/markets/" + row.market_id));
+  for (let i = 0; i < open.length; i++) {
+    const row = open[i];
+    const raw = raws[i];
     if (!raw || Array.isArray(raw)) continue;
     let prices = null;
     try { prices = JSON.parse(raw.outcomePrices); } catch (e) {}
@@ -433,7 +446,7 @@ async function loop(intervalSec) {
     // knows a live Runner exists and skips its own tick
     if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 10 * 60000) {
       sh("git add tester/data/polymark.db tester/data/results.json RESULTS.md");
-      sh("git add collector/data/whales-sync.db"); // whale/latency snapshot, when the collector runs
+      sh("git add collector/data/whales-sync.db collector/data/collector-status.json"); // whale/latency data + health
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');
       let push = sh("git push origin main");
       if (!push.ok) {

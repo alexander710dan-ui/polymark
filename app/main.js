@@ -160,7 +160,7 @@ function applyRole() {
   clearInterval(viewerTimer);
   if (config.role === "runner") {
     log("role: RUNNER — betting, collecting, pushing");
-    startChild("loop", [path.join(ROOT, "tester", "index.js"), "loop", "60", "--managed"]);
+    startChild("loop", [path.join(ROOT, "tester", "index.js"), "loop", "30", "--managed"]);
     startChild("whales", [path.join(ROOT, "collector", "index.js"), "run", "--managed"]);
   } else {
     log("role: VIEWER — pulling every 60s");
@@ -285,8 +285,11 @@ app.whenReady().then(() => {
   }, 5 * 60000);
   applyRole();
   if (config.openAtLogin) setLoginItem(true);
+  // hidden when: explicit flag, macOS login start, or a bare argv launch
+  // (Windows' "restart apps after reboot" resurrects the exe with no args)
   const startHidden = process.argv.includes("--hidden") ||
-    (process.platform === "darwin" && app.getLoginItemSettings().wasOpenedAtLogin);
+    (process.platform === "darwin" && app.getLoginItemSettings().wasOpenedAtLogin) ||
+    (process.platform === "win32" && process.argv.length <= 1);
   if (!SMOKE && !startHidden) showWindow();
   if (SMOKE) { log("SMOKE OK"); setTimeout(() => { app.isQuittingForReal = true; app.quit(); }, 1500); }
 });

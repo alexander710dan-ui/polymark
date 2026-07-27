@@ -219,18 +219,36 @@ function render(d){
 /* ---- settlements with pagination (default 50 per page) ---- */
 var recentPage = 0;
 var recentSize = parseInt(localStorage.getItem("pm_psize") || "50", 10);
+var settleSort = "new";
+var settleStrat = null;
+function setSettleSort(v){ settleSort = v; recentPage = 0; renderRecent(); }
+function setSettleStrat(v){ settleStrat = v || null; recentPage = 0; renderRecent(); }
 function setRecentSize(v){ recentSize = v; recentPage = 0; localStorage.setItem("pm_psize", String(v)); renderRecent(); }
 function setRecentPage(p, scroll){
   recentPage = p; renderRecent();
   if (scroll) document.getElementById("recent-pager-top").scrollIntoView({ behavior: "smooth", block: "center" });
 }
-function pagerHtml(total, pages, shownFrom, shownTo){
+function pagerHtml(total, pages, shownFrom, shownTo, withControls){
   var sizes = [10, 20, 50, 100, 300, 500, -1];
   var sel = "<select class='chip-btn' onchange='setRecentSize(parseInt(this.value,10))' style='padding:5px 8px'>" +
     sizes.map(function(s){
       return "<option value='"+s+"'"+(recentSize===s?" selected":"")+">"+(s===-1?"All":s)+" per page</option>";
     }).join("") + "</select>";
-  return "<div style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0'>" + sel +
+  var controls = "";
+  if (withControls) {
+    var names = lastData ? (lastData.strategies||[]).map(function(s){ return s.name; }) : [];
+    controls =
+      "<select class='chip-btn' onchange='setSettleStrat(this.value)' style='padding:5px 8px'>" +
+      "<option value=''>All strategies</option>" +
+      names.map(function(n){ return "<option value='"+n+"'"+(settleStrat===n?" selected":"")+">"+n+"</option>"; }).join("") +
+      "</select>" +
+      "<select class='chip-btn' onchange='setSettleSort(this.value)' style='padding:5px 8px'>" +
+      "<option value='new'"+(settleSort==="new"?" selected":"")+">Newest first</option>" +
+      "<option value='win'"+(settleSort==="win"?" selected":"")+">Highest win first</option>" +
+      "<option value='loss'"+(settleSort==="loss"?" selected":"")+">Biggest loss first</option>" +
+      "</select>";
+  }
+  return "<div style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0'>" + sel + controls +
     "<button class='chip-btn' "+(recentPage<=0?"disabled style='opacity:.4'":"")+" onclick='setRecentPage("+(recentPage-1)+", true)'>← Prev</button>" +
     "<button class='chip-btn' "+(recentPage>=pages-1?"disabled style='opacity:.4'":"")+" onclick='setRecentPage("+(recentPage+1)+", true)'>Next →</button>" +
     "<span class='meta'>"+shownFrom+"–"+shownTo+" of "+total+" · page "+(recentPage+1)+"/"+pages+"</span></div>";
@@ -239,6 +257,9 @@ function renderRecent(){
   var d = lastData;
   if (!d) return;
   var all = d.recent || [];
+  if (settleStrat) all = all.filter(function(r){ return r.strategy === settleStrat; });
+  if (settleSort === "win") all = all.slice().sort(function(a,b){ return b.pnl - a.pnl; });
+  else if (settleSort === "loss") all = all.slice().sort(function(a,b){ return a.pnl - b.pnl; });
   if (!all.length){
     document.getElementById("recent").innerHTML = "<p class='meta'>Nothing settled yet — bets close as real markets resolve.</p>";
     document.getElementById("recent-pager-top").innerHTML = "";
@@ -257,9 +278,8 @@ function renderRecent(){
       "<td class='num "+(r.pnl>0?"pos":"neg")+"'>"+(r.pnl>0?"+":"")+money(r.pnl)+"</td></tr>";
   });
   document.getElementById("recent").innerHTML = rec + "</tbody></table>";
-  var pager = pagerHtml(all.length, pages, start + 1, Math.min(start + size, all.length));
-  document.getElementById("recent-pager-top").innerHTML = pager;
-  document.getElementById("recent-pager-bottom").innerHTML = pager;
+  document.getElementById("recent-pager-top").innerHTML = pagerHtml(all.length, pages, start + 1, Math.min(start + size, all.length), true);
+  document.getElementById("recent-pager-bottom").innerHTML = pagerHtml(all.length, pages, start + 1, Math.min(start + size, all.length), false);
 }
 
 var lastData = null, openFilter = "all";
@@ -376,7 +396,11 @@ function openPagerHtml(total, pages, shownFrom, shownTo){
 
 var chartSel = null;
 var chartStake = 100;
-function chartToggle(n){ chartSel = chartSel === n ? null : n; if (lastData) drawChart(lastData); }
+function chartToggle(n){
+  chartSel = chartSel === n ? null : n;
+  settleStrat = chartSel; recentPage = 0; // singling out a strategy also filters its full trade history below
+  if (lastData) { drawChart(lastData); renderRecent(); }
+}
 
 function drawChart(d){
   var retired = {};

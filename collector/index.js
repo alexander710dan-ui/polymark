@@ -177,12 +177,37 @@ async function run() {
   }, 60000);
 
   // consistent snapshot for git sync (the live WAL db must never be committed)
+  let lastSnapshot = null, lastSnapshotErr = null;
+  setInterval(() => {
+    const tmp = SYNC_PATH + ".tmp";
+    try {
+      fs.rmSync(tmp, { force: true });
+      db.exec("VACUUM INTO '" + tmp.replace(/'/g, "''") + "'");
+      fs.rmSync(SYNC_PATH, { force: true });
+      fs.renameSync(tmp, SYNC_PATH);
+      lastSnapshot = Date.now(); lastSnapshotErr = null;
+    } catch (e) { lastSnapshotErr = e.message; console.error("snapshot failed:", e.message); }
+  }, 2 * 60000);
+
+  // status file synced through git so any machine can see collector health
   setInterval(() => {
     try {
-      fs.rmSync(SYNC_PATH, { force: true });
-      db.exec("VACUUM INTO '" + SYNC_PATH.replace(/'/g, "''") + "'");
-    } catch (e) { console.error("snapshot failed:", e.message); }
-  }, 5 * 60000);
+      const n = db.prepare("SELECT COUNT(*) n FROM whale_trades").get().n;
+      fs.writeFileSync(path.join(DATA_DIR, "collector-status.json"), JSON.stringify({
+        ts: new Date().toISOString(), whaleTrades: n, wallets: WHALES.size,
+        lastSnapshot: lastSnapshot ? new Date(lastSnapshot).toISOString() : null,
+        snapshotError: lastSnapshotErr
+      }));
+    } catch (e) { /* best effort */ }
+  }, 60000);
+
+  // prune so the synced file stays far below GitHub's 100MB hard limit
+  setInterval(() => {
+    try {
+      db.prepare("DELETE FROM snaps WHERE ts < ?").run(Date.now() - 14 * 86400000);
+      db.prepare("DELETE FROM whale_trades WHERE detected_ts < ?").run(Date.now() - 30 * 86400000);
+    } catch (e) { /* next sweep */ }
+  }, 3600000);
 
   function connect(attempt) {
     ws = new WebSocket(WS_URL);
