@@ -137,7 +137,7 @@ function openDb() {
     CREATE INDEX IF NOT EXISTS idx_pos_market ON positions(market_id, strategy);
   `);
   // migrations for columns added after the first release
-  for (const col of ["outcome_name TEXT", "condition_id TEXT"]) {
+  for (const col of ["outcome_name TEXT", "condition_id TEXT", "signal_meta TEXT"]) {
     try { db.exec("ALTER TABLE positions ADD COLUMN " + col); } catch (e) { /* exists */ }
   }
   return db;
@@ -292,6 +292,7 @@ async function fetchWhaleData() {
       if (s.usd[idx] / total < 0.7) continue; // whales disagree — no signal
       map.set(cid, {
         index: idx, usd: Math.round(s.usd[idx]), traders: s.traders[idx].size,
+        wallets: [...s.traders[idx]].slice(0, 3),
         avgPrice: s.pxUsd[idx] > 0 ? s.pxUsd[idx] / s.usd[idx] : null
       });
     }
@@ -379,10 +380,14 @@ function openNewPositions(db, universe, whales) {
       if (price <= 0.01 || price >= 0.99) continue;
       const shares = stakeAmt / price;
       const outcomeName = side === "yes" ? m.outcomes[0] : m.outcomes[1];
-      db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares, opened_at, end_date, last_mark, outcome_name, condition_id)
-                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      // record WHICH whales triggered copy-family bets → per-whale attribution later
+      const sig = ctx.whale && (name === "copy_top" || name === "whale_fade" || name === "super") ? ctx.whale
+        : ctx.pro && name === "copy_pro" ? ctx.pro : null;
+      const sigMeta = sig && sig.wallets ? sig.wallets.join(",") : null;
+      db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares, opened_at, end_date, last_mark, outcome_name, condition_id, signal_meta)
+                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
         .run(name, m.id, m.question, tag(m.question), side, Math.round(price * 10000) / 10000, stakeAmt,
-             Math.round(shares * 100) / 100, now, m.endDate, Math.round(price * 10000) / 10000, outcomeName, m.conditionId);
+             Math.round(shares * 100) / 100, now, m.endDate, Math.round(price * 10000) / 10000, outcomeName, m.conditionId, sigMeta);
       opened++; slots--; budgetLeft -= stakeAmt;
     }
   }

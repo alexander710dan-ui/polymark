@@ -218,7 +218,7 @@ function render(d){
 
 /* ---- settlements with pagination (default 50 per page) ---- */
 var recentPage = 0;
-var recentSize = parseInt(localStorage.getItem("pm_psize") || "50", 10);
+var recentSize = parseInt(localStorage.getItem("pm_psize") || "10", 10);
 var settleSort = "new";
 var settleStrat = null;
 function setSettleSort(v){ settleSort = v; recentPage = 0; renderRecent(); }
@@ -353,7 +353,7 @@ function renderOpen(){
 }
 
 var openPage = 0;
-var openSize = parseInt(localStorage.getItem("pm_osize") || "50", 10);
+var openSize = parseInt(localStorage.getItem("pm_osize") || "10", 10);
 function setOpenSize(v){ openSize = v; openPage = 0; localStorage.setItem("pm_osize", String(v)); renderOpen(); }
 function setOpenPage(p, scroll){
   openPage = p; renderOpen();

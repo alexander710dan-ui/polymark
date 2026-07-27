@@ -9,14 +9,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,600&family=Schibsted+Grotesk:wght@400;600;700&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root { --bg:#0b0e13; --panel:#131823; --raised:#10141c; --border:#232b39; --border-soft:#1a2130;
-  --text:#e9e4d8; --dim:#9aa3b2; --faint:#626b7a; --brass:#c9a35c; --yes:#4fb286; --no:#c96f63; }
+  --text:#e9e4d8; --dim:#9aa3b2; --faint:#626b7a; --brass:#c9a35c; --yes:#4fb286; --no:#c96f63; --scroll:#2a3342; }
+body.light { --bg:#f4f1e8; --panel:#ffffff; --raised:#edeade; --border:#d9d3c3; --border-soft:#e5dfd0;
+  --text:#28231a; --dim:#5c6570; --faint:#8b93a0; --brass:#a07d35; --yes:#237a54; --no:#ab4437; --scroll:#cdc6b4; }
 * { margin:0; padding:0; box-sizing:border-box; }
-::-webkit-scrollbar { width:10px; } ::-webkit-scrollbar-thumb { background:#2a3342; border-radius:5px; }
+::-webkit-scrollbar { width:10px; } ::-webkit-scrollbar-thumb { background:var(--scroll); border-radius:5px; }
 body { background: radial-gradient(1100px 600px at 18% -8%, #131a28 0%, transparent 60%), var(--bg);
   color:var(--text); font-family:"Schibsted Grotesk",sans-serif; font-size:14px; line-height:1.5;
   min-height:100vh; padding:28px 18px 60px; -webkit-font-smoothing:antialiased; }
+body.light { background: var(--bg); }
 .wrap { max-width:860px; margin:0 auto; }
 .mono { font-family:"Spline Sans Mono",monospace; font-variant-numeric:tabular-nums; }
+.head { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
 h1 { font-family:"Fraunces",serif; font-style:italic; font-weight:600; font-size:26px; margin-bottom:4px; }
 h1 .p { color:var(--brass); }
 .sub { color:var(--faint); font-size:12.5px; margin-bottom:20px; }
@@ -33,72 +37,123 @@ tr:last-child td { border-bottom:none; }
 .warn { font-size:11.5px; color:var(--brass); border:1px solid rgba(201,163,92,.3); background:rgba(201,163,92,.08);
   border-radius:8px; padding:10px 14px; margin-bottom:16px; line-height:1.5; }
 a { color:var(--brass); }
+.chip-btn { background:var(--raised); border:1px solid var(--border); color:var(--dim); border-radius:999px;
+  padding:5px 12px; font-size:11.5px; font-weight:600; cursor:pointer; font-family:inherit; }
+input[type=number] { background:var(--raised); border:1px solid var(--border); color:var(--text);
+  border-radius:8px; padding:7px 10px; font-family:"Spline Sans Mono",monospace; font-size:14px; width:110px; }
+.cut { opacity:.5; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1><span class="p">S</span>izing lab</h1>
-  <p class="sub"><a href="live.html">← back to live</a> · experimental · recomputes from the live feed</p>
-  <div class="warn">Nothing here affects real bets. This page asks: <strong>if stakes were sized by how much each strategy has earned our trust, what would the ledger look like?</strong> The trust score is a transparent formula over sample size, profitability, robustness (profit minus best win), win rate and ROI — not an AI number.</div>
+  <div class="head">
+    <h1><span class="p">S</span>izing lab</h1>
+    <span style="margin-left:auto"><button class="chip-btn" id="btn-theme" title="Light / dark">◐</button></span>
+  </div>
+  <p class="sub"><a href="live.html">← back to live</a> · experimental · nothing here affects real bets</p>
 
   <div class="panel">
-    <div class="ptitle">Trust scores &amp; suggested stakes — active strategies</div>
-    <div id="table">Loading…</div>
+    <div class="ptitle">Budget reality — one real bankroll, trust must cut someone</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+      <span class="sub" style="margin:0">Total bankroll $</span>
+      <input type="number" id="bankroll" value="1450" min="100" step="50">
+      <span class="sub" style="margin:0" id="dkk-note">≈ 10,000 DKK</span>
+    </div>
+    <div id="budget">Loading…</div>
   </div>
 
   <div class="panel">
-    <div class="ptitle">Portfolio what-if</div>
-    <div id="whatif">…</div>
+    <div class="ptitle">Trust scores — the formula behind the cuts</div>
+    <div id="table">…</div>
   </div>
 </div>
 
 <script>
 "use strict";
+if (localStorage.getItem("pm_theme") === "light") document.body.classList.add("light");
+document.getElementById("btn-theme").onclick = function(){
+  document.body.classList.toggle("light");
+  localStorage.setItem("pm_theme", document.body.classList.contains("light") ? "light" : "dark");
+};
 function money(v){ return (v<0?"-":"")+"$"+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0}); }
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
 function trust(s){
   var f = {};
-  f.sample = Math.min(25, Math.round((s.closed||0)/8));                    // 0-25: history depth
-  f.profitable = (s.realized||0) > 0 ? 20 : 0;                             // 0/20: makes money at all
-  f.robust = (s.exTopWin||0) > 0 ? 25 : 0;                                 // 0/25: survives removing best win
-  f.winrate = Math.max(0, Math.min(15, Math.round(((s.winRate||0)-40)/60*15))); // 0-15
-  f.roi = Math.max(0, Math.min(15, Math.round(s.roiClosed||0)));           // 0-15
-  var total = f.sample + f.profitable + f.robust + f.winrate + f.roi;
-  return { total: total, f: f };
+  f.sample = Math.min(25, Math.round((s.closed||0)/8));
+  f.profitable = (s.realized||0) > 0 ? 20 : 0;
+  f.robust = (s.exTopWin||0) > 0 ? 25 : 0;
+  f.winrate = Math.max(0, Math.min(15, Math.round(((s.winRate||0)-40)/60*15)));
+  f.roi = Math.max(0, Math.min(15, Math.round(s.roiClosed||0)));
+  return { total: f.sample+f.profitable+f.robust+f.winrate+f.roi, f: f };
 }
 
-fetch("tester/data/results.json?t="+Date.now()).then(function(r){ return r.json(); }).then(function(d){
-  var act = (d.strategies||[]).filter(function(s){ return !s.retired; });
+var DATA = null;
+
+function renderBudget(){
+  if (!DATA) return;
+  var budget = parseFloat(document.getElementById("bankroll").value) || 0;
+  document.getElementById("dkk-note").textContent = "≈ " + Math.round(budget * 6.9).toLocaleString() + " DKK";
+  var act = DATA.filter(function(s){ return !s.retired; });
   act.forEach(function(s){ s._t = trust(s); s._stake = 25 + Math.round(s._t.total * 2.25); });
   act.sort(function(a,b){ return b._t.total - a._t.total; });
 
-  var html = "<table><thead><tr><th>Strategy</th><th>Trust</th><th></th><th class='num'>Closed</th><th class='num'>Robust?</th><th class='num'>Suggested stake</th><th class='num'>Flat P&L</th><th class='num'>Trust-sized P&L</th></tr></thead><tbody>";
-  var flatTot = 0, dynTot = 0;
+  var remaining = budget, rows = "", simTotal = 0, usedTotal = 0, flatNeed = 0;
   act.forEach(function(s){
-    var dyn = (s.realized||0) * s._stake / 100;
-    flatTot += s.realized||0; dynTot += dyn;
-    html += "<tr><td><strong>"+esc(s.name)+"</strong></td>"+
-      "<td class='num mono'>"+s._t.total+"</td>"+
+    var slots = Math.max(5, s.open || 5); // concurrent positions this strategy typically holds
+    flatNeed += 100 * slots;
+    var wanted = s._stake;
+    var need = wanted * slots;
+    var funded = 0;
+    if (need <= remaining) funded = wanted;
+    else {
+      var fit = Math.floor(remaining / slots / 5) * 5;
+      if (fit >= 25) funded = fit;
+    }
+    if (funded > 0){
+      var used = funded * slots;
+      remaining -= used; usedTotal += used;
+      var sim = (s.realized||0) * funded / 100;
+      simTotal += sim;
+      rows += "<tr><td><strong>"+esc(s.name)+"</strong></td><td class='num'>"+s._t.total+"</td>"+
+        "<td class='num'>$"+funded+(funded<wanted?" <span class='sub'>(squeezed)</span>":"")+"</td>"+
+        "<td class='num'>"+slots+"</td><td class='num'>"+money(used)+"</td>"+
+        "<td class='num "+(sim>0?"pos":"neg")+"'>"+money(Math.round(sim))+"</td></tr>";
+    } else {
+      rows += "<tr class='cut'><td><strong>"+esc(s.name)+"</strong> <span class='sub'>CUT — budget exhausted by higher trust</span></td>"+
+        "<td class='num'>"+s._t.total+"</td><td class='num'>—</td><td class='num'>"+slots+"</td><td class='num'>—</td><td class='num'>—</td></tr>";
+    }
+  });
+  document.getElementById("budget").innerHTML =
+    "<table><thead><tr><th>Strategy (by trust)</th><th class='num'>Trust</th><th class='num'>Stake</th><th class='num'>Slots</th><th class='num'>Capital reserved</th><th class='num'>Simulated P&L</th></tr></thead><tbody>"+rows+"</tbody></table>"+
+    "<table style='margin-top:12px'><tbody>"+
+    "<tr><td>Capital reserved</td><td class='num'>"+money(Math.round(usedTotal))+" of "+money(budget)+"</td></tr>"+
+    "<tr><td>Simulated P&L under this allocation</td><td class='num "+(simTotal>0?"pos":"neg")+"'>"+money(Math.round(simTotal))+"</td></tr>"+
+    "<tr><td class='sub'>For contrast: flat $100 on every strategy needs "+money(flatNeed)+" — "+(flatNeed>budget?"<span class='neg'>"+Math.round(flatNeed/Math.max(1,budget)*10)/10+"× over this budget, impossible</span>":"fits")+"</td><td></td></tr>"+
+    "</tbody></table>"+
+    "<p class='sub' style='margin-top:10px'>Slots = the strategy's typical concurrent open positions (from the live feed). Same hindsight caveat as always: trust is computed on the full history — the honest walk-forward version comes before anything real.</p>";
+}
+
+fetch("tester/data/results.json?t="+Date.now()).then(function(r){ return r.json(); }).then(function(d){
+  DATA = d.strategies || [];
+  renderBudget();
+  var act = DATA.filter(function(s){ return !s.retired; });
+  act.forEach(function(s){ s._t = trust(s); });
+  act.sort(function(a,b){ return b._t.total - a._t.total; });
+  var html = "<table><thead><tr><th>Strategy</th><th>Trust</th><th></th><th class='num'>Closed</th><th class='num'>Robust?</th><th class='num'>Flat P&L</th></tr></thead><tbody>";
+  act.forEach(function(s){
+    html += "<tr><td><strong>"+esc(s.name)+"</strong></td><td class='num mono'>"+s._t.total+"</td>"+
       "<td><div class='bar'><div class='fill' style='width:"+s._t.total+"%'></div></div></td>"+
       "<td class='num'>"+s.closed+"</td>"+
       "<td class='num "+((s.exTopWin||0)>0?"pos":"neg")+"'>"+((s.exTopWin||0)>0?"yes":"no")+"</td>"+
-      "<td class='num'>$"+s._stake+"</td>"+
-      "<td class='num "+(s.realized>0?"pos":"neg")+"'>"+money(s.realized)+"</td>"+
-      "<td class='num "+(dyn>0?"pos":"neg")+"'>"+money(Math.round(dyn))+"</td></tr>";
+      "<td class='num "+(s.realized>0?"pos":"neg")+"'>"+money(s.realized)+"</td></tr>";
   });
-  html += "</tbody></table><p class='sub' style='margin-top:10px'>Trust = sample depth (0–25) + profitable (0/20) + robust to best-win removal (0/25) + win rate (0–15) + ROI (0–15). Suggested stake = $25 + trust × $2.25, capped $250.</p>";
+  html += "</tbody></table><p class='sub' style='margin-top:10px'>Trust = sample depth (0–25) + profitable (0/20) + robust to best-win removal (0/25) + win rate (0–15) + ROI (0–15).</p>";
   document.getElementById("table").innerHTML = html;
-
-  document.getElementById("whatif").innerHTML =
-    "<table><tbody>"+
-    "<tr><td>Everything at flat $100 (what actually happened)</td><td class='num "+(flatTot>0?"pos":"neg")+"'>"+money(Math.round(flatTot))+"</td></tr>"+
-    "<tr><td>Same bets, trust-sized stakes</td><td class='num "+(dynTot>0?"pos":"neg")+"'>"+money(Math.round(dynTot))+"</td></tr>"+
-    "</tbody></table>"+
-    "<p class='sub' style='margin-top:10px'>Naive first pass: it scales each strategy's whole history by today's trust — hindsight leaks in. A proper walk-forward version (trust computed only from bets before each trade) is the honest next step before anything acts on this.</p>";
 }).catch(function(e){
-  document.getElementById("table").textContent = "Could not load feed: " + e.message;
+  document.getElementById("budget").textContent = "Could not load feed: " + e.message;
 });
+document.getElementById("bankroll").addEventListener("input", renderBudget);
 </script>
 </body>
 </html>
