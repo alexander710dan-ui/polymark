@@ -2,12 +2,12 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 7843 · Last run: 2026-07-28T01:00:49.194Z · Database: `tester/data/polymark.db`
+Ticks: 7844 · Last run: 2026-07-28T01:01:18.482Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
 | copy_top | 230 | 117 | 51% | $505.27 | 2.2% | $-823.3 | 25 | $11008.49 |
-| copy_pro | 198 | 97 | 49% | $-663.87 | -2.14% | $-1513.87 | 25 | $10611.96 |
+| copy_pro | 198 | 97 | 49% | $-663.87 | -2.14% | $-1513.87 | 25 | $10605.71 |
 | random_control | 57 | 31 | 54% | $-146.61 | -2.57% | $-760.9 | 25 | $10509.83 |
 | momentum | 128 | 93 | 73% | $383.36 | 3% | $-104.88 | 25 | $10354.81 |
 | mid_momentum | 113 | 67 | 59% | $630.14 | 5.58% | $416.66 | 25 | $10085.69 |
