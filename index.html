@@ -72,15 +72,16 @@ border-radius:7px;padding:6px 9px;font-family:"Spline Sans Mono",monospace;font-
     <h1><span class="p">P</span>olymark</h1>
     <span class="state"><span class="dot" id="dot"></span><span id="state">…</span></span>
     <span class="icons">
+      <button class="ico" id="refresh" title="Refresh data now">⟳</button>
       <button class="ico" id="theme" title="Light / dark">◐</button>
-      <button class="ico hide" id="update" title="Update from GitHub">⟳</button>
+      <button class="ico hide" id="update" title="Update the app from GitHub">↻</button>
     </span>
   </div>
 
   <div class="tabs" id="tabs"></div>
   <div id="view"></div>
 
-  <p class="foot">Fake money · real markets · read-only · <a href="demo/index.html">demo desk</a></p>
+  <p class="foot">Fake money · real markets · read-only · not financial advice</p>
 </div>
 
 <script>
@@ -238,12 +239,30 @@ function draw(){
   document.getElementById("dot").style.background=st[1];
   document.getElementById("state").textContent=st[0]+" · "+ago(D.generated_at)+" ago · tick #"+D.ticks;
 }
+/* GitHub Pages rebuilds only ~10x/hour, but the runner pushes every ~30s —
+   so on the public site the Pages copy is often far behind. Fetch both the
+   local copy and the raw repo file, keep whichever is newer. */
+var RAW="https://raw.githubusercontent.com/alexander710dan-ui/polymark/main/";
+function newest(a,b){
+  if(!a)return b; if(!b)return a;
+  return Date.parse(b.generated_at||0)>Date.parse(a.generated_at||0)?b:a;
+}
+function grab(rel){
+  var bust="?t="+Date.now();
+  var local=fetch(rel+bust).then(function(r){return r.ok?r.json():null}).catch(function(){return null});
+  var isApp=/Electron/i.test(navigator.userAgent);
+  if(isApp)return local;
+  var raw=fetch(RAW+rel+bust).then(function(r){return r.ok?r.json():null}).catch(function(){return null});
+  return Promise.all([local,raw]).then(function(v){return newest(v[0],v[1])});
+}
 function load(){
-  fetch("tester/data/results.json?t="+Date.now()).then(function(r){return r.json()}).then(function(d){D=d;draw()}).catch(function(){});
-  fetch("reasoner/data/ai-scores.json?t="+Date.now()).then(function(r){return r.json()}).then(function(d){AI=d;if(tab==="ai")draw();drawTabs()}).catch(function(){});
+  grab("tester/data/results.json").then(function(d){if(d){D=d;draw()}});
+  grab("reasoner/data/ai-scores.json").then(function(d){if(d){AI=d;if(tab==="ai")draw();drawTabs()}});
 }
 document.getElementById("theme").onclick=function(){document.body.classList.toggle("light");
   localStorage.setItem("pm_theme",document.body.classList.contains("light")?"light":"dark")};
+document.getElementById("refresh").onclick=function(){var b=this;b.textContent="…";load();
+  setTimeout(function(){b.textContent="⟳"},900)};
 if(localStorage.getItem("pm_theme")==="light")document.body.classList.add("light");
 if(/Electron/i.test(navigator.userAgent)){var u=document.getElementById("update");u.classList.remove("hide");
   u.onclick=function(){u.textContent="…";fetch("/__update",{method:"POST"}).then(function(r){return r.json()})
