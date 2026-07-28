@@ -31,6 +31,11 @@ const MAX_SPREAD = 0.06;
 const MAX_DAYS = 45;        // only markets resolving soon, so data accumulates fast
 const FORCE_CLOSE_DAYS = 10; // days past endDate before an unresolved position is marked out
 
+/* Empirically banned market types (settled-bet evidence, 2026-07-28):
+   - tweet-count buckets: 88 bets, -$2,396 — pure noise, unpredictable
+   - same-day crypto strike/updown: high win rate, negative P&L (payoff
+     asymmetry) and effectively coin flips on intraday price paths */
+const JUNK_RE = /\btweets? (from|between)|post \d+[-–]\d+ tweets|Up or Down on|dip to \$|reach \$[\d,]+ (in|on) |be above \$[\d,]+ on /i;
 const SPORT_RE = /\b(vs\.?|@)\b|NBA|NFL|NHL|MLB|UFC|Premier League|La Liga|Serie A|Bundesliga|Champions League|Grand Prix|F1|ATP|WTA|LoL|Dota|Counter-Strike|CS2|Valorant|tennis|Wimbledon|playoff|Super Bowl|World Series|spread|moneyline/i;
 const POLITICS_RE = /election|president|senate|parliament|minister|congress|governor|nominee|referendum|impeach/i;
 const CRYPTO_RE = /bitcoin|BTC|ethereum|ETH|solana|crypto|token|\$\d+k/i;
@@ -59,17 +64,23 @@ const STRATEGIES = {
     if (m.inPlay || m.yes < 0.30 || m.yes > 0.70) return null;
     const mom = m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null;
     const whale = ctx.whale ? (ctx.whale.index === 0 ? "yes" : "no") : null;
-    if (whale && mom && whale !== mom) return null; // signals conflict — pass
-    const side = whale || mom;
-    if (!side) return null;
-    if (ctx.whale && ctx.whale.avgPrice !== null) {
+    /* Two independent signals REQUIRED (2026-07-28 evidence: super's
+       single-signal $100 bets went 33% for -$526, while its two-signal
+       conviction bets went 62% for +$390 — the confirmation is the edge,
+       not the size). */
+    if (!whale || !mom || whale !== mom) return null;
+    const side = whale;
+    if (ctx.whale.avgPrice !== null) {
       const cur = ctx.whale.index === 0 ? m.yes : 1 - m.yes;
       if (cur - ctx.whale.avgPrice > 0.05) return null; // never chase
     }
-    let stake = STAKE;
-    if (whale && mom) stake += 50;                       // independent agreement
-    if (ctx.whale && ctx.whale.usd >= 3000) stake += 50; // whale conviction
-    if (ctx.whale && ctx.whale.traders >= 2) stake += 50;
+    let stake = STAKE + 50;                              // both signals agree
+    if (ctx.whale.usd >= 3000) stake += 50;              // whale conviction
+    if (ctx.whale.traders >= 2) stake += 50;             // independent whales
+    if (ctx.ai && Date.now() - ctx.ai.ts < 45 * 60000) { // local AI as a tiebreak vote
+      const aiSide = ctx.ai.ai > m.yes ? "yes" : "no";
+      if (aiSide === side && Math.abs(ctx.ai.ai - m.yes) > 0.05) stake += 25;
+    }
     return { side, stake: Math.min(250, stake) };
   },
   /* In-play guard on all copy strategies (and the fade control, to stay its
@@ -246,6 +257,7 @@ async function fetchUniverse() {
       if (m.liq < MIN_LIQ || m.vol24 < MIN_VOL24) continue;
       if (m.spread !== null && m.spread > MAX_SPREAD) continue;
       if (m.days < 0.02 || m.days > MAX_DAYS) continue;
+      if (JUNK_RE.test(m.question)) continue; // banned market types (see JUNK_RE)
       out.push(m);
     }
   }
