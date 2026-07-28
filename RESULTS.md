@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 7714 · Last run: 2026-07-28T00:02:12.236Z · Database: `tester/data/polymark.db`
+Ticks: 7715 · Last run: 2026-07-28T00:02:41.601Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
@@ -11,15 +11,15 @@ Ticks: 7714 · Last run: 2026-07-28T00:02:12.236Z · Database: `tester/data/poly
 | random_control | 57 | 31 | 54% | $-146.61 | -2.57% | $-760.9 | 25 | $10494.53 |
 | momentum | 127 | 93 | 73% | $483.36 | 3.81% | $-4.88 | 25 | $10446.97 |
 | fade_longshot | 60 | 58 | 97% | $89.03 | 1.48% | $79.14 | 25 | $10082.83 |
-| mid_momentum | 112 | 66 | 59% | $502.87 | 4.49% | $289.39 | 25 | $10069.25 |
+| mid_momentum | 112 | 66 | 59% | $502.87 | 4.49% | $289.39 | 25 | $10066.24 |
 | super | 28 | 14 | 50% | $86.33 | 2.43% | $-105.83 | 25 | $10033.91 |
 | ai_judge | 0 | 0 | — | $0 | — | $0 | 9 | $9794.83 |
-| strong_dip | 49 | 26 | 53% | $-551.83 | -11.26% | $-644.14 | 25 | $9408.94 |
+| strong_dip | 49 | 26 | 53% | $-551.83 | -11.26% | $-644.14 | 25 | $9409.59 |
 | whale_fade | 229 | 110 | 48% | $-790.29 | -3.45% | $-1125.07 | 25 | $8735.33 |
 | copy_month (retired) | 150 | 72 | 48% | $-74.61 | -0.5% | $-883.7 | 15 | $10214.82 |
 | favorite (retired) | 114 | 74 | 65% | $-1228.57 | -10.78% | $-1292.5 | 22 | $8735.44 |
 | mean_revert (retired) | 123 | 29 | 24% | $-724.26 | -5.89% | $-2751.92 | 24 | $8514.52 |
-| late_favorite (retired) | 404 | 312 | 77% | $-1811.69 | -4.48% | $-1852.54 | 5 | $8297.08 |
+| late_favorite (retired) | 404 | 312 | 77% | $-1811.69 | -4.48% | $-1852.54 | 5 | $8296.23 |
 | longshot (retired) | 60 | 2 | 3% | $-2591.55 | -43.19% | $-4491.55 | 24 | $7577.52 |
 
 **Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
