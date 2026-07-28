@@ -420,6 +420,18 @@ function openNewPositions(db, universe, whales) {
   return opened;
 }
 
+/* keep the synced db small — it is committed on every tick, so growth
+   directly bloats the repo. Old closed positions and equity points are
+   already summarized in RESULTS.md and results.json. */
+function pruneDb(db) {
+  try {
+    const cutoff = new Date(Date.now() - 30 * 86400000).toISOString();
+    db.prepare("DELETE FROM positions WHERE status='closed' AND closed_at < ?").run(cutoff);
+    db.prepare("DELETE FROM equity WHERE ts < ?").run(cutoff);
+    db.prepare("DELETE FROM ticks WHERE ts < ?").run(cutoff);
+  } catch (e) { /* next tick */ }
+}
+
 function snapshotEquity(db) {
   const ts = new Date().toISOString();
   for (const name of Object.keys(STRATEGIES)) {
@@ -448,6 +460,7 @@ async function tick() {
   } catch (e) { /* reasoner not running — ai_judge simply stays quiet */ }
   note += (note ? " | " : "") + "whale signals top/pro/month/ai: " + whales.top.size + "/" + whales.pro.size + "/" + whales.month.size + "/" + whales.ai.size;
   const opened = universe.length ? openNewPositions(db, universe, whales) : 0;
+  pruneDb(db);
   snapshotEquity(db);
   db.prepare("INSERT INTO ticks(ts, markets_seen, opened, settled, note) VALUES(?,?,?,?,?)")
     .run(new Date().toISOString(), universe.length, opened, settled, note);

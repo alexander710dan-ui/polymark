@@ -48,7 +48,7 @@ A GitHub Actions cron runs a tick every ~15 minutes and commits the updated
 database, [RESULTS.md](RESULTS.md) and a JSON feed back to the repo, so the
 experiment accumulates outcome data on its own.
 
-**Live scoreboard:** [alexander710dan-ui.github.io/polymark/live.html](https://alexander710dan-ui.github.io/polymark/live.html)
+**Live scoreboard:** [alexander710dan-ui.github.io/polymark](https://alexander710dan-ui.github.io/polymark/)
 
 ## Honest limits
 

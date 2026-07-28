@@ -33,6 +33,19 @@ const PING_MS = 5000;                   // protocol keepalive
 
 function openDb() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+  // self-heal: a corrupt or oversized whale db must never wedge the collector
+  try {
+    const st = fs.statSync(DB_PATH);
+    if (st.size > 2 * 1024 * 1024 * 1024) throw new Error("db over 2GB");
+    const probe = new DatabaseSync(DB_PATH);
+    probe.prepare("SELECT COUNT(*) n FROM whale_trades").get();
+    probe.close();
+  } catch (e) {
+    if (fs.existsSync(DB_PATH)) {
+      console.log("whale db unusable (" + e.message + ") — starting a fresh one");
+      for (const f of [DB_PATH, DB_PATH + "-wal", DB_PATH + "-shm"]) fs.rmSync(f, { force: true });
+    }
+  }
   const db = new DatabaseSync(DB_PATH);
   db.exec(`
     PRAGMA journal_mode = WAL;
@@ -191,15 +204,18 @@ async function run() {
   // The raw whale db is far too big for git (first real day ≈ 200MB, GitHub
   // hard-rejects >100MB). Sync the ANSWERS instead: compute the latency-lab
   // aggregates here and ship a tiny JSON. Raw data stays local to the runner.
-  setInterval(() => {
+  const exportLatency = () => {
     try {
       const rows = latencyRows(db);
       const n = db.prepare("SELECT COUNT(*) n FROM whale_trades").get().n;
       fs.writeFileSync(path.join(DATA_DIR, "latency.json"), JSON.stringify({
         generated_at: new Date().toISOString(), whaleTrades: n, byDelay: rows
       }));
+      console.log("latency report exported (" + rows.length + " delay tiers)");
     } catch (e) { console.error("latency export failed:", e.message); }
-  }, 5 * 60000);
+  };
+  setTimeout(exportLatency, 60000); // first report a minute after start
+  setInterval(exportLatency, 5 * 60000);
 
   // status file synced through git so any machine can see collector health
   setInterval(() => {
@@ -211,13 +227,16 @@ async function run() {
     } catch (e) { /* best effort */ }
   }, 60000);
 
-  // prune the local db so it doesn't grow forever
+  // prune aggressively: the firehose writes ~200k rows/day, and only recent
+  // data feeds the latency lab
   setInterval(() => {
     try {
-      db.prepare("DELETE FROM snaps WHERE ts < ?").run(Date.now() - 7 * 86400000);
-      db.prepare("DELETE FROM whale_trades WHERE detected_ts < ?").run(Date.now() - 14 * 86400000);
+      db.prepare("DELETE FROM snaps WHERE ts < ?").run(Date.now() - 3 * 86400000);
+      db.prepare("DELETE FROM whale_trades WHERE detected_ts < ? AND id NOT IN (SELECT trade_id FROM snaps)")
+        .run(Date.now() - 3 * 86400000);
+      db.prepare("DELETE FROM collector_stats WHERE ts < ?").run(Date.now() - 7 * 86400000);
     } catch (e) { /* next sweep */ }
-  }, 3600000);
+  }, 1800000);
 
   function connect(attempt) {
     ws = new WebSocket(WS_URL);

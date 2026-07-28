@@ -90,7 +90,7 @@ function startServer() {
       return;
     }
     const urlPath = decodeURIComponent((req.url || "/").split("?")[0]);
-    let rel = urlPath === "/" ? "/live.html" : urlPath;
+    let rel = urlPath === "/" ? "/index.html" : urlPath;
     const file = path.normalize(path.join(ROOT, rel));
     if (!file.startsWith(path.normalize(ROOT)) || rel.includes("..")) { res.writeHead(403); res.end(); return; }
     fs.readFile(file, (err, data) => {
@@ -232,7 +232,7 @@ function showWindow() {
     backgroundColor: "#0b0e13", autoHideMenuBar: true,
     webPreferences: { contextIsolation: true, nodeIntegration: false }
   });
-  win.loadURL("http://127.0.0.1:" + PORT + "/live.html");
+  win.loadURL("http://127.0.0.1:" + PORT + "/index.html");
   win.on("close", (e) => { if (!app.isQuittingForReal) { e.preventDefault(); win.hide(); } });
   win.on("closed", () => { win = null; });
 }
@@ -245,7 +245,7 @@ function refreshMenu() {
     { label: "Leader: " + leaderLine(), enabled: false },
     { type: "separator" },
     { label: "Open dashboard", click: showWindow },
-    { label: "Open web version", click: () => shell.openExternal("https://alexander710dan-ui.github.io/polymark/live.html") },
+    { label: "Open web version", click: () => shell.openExternal("https://alexander710dan-ui.github.io/polymark/index.html") },
     { type: "separator" },
     { label: "Runner (bets + collects on this machine)", type: "radio", checked: config.role === "runner", click: () => { config.role = "runner"; saveConfig(); applyRole(); } },
     { label: "Viewer (mirror only)", type: "radio", checked: config.role === "viewer", click: () => { config.role = "viewer"; saveConfig(); applyRole(); } },
