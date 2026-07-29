@@ -2,24 +2,24 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 13268 · Last run: 2026-07-29T21:10:32.869Z · Database: `tester/data/polymark.db`
+Ticks: 13269 · Last run: 2026-07-29T21:11:03.013Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
 | copy_top | 257 | 129 | 50% | $454.25 | 1.77% | $-874.32 | 25 | $10586.67 |
 | fade_longshot | 65 | 63 | 97% | $110.36 | 1.7% | $100.47 | 25 | $10206.29 |
-| mid_momentum | 136 | 79 | 58% | $643.72 | 4.73% | $430.24 | 25 | $10102.56 |
-| momentum | 158 | 110 | 70% | $-265.51 | -1.68% | $-753.75 | 25 | $9887.99 |
+| mid_momentum | 136 | 79 | 58% | $643.72 | 4.73% | $430.24 | 25 | $10093.91 |
+| momentum | 158 | 110 | 70% | $-265.51 | -1.68% | $-753.75 | 25 | $9894.72 |
 | copy_pro | 227 | 113 | 50% | $-449.42 | -1.25% | $-1299.42 | 25 | $9848.86 |
-| ai_judge | 3 | 0 | 0% | $-300 | -100% | $-200 | 6 | $9558.92 |
-| strong_dip | 58 | 33 | 57% | $-434 | -7.48% | $-526.31 | 25 | $9435.33 |
-| random_control | 60 | 33 | 55% | $-231.98 | -3.87% | $-846.27 | 25 | $9418.2 |
-| super | 42 | 18 | 43% | $-443.59 | -8.07% | $-659.44 | 23 | $9047.25 |
+| ai_judge | 3 | 0 | 0% | $-300 | -100% | $-200 | 6 | $9557.96 |
+| strong_dip | 58 | 33 | 57% | $-434 | -7.48% | $-526.31 | 25 | $9423.94 |
+| random_control | 60 | 33 | 55% | $-231.98 | -3.87% | $-846.27 | 25 | $9418.64 |
+| super | 42 | 18 | 43% | $-443.59 | -8.07% | $-659.44 | 23 | $9037.44 |
 | whale_fade | 257 | 126 | 49% | $-705.19 | -2.74% | $-1039.97 | 25 | $8850.01 |
 | copy_month (retired) | 154 | 73 | 47% | $-346.4 | -2.25% | $-1155.49 | 11 | $9673.05 |
-| favorite (retired) | 117 | 77 | 66% | $-1170.21 | -10% | $-1234.14 | 19 | $8880.12 |
+| favorite (retired) | 117 | 77 | 66% | $-1170.21 | -10% | $-1234.14 | 19 | $8880.44 |
 | late_favorite (retired) | 408 | 316 | 77% | $-1702.76 | -4.17% | $-1744.81 | 1 | $8338.02 |
-| mean_revert (retired) | 128 | 31 | 24% | $-981.38 | -7.67% | $-3009.04 | 19 | $8288.41 |
+| mean_revert (retired) | 128 | 31 | 24% | $-981.38 | -7.67% | $-3009.04 | 19 | $8250 |
 | longshot (retired) | 64 | 2 | 3% | $-2991.55 | -46.74% | $-4891.55 | 20 | $5499.26 |
 
 **Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
