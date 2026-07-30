@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 15158 · Last run: 2026-07-30T12:57:56.922Z · Database: `tester/data/polymark.db`
+Ticks: 15159 · Last run: 2026-07-30T12:58:27.551Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
@@ -10,16 +10,16 @@ Ticks: 15158 · Last run: 2026-07-30T12:57:56.922Z · Database: `tester/data/pol
 | mid_momentum | 147 | 90 | 61% | $1475.45 | 10.04% | $1261.97 | 25 | $10676.14 |
 | fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10255.81 |
 | copy_pro | 246 | 120 | 49% | $-798.3 | -2.04% | $-1648.3 | 20 | $10165.03 |
-| mm_strong | 0 | 0 | — | $0 | — | $0 | 21 | $9895.46 |
-| mm_sports | 0 | 0 | — | $0 | — | $0 | 14 | $9892.58 |
-| mm_tight | 0 | 0 | — | $0 | — | $0 | 11 | $9844.93 |
-| mm_max | 0 | 0 | — | $0 | — | $0 | 4 | $9781.54 |
-| mm_slow | 0 | 0 | — | $0 | — | $0 | 16 | $9771.46 |
-| strong_dip | 60 | 34 | 57% | $-511.6 | -8.53% | $-603.91 | 25 | $9645.11 |
+| mm_tight | 0 | 0 | — | $0 | — | $0 | 11 | $9841.05 |
+| mm_strong | 0 | 0 | — | $0 | — | $0 | 21 | $9811.37 |
+| mm_sports | 0 | 0 | — | $0 | — | $0 | 14 | $9808.49 |
+| mm_max | 0 | 0 | — | $0 | — | $0 | 4 | $9776.92 |
+| mm_slow | 0 | 0 | — | $0 | — | $0 | 16 | $9766.85 |
+| strong_dip | 60 | 34 | 57% | $-511.6 | -8.53% | $-603.91 | 25 | $9644.4 |
 | super | 50 | 23 | 46% | $-193.77 | -2.89% | $-409.62 | 16 | $9597.73 |
-| momentum | 183 | 128 | 70% | $-211.47 | -1.16% | $-699.71 | 25 | $9511.48 |
+| momentum | 183 | 128 | 70% | $-211.47 | -1.16% | $-699.71 | 25 | $9513.63 |
 | ai_judge | 4 | 0 | 0% | $-400 | -100% | $-300 | 5 | $9483.57 |
-| random_control | 72 | 38 | 53% | $-528.01 | -7.33% | $-1142.3 | 25 | $8996.63 |
+| random_control | 72 | 38 | 53% | $-528.01 | -7.33% | $-1142.3 | 25 | $8998.41 |
 | whale_fade | 275 | 134 | 49% | $-1206.97 | -4.39% | $-1541.75 | 16 | $8228.24 |
 | copy_month (retired) | 155 | 74 | 48% | $-318.19 | -2.05% | $-1127.28 | 10 | $9682.66 |
 | favorite (retired) | 120 | 79 | 66% | $-1232.11 | -10.27% | $-1296.04 | 16 | $8931.24 |
