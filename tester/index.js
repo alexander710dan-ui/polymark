@@ -104,8 +104,32 @@ const STRATEGIES = {
     return { side: s.index === 0 ? "yes" : "no", stake: Math.min(250, stake) };
   },
   /* momentum, repaired: only trade where payoffs are symmetric (30-70¢).
-     Plain momentum won 75% of its bets and still lost money buying 95¢ sides. */
+     Plain momentum won 75% of its bets and still lost money buying 95¢ sides.
+     FROZEN as v1 (strategies/mid_momentum-v1.md) — the control for the
+     variants below. Do not change this rule; add new ones instead. */
   mid_momentum:  (m) => (m.yes >= 0.30 && m.yes <= 0.70 ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null),
+
+  /* ---- mid_momentum variants: one changed variable each, v1 keeps running
+     as the control so every comparison is like-for-like. ---- */
+  // drop the two segments that lost money in v1's ledger: sub-45c and non-sports.
+  // NOTE: walk-forward (tester/walkforward.js, 2026-07-29) says the sub-45c cut
+  // is NOT justified — that band made +$598 out-of-sample after losing $71
+  // in-sample. Kept anyway as the "fitted" arm of the experiment.
+  mm_tight: (m) => (m.tag === "sports" && m.yes >= 0.45 && m.yes <= 0.70
+    ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null),
+  // the ONLY refinement walk-forward actually supports: sports in both halves
+  // (+$307 in-sample, +$1,411 out), non-sports negative in both. Band untouched.
+  mm_sports: (m) => (m.tag === "sports" && m.yes >= 0.30 && m.yes <= 0.70
+    ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null),
+  // only markets with real runway — tests whether the edge is slow news, not same-day noise
+  mm_slow: (m) => (m.days >= 2 && m.yes >= 0.30 && m.yes <= 0.70
+    ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null),
+  // demand a bigger move — stronger signal, or just a later entry?
+  mm_strong: (m) => (m.yes >= 0.30 && m.yes <= 0.70
+    ? (m.change24 >= 0.08 ? "yes" : m.change24 <= -0.08 ? "no" : null) : null),
+  // everything at once: sports, 45-70c, 2+ days, >=8c move
+  mm_max: (m) => (m.tag === "sports" && m.days >= 2 && m.yes >= 0.45 && m.yes <= 0.70
+    ? (m.change24 >= 0.08 ? "yes" : m.change24 <= -0.08 ? "no" : null) : null),
   /* mean_revert, repaired: only buy a knocked-down side that is STILL the
      favourite. Plain mean_revert died buying dying longshots. */
   strong_dip:    (m) => (m.change24 <= -0.10 && m.yes >= 0.50 ? "yes" : m.change24 >= 0.10 && m.yes <= 0.50 ? "no" : null),
@@ -232,11 +256,13 @@ function parseMarket(raw) {
   const days = (end - Date.now()) / 86400000;
   const spread = bid !== null && ask !== null ? ask - bid : null;
   const gameStart = raw.gameStartTime ? Date.parse(raw.gameStartTime) : null;
+  const question = raw.question || raw.slug || "?";
   return {
     id: String(raw.id),
     conditionId: raw.conditionId || "",
+    tag: tag(question),
     inPlay: Number.isFinite(gameStart) ? Date.now() > gameStart : false,
-    question: raw.question || raw.slug || "?",
+    question: question,
     outcomes: [String(outcomes[0]), String(outcomes[1])],
     yes, bid, ask, spread,
     change24: num(raw.oneDayPriceChange) ?? 0,
@@ -582,7 +608,12 @@ function report(db) {
   md.push("");
   md.push("### Active strategies");
   md.push("- **super** — the best empirical part of every earlier strategy: 30–70¢ only, never in-play, momentum or pregame-whale signal (veto on disagreement), no chasing, conviction-sized stakes ($100–250)");
-  md.push("- **mid_momentum** — momentum restricted to 30–70¢ where payoffs are symmetric");
+  md.push("- **mid_momentum** — momentum restricted to 30–70¢ where payoffs are symmetric (frozen as v1, the control)");
+  md.push("- **mm_sports** — mid_momentum, sports only (the one refinement walk-forward supports)");
+  md.push("- **mm_tight** — mid_momentum, sports + 45–70¢ (walk-forward says the band cut is unjustified; running as the fitted arm)");
+  md.push("- **mm_slow** — mid_momentum, only markets resolving in 2+ days");
+  md.push("- **mm_strong** — mid_momentum, requires a ≥8¢ move instead of ≥5¢");
+  md.push("- **mm_max** — all four refinements at once: sports, 45–70¢, 2+ days, ≥8¢");
   md.push("- **momentum** — buys whichever side moved ≥5¢ in 24h");
   md.push("- **fade_longshot** — sells the lottery tickets (buys the 90–98¢ side)");
   md.push("- **strong_dip** — buys a side knocked down ≥10¢ that is still the favourite");
