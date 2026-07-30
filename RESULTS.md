@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 15149 · Last run: 2026-07-30T12:53:28.289Z · Database: `tester/data/polymark.db`
+Ticks: 15150 · Last run: 2026-07-30T12:53:59.159Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
@@ -10,16 +10,16 @@ Ticks: 15149 · Last run: 2026-07-30T12:53:28.289Z · Database: `tester/data/pol
 | mid_momentum | 147 | 90 | 61% | $1475.45 | 10.04% | $1261.97 | 25 | $10670.87 |
 | fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10258.64 |
 | copy_pro | 246 | 120 | 49% | $-798.3 | -2.04% | $-1648.3 | 20 | $10177.5 |
-| mm_tight | 0 | 0 | — | $0 | — | $0 | 11 | $9882.64 |
-| mm_sports | 0 | 0 | — | $0 | — | $0 | 14 | $9863.21 |
-| mm_strong | 0 | 0 | — | $0 | — | $0 | 21 | $9861.13 |
+| mm_tight | 0 | 0 | — | $0 | — | $0 | 11 | $9869.18 |
+| mm_strong | 0 | 0 | — | $0 | — | $0 | 21 | $9847.67 |
+| mm_sports | 0 | 0 | — | $0 | — | $0 | 14 | $9844.29 |
 | mm_max | 0 | 0 | — | $0 | — | $0 | 4 | $9784.44 |
 | mm_slow | 0 | 0 | — | $0 | — | $0 | 16 | $9774.48 |
 | strong_dip | 60 | 34 | 57% | $-511.6 | -8.53% | $-603.91 | 25 | $9640.29 |
-| super | 50 | 23 | 46% | $-193.77 | -2.89% | $-409.62 | 16 | $9600.42 |
+| super | 50 | 23 | 46% | $-193.77 | -2.89% | $-409.62 | 16 | $9599.22 |
 | momentum | 183 | 128 | 70% | $-211.47 | -1.16% | $-699.71 | 25 | $9523.97 |
 | ai_judge | 4 | 0 | 0% | $-400 | -100% | $-300 | 5 | $9478.98 |
-| random_control | 72 | 38 | 53% | $-528.01 | -7.33% | $-1142.3 | 25 | $9009.71 |
+| random_control | 72 | 38 | 53% | $-528.01 | -7.33% | $-1142.3 | 25 | $9003.61 |
 | whale_fade | 275 | 134 | 49% | $-1206.97 | -4.39% | $-1541.75 | 16 | $8230.99 |
 | copy_month (retired) | 155 | 74 | 48% | $-318.19 | -2.05% | $-1127.28 | 10 | $9684.11 |
 | favorite (retired) | 120 | 79 | 66% | $-1232.11 | -10.27% | $-1296.04 | 16 | $8928.88 |
