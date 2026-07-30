@@ -2,18 +2,23 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 15001 · Last run: 2026-07-30T11:39:22.959Z · Database: `tester/data/polymark.db`
+Ticks: 15002 · Last run: 2026-07-30T11:39:55.686Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
-| mid_momentum | 147 | 90 | 61% | $1475.45 | 10.04% | $1261.97 | 25 | $10683.77 |
+| mid_momentum | 147 | 90 | 61% | $1475.45 | 10.04% | $1261.97 | 25 | $10676.33 |
 | copy_top | 275 | 139 | 51% | $448.12 | 1.63% | $-880.45 | 16 | $10646.34 |
-| fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10225.14 |
+| fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10232.26 |
+| mm_tight | 0 | 0 | — | $0 | — | $0 | 3 | $10000 |
+| mm_sports | 0 | 0 | — | $0 | — | $0 | 3 | $10000 |
+| mm_slow | 0 | 0 | — | $0 | — | $0 | 5 | $10000 |
+| mm_strong | 0 | 0 | — | $0 | — | $0 | 5 | $10000 |
+| mm_max | 0 | 0 | — | $0 | — | $0 | 1 | $10000 |
 | copy_pro | 246 | 120 | 49% | $-798.3 | -2.04% | $-1648.3 | 19 | $9811.71 |
-| strong_dip | 60 | 34 | 57% | $-511.6 | -8.53% | $-603.91 | 25 | $9677.8 |
-| super | 50 | 23 | 46% | $-193.77 | -2.89% | $-409.62 | 16 | $9561.66 |
+| strong_dip | 60 | 34 | 57% | $-511.6 | -8.53% | $-603.91 | 25 | $9671.35 |
+| super | 50 | 23 | 46% | $-193.77 | -2.89% | $-409.62 | 16 | $9564.92 |
 | ai_judge | 4 | 0 | 0% | $-400 | -100% | $-300 | 5 | $9496.18 |
-| momentum | 183 | 128 | 70% | $-211.47 | -1.16% | $-699.71 | 25 | $9406.1 |
+| momentum | 183 | 128 | 70% | $-211.47 | -1.16% | $-699.71 | 25 | $9413.07 |
 | random_control | 71 | 37 | 52% | $-636.34 | -8.96% | $-1250.63 | 25 | $9073.6 |
 | whale_fade | 275 | 134 | 49% | $-1206.97 | -4.39% | $-1541.75 | 16 | $8333.19 |
 | copy_month (retired) | 155 | 74 | 48% | $-318.19 | -2.05% | $-1127.28 | 10 | $9687.2 |
@@ -26,7 +31,12 @@ Ticks: 15001 · Last run: 2026-07-30T11:39:22.959Z · Database: `tester/data/pol
 
 ### Active strategies
 - **super** — the best empirical part of every earlier strategy: 30–70¢ only, never in-play, momentum or pregame-whale signal (veto on disagreement), no chasing, conviction-sized stakes ($100–250)
-- **mid_momentum** — momentum restricted to 30–70¢ where payoffs are symmetric
+- **mid_momentum** — momentum restricted to 30–70¢ where payoffs are symmetric (frozen as v1, the control)
+- **mm_sports** — mid_momentum, sports only (the one refinement walk-forward supports)
+- **mm_tight** — mid_momentum, sports + 45–70¢ (walk-forward says the band cut is unjustified; running as the fitted arm)
+- **mm_slow** — mid_momentum, only markets resolving in 2+ days
+- **mm_strong** — mid_momentum, requires a ≥8¢ move instead of ≥5¢
+- **mm_max** — all four refinements at once: sports, 45–70¢, 2+ days, ≥8¢
 - **momentum** — buys whichever side moved ≥5¢ in 24h
 - **fade_longshot** — sells the lottery tickets (buys the 90–98¢ side)
 - **strong_dip** — buys a side knocked down ≥10¢ that is still the favourite
