@@ -92,6 +92,7 @@ copy_month:"#e09f7d",whale_fade:"#a58fd0",mid_momentum:"#9fd06a",strong_dip:"#8a
 var TABS=[["standings","Standings"],["open","Open"],["settled","Settled"],["ai","AI"],["lab","Lab"]];
 var tab=localStorage.getItem("pm_tab")||"standings", D=null, AI=null;
 var sel=null, stake=100, page=0, size=+(localStorage.getItem("pm_size")||10), sort="new", filter=null, opage=0, ofilter="all";
+var metric=localStorage.getItem("pm_metric")||"equity";
 
 function m$(v){return (v<0?"-":"")+"$"+Math.abs(Math.round(v)).toLocaleString()}
 function c$(v){var c=v*100;return (c<10?c.toFixed(1):Math.round(c))+"¢"}
@@ -127,8 +128,12 @@ function vStandings(){
   var top=rows.filter(function(s){return !s.retired})[0];
   var h="<div class='bar'><select class='ctl' onchange='stake=+this.value;draw()'>"+
     [10,50,100,250,500,1000].map(function(v){return "<option value='"+v+"'"+(stake===v?" selected":"")+">$"+v+"/bet</option>"}).join("")+
-    "</select><span class='meta'>click a line to isolate</span><span class='meta right' id='rng'></span></div>"+
-    "<div class='chart' id='chart'></div><div class='legend' id='legend'></div>";
+    "</select><button class='ctl"+(metric==="equity"?" on":"")+"' onclick='metric=\"equity\";draw()'>Equity</button>"+
+    "<button class='ctl"+(metric==="real"?" on":"")+"' onclick='metric=\"real\";draw()'>Realized only</button>"+
+    "<span class='meta'>click a line to isolate</span>"+
+    "<span class='meta right' id='rng'></span></div>"+
+    "<div class='chart' id='chart'></div><div class='legend' id='legend'></div>"+
+    "<p class='meta' id='span' style='margin-top:6px'></p>";
   h+="<table style='margin-top:20px'><thead><tr><th>Strategy</th><th class='num'>Bets</th><th class='num hm'>Win</th>"+
     "<th class='num'>Realized</th><th class='num hm'>Open</th><th class='num'>Equity</th></tr></thead><tbody>";
   rows.forEach(function(s){
@@ -141,18 +146,32 @@ function vStandings(){
 }
 function chart(){
   var ret={};(D.strategies||[]).forEach(function(s){if(s.retired)ret[s.name]=1});
-  var ser={};(D.equity||[]).forEach(function(p){if(!ret[p.strategy])(ser[p.strategy]=ser[p.strategy]||[]).push(p.equity)});
+  // keep timestamps: all series share ONE time axis, so lines are comparable
+  var ser={};(D.equity||[]).forEach(function(p){
+    if(ret[p.strategy])return;
+    // realized-only = bankroll + booked P&L (matches the table's Realized column);
+    // equity also carries open positions at their current marks
+    var v=metric==="real"?1e4+(p.realized||0):p.equity;
+    (ser[p.strategy]=ser[p.strategy]||[]).push({t:Date.parse(p.ts),v:v})});
   var names=Object.keys(ser);if(!names.length)return;
-  var show=sel&&ser[sel]?[sel]:names, k=stake/100, sc=function(v){return 1e4+(v-1e4)*k}, all=[];
-  show.forEach(function(n){ser[n].forEach(function(v){all.push(sc(v))})});
+  names.forEach(function(n){ser[n].sort(function(a,b){return a.t-b.t})});
+  var show=sel&&ser[sel]?[sel]:names, k=stake/100, sc=function(v){return 1e4+(v-1e4)*k};
+  var all=[],t0=Infinity,t1=-Infinity;
+  show.forEach(function(n){ser[n].forEach(function(p){all.push(sc(p.v));
+    if(p.t<t0)t0=p.t; if(p.t>t1)t1=p.t})});
   var mn=Math.min.apply(null,all),mx=Math.max.apply(null,all),pd=Math.max(15,(mx-mn)*.12);mn-=pd;mx+=pd;
   var W=800,H=210,p="",by=H-((1e4-mn)/(mx-mn))*(H-10)-5;
+  var xs=function(t){return t1>t0?((t-t0)/(t1-t0))*W:W/2};
   if(by>0&&by<H)p+="<line x1=0 y1="+by.toFixed(1)+" x2="+W+" y2="+by.toFixed(1)+" stroke='var(--border)' stroke-dasharray='3 4'/>";
   show.forEach(function(n){var pts=ser[n];if(pts.length<2)return;var d="";
-    pts.forEach(function(v,i){d+=(i?"L":"M")+(i/(pts.length-1)*W).toFixed(1)+","+(H-((sc(v)-mn)/(mx-mn))*(H-10)-5).toFixed(1)});
+    pts.forEach(function(pt,i){d+=(i?"L":"M")+xs(pt.t).toFixed(1)+","+(H-((sc(pt.v)-mn)/(mx-mn))*(H-10)-5).toFixed(1)});
     p+="<path d='"+d+"' fill=none stroke='"+(C[n]||"#888")+"' stroke-width="+(show.length===1?2.4:1.6)+" opacity=.9/>"});
   document.getElementById("chart").innerHTML="<svg viewBox='0 0 "+W+" "+H+"' preserveAspectRatio=none height="+H+" role=img aria-label='Equity over time'>"+p+"</svg>";
   document.getElementById("rng").textContent=m$(mn)+" – "+m$(mx);
+  var hrs=(t1-t0)/36e5;
+  document.getElementById("span").textContent="window: "+(hrs<1?Math.round(hrs*60)+" min":hrs<48?hrs.toFixed(1)+" h":(hrs/24).toFixed(1)+" days")+
+    " · "+(metric==="real"?"realized P&L only — matches the table's Realized column":"equity = realized + open positions at current marks")+
+    " · dashed line = $10,000 start"+(sel?" · "+sel+" only":"");
   document.getElementById("legend").innerHTML=names.map(function(n){
     var last=ser[n][ser[n].length-1];
     return "<span style='opacity:"+(!sel||sel===n?1:.3)+"' onclick='sel=sel===\""+n+"\"?null:\""+n+"\";filter=sel;page=0;draw()'>"+
@@ -234,6 +253,7 @@ function draw(){
   v.innerHTML=tab==="standings"?vStandings():tab==="open"?vOpen():tab==="settled"?vSettled():tab==="ai"?vAI():vLab();
   if(tab==="standings")chart();
   if(tab==="lab"){var i=document.getElementById("bank");i.oninput=function(){localStorage.setItem("pm_bank",this.value);draw()}}
+  localStorage.setItem("pm_metric",metric);
   var age=(Date.now()-Date.parse(D.generated_at))/6e4;
   var st=D.source==="cloud"?["cloud backup","var(--no)"]:age<15?["live","var(--yes)"]:age<45?["delayed","var(--brass)"]:["silent","var(--no)"];
   document.getElementById("dot").style.background=st[1];

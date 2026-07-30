@@ -602,14 +602,27 @@ function report(db) {
     FROM positions WHERE status='closed' ORDER BY closed_at DESC LIMIT 1000`).all();
   const openPos = db.prepare(`SELECT strategy, side, entry, stake, shares, opened_at, end_date, last_mark, question, tag, outcome_name
     FROM positions WHERE status='open' ORDER BY end_date ASC`).all();
-  const equitySeries = db.prepare("SELECT ts, strategy, equity FROM equity ORDER BY ts").all();
+  /* Per-strategy equity curves covering the FULL retained history, each
+     downsampled to ~120 points. A flat global row cap made every curve span
+     only the last few minutes, so chart and table disagreed. */
+  const POINTS = 120;
+  const equitySeries = [];
+  const strategyNames = db.prepare("SELECT DISTINCT strategy s FROM equity").all().map((r) => r.s);
+  for (const s of strategyNames) {
+    const all = db.prepare("SELECT ts, strategy, equity, realized FROM equity WHERE strategy=? ORDER BY ts").all(s);
+    if (!all.length) continue;
+    const step = Math.max(1, Math.floor(all.length / POINTS));
+    for (let i = 0; i < all.length; i += step) equitySeries.push(all[i]);
+    const last = all[all.length - 1];
+    if (equitySeries[equitySeries.length - 1] !== last) equitySeries.push(last);
+  }
   fs.writeFileSync(path.join(DATA_DIR, "results.json"), JSON.stringify({
     generated_at: new Date().toISOString(),
     source: process.env.PM_SOURCE || "cloud",
     ticks: ticks.n, last_tick: ticks.last,
     bankroll: BANKROLL, stake: STAKE,
     strategies: rows, recent: recent, open: openPos,
-    equity: equitySeries.slice(-720)
+    equity: equitySeries
   }));
   console.log("\nRESULTS.md + results.json written.");
 }
