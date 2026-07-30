@@ -2,15 +2,15 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 16205 · Last run: 2026-07-30T21:44:12.205Z · Database: `tester/data/polymark.db`
+Ticks: 16206 · Last run: 2026-07-30T21:44:42.884Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
-| mid_momentum | 153 | 93 | 61% | $1331.12 | 8.7% | $1117.64 | 25 | $10586.65 |
+| mid_momentum | 153 | 93 | 61% | $1331.12 | 8.7% | $1117.64 | 25 | $10587.47 |
 | copy_top | 280 | 141 | 50% | $403.53 | 1.44% | $-925.04 | 23 | $10342.43 |
 | fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10116.52 |
 | mm_max | 17 | 10 | 59% | $5.39 | 0.32% | $-112 | 3 | $9966.51 |
-| mm_strong | 25 | 13 | 52% | $-265.43 | -10.62% | $-403.53 | 23 | $9887.97 |
+| mm_strong | 25 | 13 | 52% | $-265.43 | -10.62% | $-403.53 | 23 | $9888.68 |
 | mm_tight | 32 | 16 | 50% | $-328.61 | -10.27% | $-466.71 | 10 | $9746.08 |
 | strong_dip | 61 | 34 | 56% | $-611.6 | -10.03% | $-703.91 | 25 | $9704.38 |
 | mm_slow | 19 | 9 | 47% | $-419.16 | -22.06% | $-536.55 | 20 | $9607.99 |
@@ -19,7 +19,7 @@ Ticks: 16205 · Last run: 2026-07-30T21:44:12.205Z · Database: `tester/data/pol
 | super | 50 | 23 | 46% | $-193.77 | -2.89% | $-409.62 | 17 | $9429.89 |
 | mm_sports | 35 | 16 | 46% | $-659.88 | -18.85% | $-797.98 | 13 | $9363.25 |
 | random_control | 77 | 40 | 52% | $-740.1 | -9.61% | $-1354.39 | 25 | $9198.21 |
-| momentum | 189 | 132 | 70% | $-246.69 | -1.31% | $-734.93 | 25 | $8948.92 |
+| momentum | 189 | 132 | 70% | $-246.69 | -1.31% | $-734.93 | 25 | $8949.74 |
 | whale_fade | 280 | 137 | 49% | $-920.62 | -3.29% | $-1255.4 | 24 | $8144.57 |
 | copy_month (retired) | 155 | 74 | 48% | $-318.19 | -2.05% | $-1127.28 | 10 | $9463.05 |
 | favorite (retired) | 120 | 79 | 66% | $-1232.11 | -10.27% | $-1296.04 | 16 | $9024.83 |
