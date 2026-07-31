@@ -2,13 +2,13 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 16854 · Last run: 2026-07-31T03:09:10.957Z · Database: `tester/data/polymark.db`
+Ticks: 16855 · Last run: 2026-07-31T03:09:41.930Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
 | mid_momentum | 153 | 93 | 61% | $1331.12 | 8.7% | $1117.64 | 25 | $10421.51 |
 | copy_top | 287 | 147 | 51% | $703.01 | 2.45% | $-625.56 | 25 | $10419.26 |
-| fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10109.25 |
+| fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10109.2 |
 | copy_pro | 262 | 131 | 50% | $-167.22 | -0.4% | $-1017.22 | 20 | $9906.98 |
 | strong_dip | 61 | 34 | 56% | $-611.6 | -10.03% | $-703.91 | 25 | $9714.75 |
 | mm_max | 22 | 11 | 50% | $-327.94 | -14.91% | $-445.33 | 5 | $9461.7 |
@@ -23,9 +23,9 @@ Ticks: 16854 · Last run: 2026-07-31T03:09:10.957Z · Database: `tester/data/pol
 | whale_fade | 287 | 138 | 48% | $-1431.94 | -4.99% | $-1766.72 | 25 | $7890.17 |
 | copy_month (retired) | 155 | 74 | 48% | $-318.19 | -2.05% | $-1127.28 | 10 | $9490.66 |
 | favorite (retired) | 120 | 79 | 66% | $-1232.11 | -10.27% | $-1296.04 | 16 | $9020.69 |
-| mean_revert (retired) | 130 | 31 | 24% | $-1181.38 | -9.09% | $-3209.04 | 17 | $8713.71 |
+| mean_revert (retired) | 130 | 31 | 24% | $-1181.38 | -9.09% | $-3209.04 | 17 | $8714.34 |
 | late_favorite (retired) | 409 | 317 | 78% | $-1661.91 | -4.06% | $-1703.96 | 0 | $8338.09 |
-| longshot (retired) | 66 | 2 | 3% | $-3191.55 | -48.36% | $-5091.55 | 18 | $5157.86 |
+| longshot (retired) | 66 | 2 | 3% | $-3191.55 | -48.36% | $-5091.55 | 18 | $5158.49 |
 
 **Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
 
