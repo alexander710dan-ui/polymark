@@ -2,17 +2,17 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 17753 · Last run: 2026-07-31T10:44:19.209Z · Database: `tester/data/polymark.db`
+Ticks: 17754 · Last run: 2026-07-31T10:44:50.456Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
 | mid_momentum | 154 | 93 | 60% | $1231.12 | 7.99% | $1017.64 | 25 | $10384.37 |
 | copy_top | 293 | 149 | 51% | $457.82 | 1.56% | $-870.75 | 22 | $10357.78 |
 | copy_pro | 268 | 135 | 50% | $-102.32 | -0.24% | $-952.32 | 22 | $10081.81 |
-| fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10078.77 |
+| fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10078.82 |
 | strong_dip | 61 | 34 | 56% | $-611.6 | -10.03% | $-703.91 | 25 | $9744.34 |
 | ai_judge | 4 | 0 | 0% | $-400 | -100% | $-300 | 5 | $9455.53 |
-| random_control | 80 | 42 | 53% | $-779.57 | -9.74% | $-1393.86 | 25 | $9341.95 |
+| random_control | 80 | 42 | 53% | $-779.57 | -9.74% | $-1393.86 | 25 | $9342 |
 | super | 52 | 24 | 46% | $-249.65 | -3.54% | $-465.5 | 16 | $9335.95 |
 | mm_max | 26 | 12 | 46% | $-585.08 | -22.5% | $-702.47 | 5 | $9294.63 |
 | mm_tight | 57 | 28 | 49% | $-534.86 | -9.38% | $-737.89 | 20 | $9249.34 |
@@ -25,7 +25,7 @@ Ticks: 17753 · Last run: 2026-07-31T10:44:19.209Z · Database: `tester/data/pol
 | favorite (retired) | 120 | 79 | 66% | $-1232.11 | -10.27% | $-1296.04 | 16 | $9057.19 |
 | mean_revert (retired) | 130 | 31 | 24% | $-1181.38 | -9.09% | $-3209.04 | 17 | $8698.41 |
 | late_favorite (retired) | 409 | 317 | 78% | $-1661.91 | -4.06% | $-1703.96 | 0 | $8338.09 |
-| longshot (retired) | 66 | 2 | 3% | $-3191.55 | -48.36% | $-5091.55 | 18 | $5157.76 |
+| longshot (retired) | 66 | 2 | 3% | $-3191.55 | -48.36% | $-5091.55 | 18 | $5155.76 |
 
 **Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
 
