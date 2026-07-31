@@ -2,13 +2,13 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 17556 · Last run: 2026-07-31T09:05:44.290Z · Database: `tester/data/polymark.db`
+Ticks: 17557 · Last run: 2026-07-31T09:06:16.390Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
 | mid_momentum | 154 | 93 | 60% | $1231.12 | 7.99% | $1017.64 | 25 | $10391.81 |
 | copy_top | 293 | 149 | 51% | $457.82 | 1.56% | $-870.75 | 20 | $10356.74 |
-| fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10080.7 |
+| fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10080.86 |
 | copy_pro | 268 | 135 | 50% | $-102.32 | -0.24% | $-952.32 | 19 | $9996.71 |
 | strong_dip | 61 | 34 | 56% | $-611.6 | -10.03% | $-703.91 | 25 | $9718.25 |
 | ai_judge | 4 | 0 | 0% | $-400 | -100% | $-300 | 5 | $9430.28 |
@@ -23,9 +23,9 @@ Ticks: 17556 · Last run: 2026-07-31T09:05:44.290Z · Database: `tester/data/pol
 | whale_fade | 294 | 142 | 48% | $-1338.93 | -4.55% | $-1673.71 | 19 | $7758.37 |
 | copy_month (retired) | 155 | 74 | 48% | $-318.19 | -2.05% | $-1127.28 | 10 | $9427.33 |
 | favorite (retired) | 120 | 79 | 66% | $-1232.11 | -10.27% | $-1296.04 | 16 | $9044.5 |
-| mean_revert (retired) | 130 | 31 | 24% | $-1181.38 | -9.09% | $-3209.04 | 17 | $8739.92 |
+| mean_revert (retired) | 130 | 31 | 24% | $-1181.38 | -9.09% | $-3209.04 | 17 | $8738.05 |
 | late_favorite (retired) | 409 | 317 | 78% | $-1661.91 | -4.06% | $-1703.96 | 0 | $8338.09 |
-| longshot (retired) | 66 | 2 | 3% | $-3191.55 | -48.36% | $-5091.55 | 18 | $5158.58 |
+| longshot (retired) | 66 | 2 | 3% | $-3191.55 | -48.36% | $-5091.55 | 18 | $5156.71 |
 
 **Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
 
