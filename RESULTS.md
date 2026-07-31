@@ -2,15 +2,15 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 18251 · Last run: 2026-07-31T14:54:09.295Z · Database: `tester/data/polymark.db`
+Ticks: 18252 · Last run: 2026-07-31T14:54:41.995Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
-| copy_top | 295 | 151 | 51% | $544.96 | 1.85% | $-783.61 | 25 | $10505.63 |
+| copy_top | 295 | 151 | 51% | $544.96 | 1.85% | $-783.61 | 25 | $10505.4 |
 | mid_momentum | 155 | 93 | 60% | $1131.12 | 7.3% | $917.64 | 25 | $10350.43 |
 | fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10049.39 |
-| copy_pro | 271 | 138 | 51% | $232.09 | 0.54% | $-617.91 | 25 | $9961.14 |
-| strong_dip | 62 | 34 | 55% | $-711.6 | -11.48% | $-803.91 | 25 | $9603.56 |
+| copy_pro | 271 | 138 | 51% | $232.09 | 0.54% | $-617.91 | 25 | $9960.79 |
+| strong_dip | 62 | 34 | 55% | $-711.6 | -11.48% | $-803.91 | 25 | $9603.29 |
 | ai_judge | 4 | 0 | 0% | $-400 | -100% | $-300 | 5 | $9465.81 |
 | random_control | 81 | 43 | 53% | $-609.3 | -7.52% | $-1223.59 | 25 | $9267.95 |
 | mm_strong | 42 | 19 | 45% | $-953.64 | -22.71% | $-1091.74 | 25 | $9212.53 |
@@ -20,7 +20,7 @@ Ticks: 18251 · Last run: 2026-07-31T14:54:09.295Z · Database: `tester/data/pol
 | mm_tight | 69 | 32 | 46% | $-1054.51 | -15.28% | $-1257.54 | 22 | $9039.61 |
 | momentum | 191 | 133 | 70% | $-332.92 | -1.74% | $-821.16 | 25 | $8735.38 |
 | mm_sports | 81 | 36 | 44% | $-1714.98 | -21.17% | $-1918.01 | 23 | $8345.89 |
-| whale_fade | 296 | 142 | 48% | $-1538.93 | -5.2% | $-1873.71 | 25 | $7484.66 |
+| whale_fade | 296 | 142 | 48% | $-1538.93 | -5.2% | $-1873.71 | 25 | $7485.77 |
 | copy_month (retired) | 155 | 74 | 48% | $-318.19 | -2.05% | $-1127.28 | 10 | $9388.34 |
 | favorite (retired) | 120 | 79 | 66% | $-1232.11 | -10.27% | $-1296.04 | 16 | $9079.62 |
 | late_favorite (retired) | 409 | 317 | 78% | $-1661.91 | -4.06% | $-1703.96 | 0 | $8338.09 |
