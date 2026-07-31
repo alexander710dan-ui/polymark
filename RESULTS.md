@@ -2,13 +2,13 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 17779 · Last run: 2026-07-31T10:57:14.208Z · Database: `tester/data/polymark.db`
+Ticks: 17780 · Last run: 2026-07-31T10:57:46.247Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
 | mid_momentum | 154 | 93 | 60% | $1231.12 | 7.99% | $1017.64 | 25 | $10390.57 |
-| copy_top | 293 | 149 | 51% | $457.82 | 1.56% | $-870.75 | 23 | $10336.95 |
-| copy_pro | 268 | 135 | 50% | $-102.32 | -0.24% | $-952.32 | 23 | $10109.23 |
+| copy_top | 293 | 149 | 51% | $457.82 | 1.56% | $-870.75 | 23 | $10339.66 |
+| copy_pro | 268 | 135 | 50% | $-102.32 | -0.24% | $-952.32 | 23 | $10111.93 |
 | fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10078.44 |
 | strong_dip | 61 | 34 | 56% | $-611.6 | -10.03% | $-703.91 | 25 | $9742.05 |
 | ai_judge | 4 | 0 | 0% | $-400 | -100% | $-300 | 5 | $9449.06 |
@@ -19,8 +19,8 @@ Ticks: 17779 · Last run: 2026-07-31T10:57:14.208Z · Database: `tester/data/pol
 | mm_slow | 31 | 14 | 45% | $-791.58 | -25.53% | $-908.97 | 24 | $8972.59 |
 | mm_strong | 42 | 19 | 45% | $-953.64 | -22.71% | $-1091.74 | 25 | $8926.86 |
 | momentum | 190 | 132 | 69% | $-346.69 | -1.82% | $-834.93 | 25 | $8625.84 |
-| mm_sports | 66 | 31 | 47% | $-1066.04 | -16.15% | $-1269.07 | 25 | $8379.39 |
-| whale_fade | 294 | 142 | 48% | $-1338.93 | -4.55% | $-1673.71 | 23 | $7746.22 |
+| mm_sports | 66 | 31 | 47% | $-1066.04 | -16.15% | $-1269.07 | 25 | $8377.85 |
+| whale_fade | 294 | 142 | 48% | $-1338.93 | -4.55% | $-1673.71 | 23 | $7744.66 |
 | copy_month (retired) | 155 | 74 | 48% | $-318.19 | -2.05% | $-1127.28 | 10 | $9424.45 |
 | favorite (retired) | 120 | 79 | 66% | $-1232.11 | -10.27% | $-1296.04 | 16 | $9052.27 |
 | mean_revert (retired) | 130 | 31 | 24% | $-1181.38 | -9.09% | $-3209.04 | 17 | $8708.62 |
