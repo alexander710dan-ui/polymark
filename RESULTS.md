@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 18350 · Last run: 2026-07-31T15:43:41.746Z · Database: `tester/data/polymark.db`
+Ticks: 18351 · Last run: 2026-07-31T15:44:13.288Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
@@ -10,15 +10,15 @@ Ticks: 18350 · Last run: 2026-07-31T15:43:41.746Z · Database: `tester/data/pol
 | mid_momentum | 155 | 93 | 60% | $1131.12 | 7.3% | $917.64 | 25 | $10383.71 |
 | fade_longshot | 72 | 70 | 97% | $156.21 | 2.17% | $146.32 | 25 | $10032.2 |
 | copy_pro | 271 | 138 | 51% | $232.09 | 0.54% | $-617.91 | 25 | $9736.42 |
-| strong_dip | 62 | 34 | 55% | $-711.6 | -11.48% | $-803.91 | 25 | $9624.1 |
+| strong_dip | 62 | 34 | 55% | $-711.6 | -11.48% | $-803.91 | 25 | $9624.17 |
 | ai_judge | 4 | 0 | 0% | $-400 | -100% | $-300 | 5 | $9467.48 |
-| random_control | 81 | 43 | 53% | $-609.3 | -7.52% | $-1223.59 | 25 | $9296.06 |
+| random_control | 81 | 43 | 53% | $-609.3 | -7.52% | $-1223.59 | 25 | $9295.88 |
 | mm_strong | 42 | 19 | 45% | $-953.64 | -22.71% | $-1091.74 | 25 | $9196.95 |
 | super | 53 | 24 | 45% | $-349.65 | -4.89% | $-565.5 | 15 | $9147.45 |
 | mm_max | 28 | 12 | 43% | $-785.08 | -28.04% | $-902.47 | 4 | $9116.62 |
 | mm_slow | 34 | 15 | 44% | $-913.01 | -26.85% | $-1030.4 | 25 | $9032.16 |
 | mm_tight | 74 | 35 | 47% | $-1037.05 | -14.01% | $-1240.08 | 20 | $8814.25 |
-| momentum | 191 | 133 | 70% | $-332.92 | -1.74% | $-821.16 | 25 | $8726.46 |
+| momentum | 191 | 133 | 70% | $-332.92 | -1.74% | $-821.16 | 25 | $8726.24 |
 | mm_sports | 85 | 38 | 45% | $-1744.1 | -20.52% | $-1947.13 | 25 | $8154.75 |
 | whale_fade | 297 | 142 | 48% | $-1638.93 | -5.52% | $-1973.71 | 24 | $7492.13 |
 | copy_month (retired) | 155 | 74 | 48% | $-318.19 | -2.05% | $-1127.28 | 10 | $9390.44 |
