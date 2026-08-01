@@ -2,14 +2,14 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 21130 · Last run: 2026-08-01T15:08:20.023Z · Database: `tester/data/polymark.db`
+Ticks: 21131 · Last run: 2026-08-01T15:08:51.433Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
 | copy_top | 339 | 179 | 53% | $543.83 | 1.6% | $-784.74 | 14 | $10459.61 |
-| copy_pro | 316 | 165 | 52% | $783.2 | 1.59% | $-66.8 | 25 | $10273.58 |
-| mid_momentum | 172 | 96 | 56% | $60.13 | 0.35% | $-153.35 | 25 | $10157.68 |
-| strong_dip | 86 | 53 | 62% | $-200.8 | -2.33% | $-293.11 | 24 | $10084.33 |
+| copy_pro | 316 | 165 | 52% | $783.2 | 1.59% | $-66.8 | 25 | $10275.85 |
+| mid_momentum | 172 | 96 | 56% | $60.13 | 0.35% | $-153.35 | 25 | $10155.6 |
+| strong_dip | 86 | 53 | 62% | $-200.8 | -2.33% | $-293.11 | 24 | $10084.58 |
 | fade_longshot | 99 | 95 | 96% | $107.93 | 1.09% | $97.19 | 25 | $10025.42 |
 | mm_tight | 129 | 68 | 53% | $-429.38 | -3.33% | $-632.41 | 10 | $9797.67 |
 | random_control | 106 | 62 | 58% | $-274.52 | -2.59% | $-888.81 | 25 | $9529.56 |
@@ -19,7 +19,7 @@ Ticks: 21130 · Last run: 2026-08-01T15:08:20.023Z · Database: `tester/data/pol
 | mm_max | 46 | 21 | 46% | $-839.48 | -18.25% | $-956.87 | 1 | $9146.37 |
 | mm_slow | 42 | 19 | 45% | $-1029.17 | -24.5% | $-1151.39 | 25 | $8872.4 |
 | mm_strong | 57 | 26 | 46% | $-885.1 | -15.53% | $-1089.05 | 25 | $8616.09 |
-| momentum | 219 | 146 | 67% | $-1397.09 | -6.38% | $-1885.33 | 25 | $8508.51 |
+| momentum | 219 | 146 | 67% | $-1397.09 | -6.38% | $-1885.33 | 25 | $8513.27 |
 | whale_fade | 340 | 158 | 46% | $-3056.02 | -8.99% | $-3390.8 | 14 | $6884.83 |
 | copy_month (retired) | 163 | 77 | 47% | $-777.42 | -4.77% | $-1586.51 | 2 | $9304.14 |
 | favorite (retired) | 131 | 90 | 69% | $-1003.53 | -7.66% | $-1067.46 | 5 | $9093.4 |
