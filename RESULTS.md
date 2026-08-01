@@ -2,14 +2,14 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 19796 · Last run: 2026-08-01T04:00:15.413Z · Database: `tester/data/polymark.db`
+Ticks: 19797 · Last run: 2026-08-01T04:00:46.784Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
 | copy_top | 322 | 168 | 52% | $608.95 | 1.89% | $-719.62 | 21 | $10749.95 |
 | copy_pro | 297 | 152 | 51% | $-160.49 | -0.34% | $-1010.49 | 25 | $10405.49 |
-| strong_dip | 76 | 47 | 62% | $-135.77 | -1.79% | $-228.08 | 24 | $10098.69 |
-| fade_longshot | 85 | 81 | 95% | $13.04 | 0.15% | $2.3 | 25 | $9986.99 |
+| strong_dip | 76 | 47 | 62% | $-135.77 | -1.79% | $-228.08 | 24 | $10094.14 |
+| fade_longshot | 85 | 81 | 95% | $13.04 | 0.15% | $2.3 | 25 | $9987.04 |
 | mid_momentum | 164 | 94 | 57% | $473.98 | 2.89% | $260.5 | 25 | $9697.6 |
 | random_control | 89 | 49 | 55% | $-268.88 | -3.02% | $-883.17 | 25 | $9555.68 |
 | ai_judge | 4 | 0 | 0% | $-400 | -100% | $-300 | 5 | $9469.59 |
@@ -24,8 +24,8 @@ Ticks: 19796 · Last run: 2026-08-01T04:00:15.413Z · Database: `tester/data/pol
 | copy_month (retired) | 163 | 77 | 47% | $-777.42 | -4.77% | $-1586.51 | 2 | $9311.09 |
 | favorite (retired) | 123 | 82 | 67% | $-1175.39 | -9.56% | $-1239.32 | 13 | $9091.17 |
 | late_favorite (retired) | 409 | 317 | 78% | $-1661.91 | -4.06% | $-1703.96 | 0 | $8338.09 |
-| mean_revert (retired) | 136 | 36 | 26% | $-1065.3 | -7.83% | $-3092.96 | 11 | $8021.65 |
-| longshot (retired) | 72 | 2 | 3% | $-3791.55 | -52.66% | $-5691.55 | 12 | $5102.24 |
+| mean_revert (retired) | 136 | 36 | 26% | $-1065.3 | -7.83% | $-3092.96 | 11 | $8021.02 |
+| longshot (retired) | 72 | 2 | 3% | $-3791.55 | -52.66% | $-5691.55 | 12 | $5101.61 |
 
 **Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
 
