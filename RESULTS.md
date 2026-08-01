@@ -2,13 +2,13 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 20006 · Last run: 2026-08-01T05:45:24.877Z · Database: `tester/data/polymark.db`
+Ticks: 20007 · Last run: 2026-08-01T05:45:56.665Z · Database: `tester/data/polymark.db`
 
 | Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
 |---|---|---|---|---|---|---|---|---|
-| copy_pro | 306 | 159 | 52% | $756.24 | 1.58% | $-93.76 | 18 | $10850.39 |
-| copy_top | 328 | 173 | 53% | $663.85 | 2.02% | $-664.72 | 16 | $10782.88 |
-| fade_longshot | 93 | 89 | 96% | $63.69 | 0.68% | $52.95 | 25 | $10010.03 |
+| copy_pro | 306 | 159 | 52% | $756.24 | 1.58% | $-93.76 | 18 | $10882.89 |
+| copy_top | 328 | 173 | 53% | $663.85 | 2.02% | $-664.72 | 16 | $10814.81 |
+| fade_longshot | 93 | 89 | 96% | $63.69 | 0.68% | $52.95 | 25 | $10009.43 |
 | strong_dip | 81 | 49 | 60% | $-337.27 | -4.16% | $-429.58 | 21 | $9999 |
 | mid_momentum | 169 | 95 | 56% | $196.2 | 1.16% | $-17.28 | 25 | $9892.32 |
 | ai_judge | 5 | 0 | 0% | $-500 | -100% | $-400 | 4 | $9463.39 |
@@ -20,9 +20,9 @@ Ticks: 20006 · Last run: 2026-08-01T05:45:24.877Z · Database: `tester/data/pol
 | mm_sports | 139 | 72 | 52% | $-1228.82 | -8.84% | $-1431.85 | 6 | $8851.96 |
 | mm_strong | 57 | 26 | 46% | $-885.1 | -15.53% | $-1089.05 | 25 | $8635.81 |
 | momentum | 213 | 143 | 67% | $-1164.82 | -5.47% | $-1653.06 | 25 | $8237.55 |
-| whale_fade | 329 | 153 | 47% | $-3026.41 | -9.2% | $-3361.19 | 16 | $6574.71 |
+| whale_fade | 329 | 153 | 47% | $-3026.41 | -9.2% | $-3361.19 | 16 | $6531 |
 | copy_month (retired) | 163 | 77 | 47% | $-777.42 | -4.77% | $-1586.51 | 2 | $9326.14 |
-| favorite (retired) | 126 | 85 | 67% | $-1120.76 | -8.89% | $-1184.69 | 10 | $9087.41 |
+| favorite (retired) | 126 | 85 | 67% | $-1120.76 | -8.89% | $-1184.69 | 10 | $9086.82 |
 | late_favorite (retired) | 409 | 317 | 78% | $-1661.91 | -4.06% | $-1703.96 | 0 | $8338.09 |
 | mean_revert (retired) | 138 | 36 | 26% | $-1265.3 | -9.17% | $-3292.96 | 9 | $8035.42 |
 | longshot (retired) | 76 | 2 | 3% | $-4191.55 | -55.15% | $-6091.55 | 8 | $5093.23 |
