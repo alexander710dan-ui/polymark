@@ -2,56 +2,35 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-<<<<<<< Updated upstream
-Ticks: 21304 · Last run: 2026-08-01T16:35:17.794Z · Database: `tester/data/polymark.db`
+Ticks: 21306 · Last run: 2026-08-01T16:36:21.380Z · Database: `tester/data/polymark.db`
 
-| Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
-|---|---|---|---|---|---|---|---|---|
-| copy_pro | 318 | 167 | 53% | $872.38 | 1.76% | $22.38 | 25 | $10631.06 |
-| copy_top | 341 | 181 | 53% | $638.97 | 1.87% | $-689.6 | 15 | $10513.59 |
-| strong_dip | 87 | 54 | 62% | $-136.87 | -1.57% | $-229.18 | 24 | $10153.38 |
-| mid_momentum | 172 | 96 | 56% | $60.13 | 0.35% | $-153.35 | 25 | $10064.64 |
-| fade_longshot | 101 | 97 | 96% | $115.44 | 1.14% | $104.7 | 24 | $10029.1 |
-| mm_tight | 132 | 70 | 53% | $-358.5 | -2.72% | $-561.53 | 12 | $9797.37 |
-| mm_sports | 152 | 82 | 54% | $-757.01 | -4.98% | $-960.04 | 14 | $9495.81 |
-| ai_judge | 6 | 1 | 17% | $-487.64 | -81.27% | $-500 | 3 | $9466.85 |
-| random_control | 107 | 63 | 59% | $-271.43 | -2.54% | $-885.72 | 25 | $9465.12 |
-| mm_max | 46 | 21 | 46% | $-839.48 | -18.25% | $-956.87 | 1 | $9192.6 |
-| super | 58 | 25 | 43% | $-649.65 | -8.44% | $-865.5 | 11 | $9191.14 |
-| mm_slow | 42 | 19 | 45% | $-1029.17 | -24.5% | $-1151.39 | 25 | $8913.59 |
-| mm_strong | 57 | 26 | 46% | $-885.1 | -15.53% | $-1089.05 | 25 | $8660.54 |
-| momentum | 220 | 147 | 67% | $-1391.83 | -6.33% | $-1880.07 | 25 | $8516.61 |
-| whale_fade | 342 | 158 | 46% | $-3256.02 | -9.52% | $-3590.8 | 15 | $6799.89 |
-| copy_month (retired) | 163 | 77 | 47% | $-777.42 | -4.77% | $-1586.51 | 2 | $9320.81 |
-| favorite (retired) | 131 | 90 | 69% | $-1003.53 | -7.66% | $-1067.46 | 5 | $9092.23 |
-=======
-Ticks: 21280 · Last run: 2026-08-01T16:23:26.190Z · Database: `tester/data/polymark.db`
+| Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
+|---|---|---|---|---|---|---|---|
+| copy_pro | **$10631.06** | $872.38 | $-241.32 | 318 | 53% | $22.38 | 25 |
+| copy_top | **$10513.59** | $638.97 | $-125.38 | 341 | 53% | $-689.6 | 15 |
+| strong_dip | **$10157.08** | $-136.87 | $293.95 | 87 | 62% | $-229.18 | 24 |
+| mid_momentum | **$10064.64** | $60.13 | $4.51 | 172 | 56% | $-153.35 | 25 |
+| fade_longshot | **$10029.1** | $115.44 | $-86.34 | 101 | 96% | $104.7 | 24 |
+| mm_cheap | **$10000** | $0 | $0 | 0 | — | $0 | 5 |
+| mm_tight | **$9792.37** | $-358.5 | $150.87 | 132 | 53% | $-561.53 | 12 |
+| mm_sports | **$9490.81** | $-757.01 | $247.82 | 152 | 54% | $-960.04 | 14 |
+| ai_judge | **$9466.85** | $-487.64 | $-45.51 | 6 | 17% | $-500 | 3 |
+| random_control | **$9465.12** | $-271.43 | $-263.45 | 107 | 59% | $-885.72 | 25 |
+| mm_max | **$9192.6** | $-839.48 | $32.08 | 46 | 46% | $-956.87 | 1 |
+| super | **$9191.14** | $-649.65 | $-159.21 | 58 | 43% | $-865.5 | 11 |
+| mm_slow | **$8913.59** | $-1029.17 | $-57.24 | 42 | 45% | $-1151.39 | 25 |
+| mm_strong | **$8660.54** | $-885.1 | $-454.36 | 57 | 46% | $-1089.05 | 25 |
+| momentum | **$8513.44** | $-1391.83 | $-94.73 | 220 | 67% | $-1880.07 | 25 |
+| whale_fade | **$6799.89** | $-3256.02 | $55.91 | 342 | 46% | $-3590.8 | 15 |
+| copy_month (retired) | **$9320.81** | $-777.42 | $98.23 | 163 | 47% | $-1586.51 | 2 |
+| favorite (retired) | **$9092.23** | $-1003.53 | $95.76 | 131 | 69% | $-1067.46 | 5 |
+| late_favorite (retired) | **$8338.09** | $-1661.91 | $0 | 409 | 78% | $-1703.96 | 0 |
+| mean_revert (retired) | **$8019.96** | $-1837.09 | $-142.95 | 145 | 26% | $-3864.75 | 2 |
+| longshot (retired) | **$5079.24** | $-4691.55 | $-229.21 | 81 | 2% | $-6591.55 | 3 |
 
-| Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |
-|---|---|---|---|---|---|---|---|---|
-| copy_top | 341 | 181 | 53% | $638.97 | 1.87% | $-689.6 | 15 | $10510.86 |
-| copy_pro | 318 | 167 | 53% | $872.38 | 1.76% | $22.38 | 25 | $10462.28 |
-| strong_dip | 87 | 54 | 62% | $-136.87 | -1.57% | $-229.18 | 24 | $10107.38 |
-| mid_momentum | 172 | 96 | 56% | $60.13 | 0.35% | $-153.35 | 25 | $10092.88 |
-| fade_longshot | 101 | 97 | 96% | $115.44 | 1.14% | $104.7 | 24 | $10025.12 |
-| mm_tight | 132 | 70 | 53% | $-358.5 | -2.72% | $-561.53 | 12 | $9777.77 |
-| mm_sports | 152 | 82 | 54% | $-757.01 | -4.98% | $-960.04 | 14 | $9476.21 |
-| ai_judge | 6 | 1 | 17% | $-487.64 | -81.27% | $-500 | 3 | $9464.62 |
-| random_control | 107 | 63 | 59% | $-271.43 | -2.54% | $-885.72 | 25 | $9457.43 |
-| super | 58 | 25 | 43% | $-649.65 | -8.44% | $-865.5 | 11 | $9187.56 |
-| mm_max | 46 | 21 | 46% | $-839.48 | -18.25% | $-956.87 | 1 | $9156.75 |
-| mm_slow | 42 | 19 | 45% | $-1029.17 | -24.5% | $-1151.39 | 25 | $8856.89 |
-| mm_strong | 57 | 26 | 46% | $-885.1 | -15.53% | $-1089.05 | 25 | $8613.35 |
-| momentum | 220 | 147 | 67% | $-1391.83 | -6.33% | $-1880.07 | 25 | $8513.62 |
-| whale_fade | 342 | 158 | 46% | $-3256.02 | -9.52% | $-3590.8 | 15 | $6800.58 |
-| copy_month (retired) | 163 | 77 | 47% | $-777.42 | -4.77% | $-1586.51 | 2 | $9318.03 |
-| favorite (retired) | 131 | 90 | 69% | $-1003.53 | -7.66% | $-1067.46 | 5 | $9091.05 |
->>>>>>> Stashed changes
-| late_favorite (retired) | 409 | 317 | 78% | $-1661.91 | -4.06% | $-1703.96 | 0 | $8338.09 |
-| mean_revert (retired) | 145 | 37 | 26% | $-1837.09 | -12.67% | $-3864.75 | 2 | $8019.96 |
-| longshot (retired) | 81 | 2 | 2% | $-4691.55 | -57.92% | $-6591.55 | 3 | $5079.24 |
+**Equity is the only honest headline** — realized P&L alone hides losses sitting in open positions. In this lab unrealized has been negative 97% of the time, so a realized-only view systematically overstates performance.
 
-**Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
+**Read 'minus best win' before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.
 
 ### Active strategies
 - **super** — the best empirical part of every earlier strategy: 30–70¢ only, never in-play, momentum or pregame-whale signal (veto on disagreement), no chasing, conviction-sized stakes ($100–250)
