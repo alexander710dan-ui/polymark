@@ -130,6 +130,12 @@ const STRATEGIES = {
   // everything at once: sports, 45-70c, 2+ days, >=8c move
   mm_max: (m) => (m.tag === "sports" && m.days >= 2 && m.yes >= 0.45 && m.yes <= 0.70
     ? (m.change24 >= 0.08 ? "yes" : m.change24 <= -0.08 ? "no" : null) : null),
+  /* Execution-cost response (post-mortem 2026-08-01): every bet in this lab
+     starts ~2.2c behind because signals read the mid but fills cross to the
+     ask — a cost larger than any edge measured so far. This variant takes the
+     same signal only where the spread is <=2c, so the crossing cost is <=1c. */
+  mm_cheap: (m) => (m.spread !== null && m.spread <= 0.02 && m.yes >= 0.30 && m.yes <= 0.70
+    ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null),
   /* mean_revert, repaired: only buy a knocked-down side that is STILL the
      favourite. Plain mean_revert died buying dying longshots. */
   strong_dip:    (m) => (m.change24 <= -0.10 && m.yes >= 0.50 ? "yes" : m.change24 >= 0.10 && m.yes <= 0.50 ? "no" : null),
@@ -185,7 +191,8 @@ function openDb() {
     CREATE INDEX IF NOT EXISTS idx_pos_market ON positions(market_id, strategy);
   `);
   // migrations for columns added after the first release
-  for (const col of ["outcome_name TEXT", "condition_id TEXT", "signal_meta TEXT"]) {
+  for (const col of ["outcome_name TEXT", "condition_id TEXT", "signal_meta TEXT",
+                     "signal_price REAL", "spread_at_entry REAL"]) {
     try { db.exec("ALTER TABLE positions ADD COLUMN " + col); } catch (e) { /* exists */ }
   }
   return db;
@@ -432,14 +439,18 @@ function openNewPositions(db, universe, whales) {
       if (price <= 0.01 || price >= 0.99) continue;
       const shares = stakeAmt / price;
       const outcomeName = side === "yes" ? m.outcomes[0] : m.outcomes[1];
+      // the price the SIGNAL saw (mid) vs the price we actually pay (ask):
+      // the difference is the execution cost, and it is measured per bet
+      const signalPrice = side === "yes" ? m.yes : 1 - m.yes;
       // record WHICH whales triggered copy-family bets → per-whale attribution later
       const sig = ctx.whale && (name === "copy_top" || name === "whale_fade" || name === "super") ? ctx.whale
         : ctx.pro && name === "copy_pro" ? ctx.pro : null;
       const sigMeta = sig && sig.wallets ? sig.wallets.join(",") : null;
-      db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares, opened_at, end_date, last_mark, outcome_name, condition_id, signal_meta)
-                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares, opened_at, end_date, last_mark, outcome_name, condition_id, signal_meta, signal_price, spread_at_entry)
+                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
         .run(name, m.id, m.question, tag(m.question), side, Math.round(price * 10000) / 10000, stakeAmt,
-             Math.round(shares * 100) / 100, now, m.endDate, Math.round(price * 10000) / 10000, outcomeName, m.conditionId, sigMeta);
+             Math.round(shares * 100) / 100, now, m.endDate, Math.round(price * 10000) / 10000, outcomeName, m.conditionId, sigMeta,
+             Math.round(signalPrice * 10000) / 10000, m.spread === null ? null : Math.round(m.spread * 10000) / 10000);
       opened++; slots--; budgetLeft -= stakeAmt;
     }
   }
@@ -598,13 +609,16 @@ function report(db) {
   md.push("");
   md.push("Ticks: " + ticks.n + " · Last run: " + (ticks.last || "never") + " · Database: `tester/data/polymark.db`");
   md.push("");
-  md.push("| Strategy | Closed | Wins | Win rate | Realized P&L | ROI (closed) | P&L minus best win | Open | Equity |");
-  md.push("|---|---|---|---|---|---|---|---|---|");
+  md.push("| Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |");
+  md.push("|---|---|---|---|---|---|---|---|");
   for (const s of rows) {
-    md.push(`| ${s.name}${s.retired ? " (retired)" : ""} | ${s.closed} | ${s.wins} | ${s.winRate === null ? "—" : s.winRate + "%"} | $${s.realized} | ${s.roiClosed === null ? "—" : s.roiClosed + "%"} | $${s.exTopWin} | ${s.open} | $${s.equity} |`);
+    const unreal = Math.round((s.openValue - s.openStake) * 100) / 100;
+    md.push(`| ${s.name}${s.retired ? " (retired)" : ""} | **$${s.equity}** | $${s.realized} | $${unreal} | ${s.closed} | ${s.winRate === null ? "—" : s.winRate + "%"} | $${s.exTopWin} | ${s.open} |`);
   }
   md.push("");
-  md.push("**Read the 'minus best win' column before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.");
+  md.push("**Equity is the only honest headline** — realized P&L alone hides losses sitting in open positions. In this lab unrealized has been negative 97% of the time, so a realized-only view systematically overstates performance.");
+  md.push("");
+  md.push("**Read 'minus best win' before believing any P&L** — a strategy whose profit disappears without its single luckiest trade hasn't proven anything yet.");
   md.push("");
   md.push("### Active strategies");
   md.push("- **super** — the best empirical part of every earlier strategy: 30–70¢ only, never in-play, momentum or pregame-whale signal (veto on disagreement), no chasing, conviction-sized stakes ($100–250)");

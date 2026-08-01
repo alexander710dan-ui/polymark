@@ -87,13 +87,13 @@ border-radius:7px;padding:6px 9px;font-family:"Spline Sans Mono",monospace;font-
 <script>
 "use strict";
 var C={super:"#f5b85c",ai_judge:"#66c7d6",momentum:"#4fb286",fade_longshot:"#c9a35c",favorite:"#7295c2",
-mm_sports:"#7ee0a0",mm_tight:"#b8e07e",mm_slow:"#5fc9a8",mm_strong:"#a8d95f",mm_max:"#d9f07e",
+mm_sports:"#7ee0a0",mm_tight:"#b8e07e",mm_slow:"#5fc9a8",mm_strong:"#a8d95f",mm_max:"#d9f07e",mm_cheap:"#c0e8b0",
 longshot:"#c96f63",mean_revert:"#ed93b1",late_favorite:"#6ec6c0",copy_top:"#e8d27c",copy_pro:"#f0d060",
 copy_month:"#e09f7d",whale_fade:"#a58fd0",mid_momentum:"#9fd06a",strong_dip:"#8aa8e8",random_control:"#5f6877"};
 var TABS=[["standings","Standings"],["open","Open"],["settled","Settled"],["ai","AI"],["lab","Lab"]];
 var tab=localStorage.getItem("pm_tab")||"standings", D=null, AI=null;
 var sel=null, stake=100, page=0, size=+(localStorage.getItem("pm_size")||10), sort="new", filter=null, opage=0, ofilter="all";
-var metric=localStorage.getItem("pm_metric")||"equity";
+var metric="equity"; // equity-first by design; Realized-only is opt-in per session
 
 function m$(v){return (v<0?"-":"")+"$"+Math.abs(Math.round(v)).toLocaleString()}
 function c$(v){var c=v*100;return (c<10?c.toFixed(1):Math.round(c))+"¢"}
@@ -135,15 +135,20 @@ function vStandings(){
     "<span class='meta right' id='rng'></span></div>"+
     "<div class='chart' id='chart'></div><div class='legend' id='legend'></div>"+
     "<p class='meta' id='span' style='margin-top:6px'></p>";
-  h+="<table style='margin-top:20px'><thead><tr><th>Strategy</th><th class='num'>Bets</th><th class='num hm'>Win</th>"+
-    "<th class='num'>Realized</th><th class='num hm'>Open</th><th class='num'>Equity</th></tr></thead><tbody>";
+  h+="<table style='margin-top:20px'><thead><tr><th>Strategy</th><th class='num'>Equity</th>"+
+    "<th class='num hm'>Realized</th><th class='num hm'>Unrealized</th><th class='num'>Bets</th>"+
+    "<th class='num hm'>Win</th><th class='num hm'>Open</th></tr></thead><tbody>";
   rows.forEach(function(s){
+    var un=(s.openValue||0)-(s.openStake||0);
     h+="<tr"+(top&&s.name===top.name?" class='lead'":s.retired?" style='opacity:.4'":"")+"><td><strong>"+e(s.name)+"</strong>"+
-      (s.retired?" <span class='meta'>retired</span>":"")+"</td><td class='num'>"+s.closed+"</td>"+
+      (s.retired?" <span class='meta'>retired</span>":"")+"</td>"+
+      "<td class='num "+(s.equity>=D.bankroll?"pos":"neg")+"'><strong>"+m$(s.equity)+"</strong></td>"+
+      "<td class='num hm "+(s.realized>0?"pos":s.realized<0?"neg":"")+"'>"+m$(s.realized)+"</td>"+
+      "<td class='num hm "+(un>0?"pos":un<0?"neg":"")+"'>"+m$(un)+"</td>"+
+      "<td class='num'>"+s.closed+"</td>"+
       "<td class='num hm'>"+(s.winRate===null?"—":s.winRate+"%")+"</td>"+
-      "<td class='num "+(s.realized>0?"pos":s.realized<0?"neg":"")+"'>"+m$(s.realized)+"</td>"+
-      "<td class='num hm'>"+s.open+"</td><td class='num "+(s.equity>=D.bankroll?"pos":"neg")+"'>"+m$(s.equity)+"</td></tr>"});
-  return h+"</tbody></table>";
+      "<td class='num hm'>"+s.open+"</td></tr>"});
+  return h+"</tbody></table><p class='meta' style='margin-top:8px'>Equity leads because realized P&L alone hides losses in open positions — unrealized has been negative 97% of the time here.</p>";
 }
 function chart(){
   var ret={};(D.strategies||[]).forEach(function(s){if(s.retired)ret[s.name]=1});
@@ -254,7 +259,6 @@ function draw(){
   v.innerHTML=tab==="standings"?vStandings():tab==="open"?vOpen():tab==="settled"?vSettled():tab==="ai"?vAI():vLab();
   if(tab==="standings")chart();
   if(tab==="lab"){var i=document.getElementById("bank");i.oninput=function(){localStorage.setItem("pm_bank",this.value);draw()}}
-  localStorage.setItem("pm_metric",metric);
   var age=(Date.now()-Date.parse(D.generated_at))/6e4;
   var st=D.source==="cloud"?["cloud backup","var(--no)"]:age<15?["live","var(--yes)"]:age<45?["delayed","var(--brass)"]:["silent","var(--no)"];
   document.getElementById("dot").style.background=st[1];

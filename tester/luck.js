@@ -146,6 +146,24 @@ for (const r of out.filter((x) => x.edgeWins > 0)) {
     "   → " + (n05 > r.n ? Math.round((n05 - r.n) / 25) + " more days at ~25 bets/day" : "already there"));
 }
 
+/* Execution cost: signals read the mid, fills cross to the ask. That gap is
+   paid on every bet and is measured directly where we recorded both prices. */
+const cost = db.prepare(`SELECT COUNT(*) n, ROUND(AVG(entry - signal_price) * 100, 2) c,
+  ROUND(AVG(spread_at_entry) * 100, 2) spr FROM positions
+  WHERE signal_price IS NOT NULL AND entry IS NOT NULL`).get();
+const implied = db.prepare(`SELECT COUNT(*) n, ROUND(AVG(entry), 4) p, ROUND(1.0 * SUM(pnl > 0) / COUNT(*), 4) w
+  FROM positions WHERE status='closed'`).get();
+console.log("\n\nEXECUTION COST — the drag every strategy pays before any edge\n");
+if (cost.n > 0) {
+  console.log("measured directly on " + cost.n + " bets: paid " + cost.c + "c above the signalled price, average spread " + cost.spr + "c");
+}
+const gap = (implied.p - implied.w) * 100;
+const se = Math.sqrt(implied.w * (1 - implied.w) / implied.n) * 100;
+console.log("lab-wide: " + implied.n + " settled bets, average entry " + (implied.p * 100).toFixed(2) +
+  "c vs actual win rate " + (implied.w * 100).toFixed(2) + "% → " + gap.toFixed(2) +
+  " points behind (z = " + (-gap / se).toFixed(2) + ")");
+console.log("Any edge smaller than this cost cannot show up as profit, no matter the sample size.");
+
 console.log("\nluck-beats-this = share of random replays that did at least as well.");
 console.log("Below 5% is the usual bar for 'not luck'; below 1% is strong.");
 console.log("A 90% ROI range straddling 0 means the true edge could still be zero.");
