@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 22588 · Last run: 2026-08-02T03:18:51.747Z · Database: `tester/data/polymark.db`
+Ticks: 22589 · Last run: 2026-08-02T03:19:23.448Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -11,8 +11,8 @@ Ticks: 22588 · Last run: 2026-08-02T03:18:51.747Z · Database: `tester/data/pol
 | mm_tight | **$10108.96** | $315.13 | $-206.17 | 166 | 55% | $112.1 | 12 |
 | mm_cheap | **$10080.23** | $522.9 | $-442.67 | 14 | 71% | $345.12 | 25 |
 | copy_top | **$10073.91** | $9.68 | $64.23 | 360 | 52% | $-1318.89 | 20 |
-| strong_dip | **$9949.11** | $-393.8 | $342.91 | 94 | 60% | $-486.11 | 25 |
-| fade_longshot | **$9946.33** | $117.48 | $-171.15 | 102 | 96% | $106.74 | 25 |
+| strong_dip | **$9946.61** | $-393.8 | $340.41 | 94 | 60% | $-486.11 | 25 |
+| fade_longshot | **$9946.28** | $117.48 | $-171.2 | 102 | 96% | $106.74 | 25 |
 | copy_pro | **$9938.41** | $-118.71 | $57.12 | 341 | 51% | $-968.71 | 22 |
 | super | **$9774.97** | $-472.29 | $247.26 | 59 | 44% | $-688.14 | 12 |
 | ai_judge | **$9397.62** | $-487.64 | $-114.74 | 6 | 17% | $-500 | 3 |
@@ -26,7 +26,7 @@ Ticks: 22588 · Last run: 2026-08-02T03:18:51.747Z · Database: `tester/data/pol
 | favorite (retired) | **$9034.14** | $-1003.53 | $37.67 | 131 | 69% | $-1067.46 | 5 |
 | late_favorite (retired) | **$8338.09** | $-1661.91 | $0 | 409 | 78% | $-1703.96 | 0 |
 | mean_revert (retired) | **$8319.96** | $-1837.09 | $157.05 | 145 | 26% | $-3864.75 | 2 |
-| longshot (retired) | **$5079.24** | $-4691.55 | $-229.21 | 81 | 2% | $-6591.55 | 3 |
+| longshot (retired) | **$5080.28** | $-4691.55 | $-228.17 | 81 | 2% | $-6591.55 | 3 |
 
 **Equity is the only honest headline** — realized P&L alone hides losses sitting in open positions. In this lab unrealized has been negative 97% of the time, so a realized-only view systematically overstates performance.
 
