@@ -2,31 +2,31 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 23307 · Last run: 2026-08-02T09:18:53.420Z · Database: `tester/data/polymark.db`
+Ticks: 23308 · Last run: 2026-08-02T09:19:25.486Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
-| mid_momentum | **$10544.25** | $630.98 | $-86.73 | 181 | 57% | $417.5 | 25 |
+| mid_momentum | **$10544.38** | $630.98 | $-86.6 | 181 | 57% | $417.5 | 25 |
 | mm_sports | **$10436.17** | $515.79 | $-79.62 | 205 | 58% | $312.76 | 10 |
 | mm_tight | **$10264.84** | $367.52 | $-102.68 | 177 | 55% | $164.49 | 9 |
 | copy_top | **$10227.95** | $33.14 | $194.81 | 366 | 52% | $-1295.43 | 18 |
 | mm_cheap | **$10200.98** | $704.44 | $-503.46 | 21 | 71% | $526.66 | 25 |
-| copy_pro | **$9996.9** | $-406.82 | $403.72 | 349 | 51% | $-1256.82 | 25 |
-| fade_longshot | **$9921.17** | $117.48 | $-196.31 | 102 | 96% | $106.74 | 25 |
+| copy_pro | **$9997.02** | $-406.82 | $403.84 | 349 | 51% | $-1256.82 | 25 |
+| fade_longshot | **$9921.38** | $117.48 | $-196.1 | 102 | 96% | $106.74 | 25 |
 | strong_dip | **$9906.13** | $-393.8 | $299.93 | 94 | 60% | $-486.11 | 25 |
 | super | **$9799.11** | $-245.84 | $44.95 | 62 | 47% | $-461.69 | 11 |
 | ai_judge | **$9405.56** | $-487.64 | $-106.8 | 6 | 17% | $-500 | 3 |
 | mm_max | **$9337.95** | $-660.83 | $-1.22 | 58 | 50% | $-778.22 | 1 |
 | random_control | **$8960.11** | $-665.29 | $-374.6 | 123 | 58% | $-1279.58 | 25 |
-| mm_slow | **$8871.93** | $-882.32 | $-245.75 | 46 | 48% | $-1004.54 | 25 |
-| mm_strong | **$8581.08** | $-933.53 | $-485.39 | 62 | 47% | $-1137.48 | 25 |
-| momentum | **$8161.08** | $-1139.53 | $-699.39 | 233 | 67% | $-1627.77 | 25 |
+| mm_slow | **$8872.08** | $-882.32 | $-245.6 | 46 | 48% | $-1004.54 | 25 |
+| mm_strong | **$8581.22** | $-933.53 | $-485.25 | 62 | 47% | $-1137.48 | 25 |
+| momentum | **$8161.2** | $-1139.53 | $-699.27 | 233 | 67% | $-1627.77 | 25 |
 | whale_fade | **$7178.33** | $-2453.31 | $-368.36 | 367 | 47% | $-2788.09 | 18 |
 | copy_month (retired) | **$9404.29** | $-777.42 | $181.71 | 163 | 47% | $-1586.51 | 2 |
 | favorite (retired) | **$9030.29** | $-1003.53 | $33.82 | 131 | 69% | $-1067.46 | 5 |
 | mean_revert (retired) | **$8339.71** | $-1837.09 | $176.8 | 145 | 26% | $-3864.75 | 2 |
 | late_favorite (retired) | **$8338.09** | $-1661.91 | $0 | 409 | 78% | $-1703.96 | 0 |
-| longshot (retired) | **$5107.37** | $-4691.55 | $-201.08 | 81 | 2% | $-6591.55 | 3 |
+| longshot (retired) | **$5106.32** | $-4691.55 | $-202.13 | 81 | 2% | $-6591.55 | 3 |
 
 **Equity is the only honest headline** — realized P&L alone hides losses sitting in open positions. In this lab unrealized has been negative 97% of the time, so a realized-only view systematically overstates performance.
 
