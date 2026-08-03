@@ -36,6 +36,17 @@ const FORCE_CLOSE_DAYS = 10; // days past endDate before an unresolved position 
    - same-day crypto strike/updown: high win rate, negative P&L (payoff
      asymmetry) and effectively coin flips on intraday price paths */
 const JUNK_RE = /\btweets? (from|between)|post \d+[-–]\d+ tweets|Up or Down on|dip to \$|reach \$[\d,]+ (in|on) |be above \$[\d,]+ on /i;
+/* Polymarket taker fees (help.polymarket.com/en/articles/13364478-trading-fees):
+     fee = shares × feeRate × p × (1 − p)
+   MAKERS ARE NEVER CHARGED. Only takers pay. That single line is why patient
+   execution matters: on a $100 bet near 50c the taker fee alone is ~$2.30,
+   which is larger than any edge this lab has measured. */
+const FEE_RATE = { sports: 0.05, crypto: 0.07, politics: 0.04, other: 0.05 };
+function takerFee(tagName, price, shares) {
+  const rate = FEE_RATE[tagName] ?? 0.05;
+  return Math.round(shares * rate * price * (1 - price) * 100000) / 100000;
+}
+
 const SPORT_RE = /\b(vs\.?|@)\b|NBA|NFL|NHL|MLB|UFC|Premier League|La Liga|Serie A|Bundesliga|Champions League|Grand Prix|F1|ATP|WTA|LoL|Dota|Counter-Strike|CS2|Valorant|tennis|Wimbledon|playoff|Super Bowl|World Series|spread|moneyline/i;
 const POLITICS_RE = /election|president|senate|parliament|minister|congress|governor|nominee|referendum|impeach/i;
 const CRYPTO_RE = /bitcoin|BTC|ethereum|ETH|solana|crypto|token|\$\d+k/i;
@@ -209,7 +220,9 @@ function openDb() {
                      /* closing-line tracking: the last price seen while the market was
                         still genuinely tradeable, plus fixed-horizon markouts. This is
                         what makes edge measurable in hours instead of weeks. */
-                     "clv_mark REAL", "clv_mark_ts TEXT", "mark_1h REAL", "mark_24h REAL"]) {
+                     "clv_mark REAL", "clv_mark_ts TEXT", "mark_1h REAL", "mark_24h REAL",
+                     /* taker fee paid on entry; 0 for maker (patient) fills */
+                     "fee REAL DEFAULT 0", "is_maker INTEGER DEFAULT 0"]) {
     try { db.exec("ALTER TABLE positions ADD COLUMN " + col); } catch (e) { /* exists */ }
   }
   return db;
@@ -422,14 +435,14 @@ async function settleOpenPositions(db) {
       if (isResolved) {
         const yesWon = yesPrice >= 0.95;
         const won = (p.side === "yes") === yesWon;
-        const pnl = won ? p.shares - p.stake : -p.stake;
+        const pnl = (won ? p.shares - p.stake : -p.stake) - (p.fee || 0);
         db.prepare("UPDATE positions SET status='closed', exit=?, closed_at=?, pnl=?, close_reason='resolved' WHERE id=?")
           .run(won ? 1 : 0, new Date().toISOString(), Math.round(pnl * 100) / 100, p.id);
         settled++;
       } else if (raw.closed === true || longExpired) {
         // closed without clean resolution, or resolution never arrived: mark out at last price
         const mark = yesPrice !== null ? (p.side === "yes" ? yesPrice : 1 - yesPrice) : p.entry;
-        const pnl = p.shares * mark - p.stake;
+        const pnl = p.shares * mark - p.stake - (p.fee || 0);
         db.prepare("UPDATE positions SET status='closed', exit=?, closed_at=?, pnl=?, close_reason=? WHERE id=?")
           .run(mark, new Date().toISOString(), Math.round(pnl * 100) / 100, longExpired ? "expired_unresolved" : "closed_unclear", p.id);
         settled++;
@@ -489,11 +502,13 @@ function openNewPositions(db, universe, whales) {
       const sig = ctx.whale && (name === "copy_top" || name === "whale_fade" || name === "super") ? ctx.whale
         : ctx.pro && name === "copy_pro" ? ctx.pro : null;
       const sigMeta = sig && sig.wallets ? sig.wallets.join(",") : null;
-      db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares, opened_at, end_date, last_mark, outcome_name, condition_id, signal_meta, signal_price, spread_at_entry)
-                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-        .run(name, m.id, m.question, tag(m.question), side, Math.round(price * 10000) / 10000, stakeAmt,
+      const mTag = tag(m.question);
+      const fee = takerFee(mTag, price, shares);
+      db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares, opened_at, end_date, last_mark, outcome_name, condition_id, signal_meta, signal_price, spread_at_entry, fee, is_maker)
+                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)`)
+        .run(name, m.id, m.question, mTag, side, Math.round(price * 10000) / 10000, stakeAmt,
              Math.round(shares * 100) / 100, now, m.endDate, Math.round(price * 10000) / 10000, outcomeName, m.conditionId, sigMeta,
-             Math.round(signalPrice * 10000) / 10000, m.spread === null ? null : Math.round(m.spread * 10000) / 10000);
+             Math.round(signalPrice * 10000) / 10000, m.spread === null ? null : Math.round(m.spread * 10000) / 10000, fee);
       opened++; slots--; budgetLeft -= stakeAmt;
     }
   }
@@ -567,9 +582,10 @@ function resolveMakerOrders(db, universe) {
       if (askNow <= o.limit_price + 1e-9) {
         // someone sold down to our price — we get filled at our limit
         const shares = o.stake / o.limit_price;
+        // maker fill: zero fee by Polymarket's own rule — this is the whole point
         db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares,
-                      opened_at, end_date, last_mark, outcome_name, condition_id, signal_price, spread_at_entry)
-                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+                      opened_at, end_date, last_mark, outcome_name, condition_id, signal_price, spread_at_entry, fee, is_maker)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,1)`)
           .run(o.strategy, o.market_id, o.question, o.tag, o.side, o.limit_price, o.stake,
                Math.round(shares * 100) / 100, new Date(now).toISOString(), o.end_date,
                o.limit_price, o.outcome_name, o.condition_id, o.ask_at_signal,
