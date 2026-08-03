@@ -2,17 +2,17 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 27265 · Last run: 2026-08-03T20:16:23.179Z · Database: `tester/data/polymark.db`
+Ticks: 27266 · Last run: 2026-08-03T20:16:56.623Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
-| mm_sports | **$11871.72** | $1816.82 | $54.9 | 294 | 57% | $1613.79 | 22 |
-| mm_tight | **$11019.84** | $815 | $204.84 | 254 | 54% | $611.97 | 18 |
+| mm_sports | **$11875.11** | $1816.82 | $58.29 | 294 | 57% | $1613.79 | 22 |
+| mm_tight | **$11016.14** | $815 | $201.14 | 254 | 54% | $611.97 | 18 |
 | mm_cheap | **$10406.9** | $893.78 | $-486.88 | 25 | 72% | $716 | 25 |
 | mid_momentum | **$10383.9** | $627.06 | $-243.16 | 190 | 57% | $413.58 | 25 |
 | maker_sports | **$9998.15** | $129.13 | $-130.98 | 14 | 57% | $1.86 | 11 |
 | strong_dip | **$9993.57** | $-337.42 | $330.99 | 96 | 60% | $-429.73 | 25 |
-| mm_max | **$9973.17** | $-99.4 | $72.57 | 92 | 52% | $-218.87 | 12 |
+| mm_max | **$9969.46** | $-99.4 | $68.86 | 92 | 52% | $-218.87 | 12 |
 | fade_longshot | **$9954.38** | $34.52 | $-80.14 | 105 | 95% | $23.78 | 25 |
 | maker_flat | **$9910.17** | $-3.97 | $-85.86 | 10 | 50% | $-131.24 | 7 |
 | super | **$9656.19** | $-353.9 | $10.09 | 64 | 47% | $-569.75 | 11 |
@@ -35,7 +35,7 @@ Ticks: 27265 · Last run: 2026-08-03T20:16:23.179Z · Database: `tester/data/pol
 
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
-| maker_flat | 17 | 17 | 3 | 50% | 2.76¢ |
+| maker_flat | 17 | 17 | 4 | 50% | 2.76¢ |
 | maker_sports | 25 | 14 | 3 | 64% | 1.84¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
