@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 27011 · Last run: 2026-08-03T17:55:04.762Z · Database: `tester/data/polymark.db`
+Ticks: 27012 · Last run: 2026-08-03T17:55:37.764Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -13,7 +13,7 @@ Ticks: 27011 · Last run: 2026-08-03T17:55:04.762Z · Database: `tester/data/pol
 | strong_dip | **$9985.76** | $-337.42 | $323.18 | 96 | 60% | $-429.73 | 25 |
 | fade_longshot | **$9973.66** | $34.52 | $-60.86 | 105 | 95% | $23.78 | 25 |
 | maker_flat | **$9966.53** | $-100.32 | $66.85 | 5 | 40% | $-227.59 | 7 |
-| maker_sports | **$9852.41** | $129.01 | $-276.6 | 7 | 57% | $1.74 | 7 |
+| maker_sports | **$9852.42** | $129.01 | $-276.59 | 7 | 57% | $1.74 | 9 |
 | copy_pro | **$9567.83** | $-834.75 | $402.58 | 365 | 51% | $-1684.75 | 25 |
 | mm_max | **$9558.18** | $-233.9 | $-207.92 | 84 | 51% | $-351.29 | 13 |
 | super | **$9544.39** | $-445.84 | $-9.77 | 63 | 46% | $-661.69 | 12 |
@@ -35,8 +35,8 @@ Ticks: 27011 · Last run: 2026-08-03T17:55:04.762Z · Database: `tester/data/pol
 
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
-| maker_flat | 12 | 10 | 6 | 55% | 2.58¢ |
-| maker_sports | 14 | 7 | 6 | 67% | 1.79¢ |
+| maker_flat | 12 | 11 | 5 | 52% | 2.58¢ |
+| maker_sports | 16 | 7 | 5 | 70% | 1.69¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
 
