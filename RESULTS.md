@@ -1,19 +1,21 @@
 # Polymark paper-trading results
 
-**Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
+**Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10.000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 26515 · Last run: 2026-08-03T13:16:51.548Z · Database: `tester/data/polymark.db`
+Ticks: 26511 · Last run: 2026-08-03T13:15:49.615Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
-| mm_sports | **$11431.21** | $1218.78 | $212.43 | 270 | 57% | $1015.75 | 23 |
-| mm_tight | **$10621.26** | $443.32 | $177.94 | 230 | 53% | $240.29 | 17 |
-| mid_momentum | **$10395.41** | $708.28 | $-312.87 | 186 | 58% | $494.8 | 25 |
-| mm_cheap | **$10250.83** | $832.49 | $-581.66 | 24 | 71% | $654.71 | 25 |
-| strong_dip | **$10007.97** | $-337.42 | $345.39 | 96 | 60% | $-429.73 | 25 |
-| copy_pro | **$9968.01** | $-334.75 | $302.76 | 362 | 51% | $-1184.75 | 25 |
-| fade_longshot | **$9963.38** | $34.52 | $-71.14 | 105 | 95% | $23.78 | 25 |
-| copy_top | **$9672.97** | $-266.45 | $-60.58 | 381 | 52% | $-1595.02 | 25 |
+| mm_sports | **$11434.15** | $1218.78 | $215.37 | 270 | 57% | $1015.75 | 23 |
+| mm_tight | **$10624.2** | $443.32 | $180.88 | 230 | 53% | $240.29 | 17 |
+| mid_momentum | **$10396.88** | $708.28 | $-311.4 | 186 | 58% | $494.8 | 25 |
+| mm_cheap | **$10251.96** | $832.49 | $-580.53 | 24 | 71% | $654.71 | 25 |
+| strong_dip | **$10007.09** | $-337.42 | $344.51 | 96 | 60% | $-429.73 | 25 |
+| maker_sports | **$10000** | $0 | $0 | 0 | — | $0 | 0 |
+| maker_flat | **$10000** | $0 | $0 | 0 | — | $0 | 0 |
+| copy_pro | **$9966.89** | $-334.75 | $301.64 | 362 | 51% | $-1184.75 | 25 |
+| fade_longshot | **$9962.83** | $34.52 | $-71.69 | 105 | 95% | $23.78 | 25 |
+| copy_top | **$9668.31** | $-266.45 | $-65.24 | 381 | 52% | $-1595.02 | 25 |
 | super | **$9544.66** | $-445.84 | $-9.5 | 63 | 46% | $-661.69 | 12 |
 | mm_max | **$9455.91** | $-475.72 | $-68.37 | 77 | 49% | $-593.11 | 8 |
 | ai_judge | **$9411.63** | $-487.64 | $-100.73 | 6 | 17% | $-500 | 3 |
@@ -27,6 +29,16 @@ Ticks: 26515 · Last run: 2026-08-03T13:16:51.548Z · Database: `tester/data/pol
 | late_favorite (retired) | **$8338.09** | $-1661.91 | $0 | 409 | 78% | $-1703.96 | 0 |
 | mean_revert (retired) | **$8333.04** | $-1837.09 | $170.13 | 145 | 26% | $-3864.75 | 2 |
 | longshot (retired) | **$5097.99** | $-4691.55 | $-210.46 | 81 | 2% | $-6591.55 | 3 |
+
+
+### Patient (maker) execution
+
+| Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
+|---|---|---|---|---|---|
+| maker_flat | 0 | 0 | 5 | — | — |
+| maker_sports | 0 | 0 | 5 | — | — |
+
+These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
 
 **Equity is the only honest headline** — realized P&L alone hides losses sitting in open positions. In this lab unrealized has been negative 97% of the time, so a realized-only view systematically overstates performance.
 

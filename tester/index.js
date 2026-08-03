@@ -189,10 +189,27 @@ function openDb() {
     );
     CREATE INDEX IF NOT EXISTS idx_pos_open ON positions(status, strategy);
     CREATE INDEX IF NOT EXISTS idx_pos_market ON positions(market_id, strategy);
+    /* Patient (maker) entries: instead of crossing to the ask, post a passive
+       limit at the bid and fill only if the market comes to us. Avoiding the
+       spread is a structural edge that requires predicting nothing — but it
+       costs fills, and the unfilled ones must be counted honestly. */
+    CREATE TABLE IF NOT EXISTS pending_orders(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      strategy TEXT NOT NULL, market_id TEXT NOT NULL, condition_id TEXT,
+      question TEXT, tag TEXT, side TEXT NOT NULL, outcome_name TEXT,
+      limit_price REAL NOT NULL, ask_at_signal REAL, stake REAL NOT NULL,
+      placed_at TEXT NOT NULL, expires_at TEXT NOT NULL, end_date TEXT,
+      status TEXT NOT NULL DEFAULT 'pending', resolved_at TEXT, fill_price REAL
+    );
+    CREATE INDEX IF NOT EXISTS idx_pend ON pending_orders(status, market_id);
   `);
   // migrations for columns added after the first release
   for (const col of ["outcome_name TEXT", "condition_id TEXT", "signal_meta TEXT",
-                     "signal_price REAL", "spread_at_entry REAL"]) {
+                     "signal_price REAL", "spread_at_entry REAL",
+                     /* closing-line tracking: the last price seen while the market was
+                        still genuinely tradeable, plus fixed-horizon markouts. This is
+                        what makes edge measurable in hours instead of weeks. */
+                     "clv_mark REAL", "clv_mark_ts TEXT", "mark_1h REAL", "mark_24h REAL"]) {
     try { db.exec("ALTER TABLE positions ADD COLUMN " + col); } catch (e) { /* exists */ }
   }
   return db;
@@ -296,6 +313,20 @@ async function fetchUniverse() {
   }
   return out;
 }
+
+/* Strategies whose entries are POSTED PASSIVELY rather than crossing the
+   spread. Same signal as their taker twin, different execution — so the pair
+   isolates exactly what the spread costs. */
+const MAKER_STRATEGIES = {
+  // mm_sports' signal, entered patiently at the bid instead of paying the ask
+  maker_sports: (m) => (m.tag === "sports" && m.yes >= 0.30 && m.yes <= 0.70
+    ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null),
+  // no signal at all — pure spread capture on liquid two-sided markets.
+  // If this makes money, the edge is structural and needs no forecasting.
+  maker_flat: (m) => (m.spread !== null && m.spread >= 0.02 && m.yes >= 0.35 && m.yes <= 0.65 && m.days >= 1
+    ? (m.change24 >= 0 ? "yes" : "no") : null)
+};
+const MAKER_TIMEOUT_MIN = 90;   // cancel unfilled orders after this long
 
 /* ---------------- whale signals (copy_top / whale_fade / copy_pro / copy_month)
    Three signal groups built from public leaderboards + wallet trade history:
@@ -405,6 +436,18 @@ async function settleOpenPositions(db) {
       } else if (yesPrice !== null) {
         const mark = p.side === "yes" ? yesPrice : 1 - yesPrice;
         db.prepare("UPDATE positions SET last_mark=? WHERE id=?").run(mark, p.id);
+        /* Closing line: keep the last mark from while the market was still
+           genuinely two-sided. Once a market starts resolving, the price pins
+           to 0 or 1 and stops being a forecast — that pinned value must never
+           become the "closing line". */
+        if (mark > 0.02 && mark < 0.98) {
+          db.prepare("UPDATE positions SET clv_mark=?, clv_mark_ts=? WHERE id=?")
+            .run(mark, new Date().toISOString(), p.id);
+        }
+        /* Fixed-horizon markouts, written once when the horizon is first passed */
+        const ageH = (Date.now() - Date.parse(p.opened_at)) / 3600000;
+        if (ageH >= 1 && p.mark_1h === null) db.prepare("UPDATE positions SET mark_1h=? WHERE id=?").run(mark, p.id);
+        if (ageH >= 24 && p.mark_24h === null) db.prepare("UPDATE positions SET mark_24h=? WHERE id=?").run(mark, p.id);
       }
     }
   }
@@ -469,9 +512,86 @@ function pruneDb(db) {
   } catch (e) { /* next tick */ }
 }
 
+/* ---------------- patient (maker) execution ----------------
+   Post at the bid for the side we want. Fill only when the market's ask comes
+   down to our limit — i.e. someone chose to sell to us. Unfilled orders expire
+   and are recorded, because a strategy that only fills when it is about to be
+   wrong is worse than useless and the fill rate is what reveals that. */
+
+function placeMakerOrders(db, universe, whales) {
+  const now = Date.now();
+  let placed = 0;
+  for (const [name, pick] of Object.entries(MAKER_STRATEGIES)) {
+    const openN = db.prepare("SELECT COUNT(*) n FROM positions WHERE strategy=? AND status='open'").get(name).n;
+    const pendN = db.prepare("SELECT COUNT(*) n FROM pending_orders WHERE strategy=? AND status='pending'").get(name).n;
+    let slots = Math.min(MAX_NEW_PER_TICK, MAX_OPEN - openN - pendN);
+    for (const m of universe) {
+      if (slots <= 0) break;
+      if (m.bid === null || m.ask === null || m.spread === null || m.spread < 0.01) continue;
+      const dup = db.prepare(
+        "SELECT 1 FROM positions WHERE strategy=? AND market_id=? AND status='open' UNION SELECT 1 FROM pending_orders WHERE strategy=? AND market_id=? AND status='pending'"
+      ).get(name, m.id, name, m.id);
+      if (dup) continue;
+      const ctx = { whale: (whales.top && whales.top.get(m.conditionId)) || null, ai: (whales.ai && whales.ai.get(m.conditionId)) || null };
+      const res = pick(m, ctx);
+      const side = typeof res === "string" ? res : res && res.side;
+      if (!side) continue;
+      // our passive limit: join the best bid on the side we want to own
+      const limit = side === "yes" ? m.bid : 1 - m.ask;
+      const askNow = side === "yes" ? m.ask : 1 - m.bid;
+      if (!(limit > 0.02 && limit < 0.98) || askNow - limit < 0.005) continue; // no spread to capture
+      db.prepare(`INSERT INTO pending_orders(strategy, market_id, condition_id, question, tag, side, outcome_name,
+                    limit_price, ask_at_signal, stake, placed_at, expires_at, end_date)
+                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+        .run(name, m.id, m.conditionId, m.question, tag(m.question), side,
+             side === "yes" ? m.outcomes[0] : m.outcomes[1],
+             Math.round(limit * 10000) / 10000, Math.round(askNow * 10000) / 10000, STAKE,
+             new Date(now).toISOString(), new Date(now + MAKER_TIMEOUT_MIN * 60000).toISOString(), m.endDate);
+      placed++; slots--;
+    }
+  }
+  return placed;
+}
+
+/* Check resting orders against current prices: fill, expire, or leave resting */
+function resolveMakerOrders(db, universe) {
+  const byId = new Map(universe.map((m) => [m.id, m]));
+  const pending = db.prepare("SELECT * FROM pending_orders WHERE status='pending'").all();
+  let filled = 0, expired = 0;
+  const now = Date.now();
+  for (const o of pending) {
+    const m = byId.get(o.market_id);
+    if (m && m.ask !== null && m.bid !== null) {
+      // the market's current cost to buy our side
+      const askNow = o.side === "yes" ? m.ask : 1 - m.bid;
+      if (askNow <= o.limit_price + 1e-9) {
+        // someone sold down to our price — we get filled at our limit
+        const shares = o.stake / o.limit_price;
+        db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares,
+                      opened_at, end_date, last_mark, outcome_name, condition_id, signal_price, spread_at_entry)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+          .run(o.strategy, o.market_id, o.question, o.tag, o.side, o.limit_price, o.stake,
+               Math.round(shares * 100) / 100, new Date(now).toISOString(), o.end_date,
+               o.limit_price, o.outcome_name, o.condition_id, o.ask_at_signal,
+               m.spread === null ? null : Math.round(m.spread * 10000) / 10000);
+        db.prepare("UPDATE pending_orders SET status='filled', resolved_at=?, fill_price=? WHERE id=?")
+          .run(new Date(now).toISOString(), o.limit_price, o.id);
+        filled++;
+        continue;
+      }
+    }
+    if (Date.parse(o.expires_at) <= now) {
+      db.prepare("UPDATE pending_orders SET status='expired', resolved_at=? WHERE id=?")
+        .run(new Date(now).toISOString(), o.id);
+      expired++;
+    }
+  }
+  return { filled, expired };
+}
+
 function snapshotEquity(db) {
   const ts = new Date().toISOString();
-  for (const name of Object.keys(STRATEGIES)) {
+  for (const name of [...Object.keys(STRATEGIES), ...Object.keys(MAKER_STRATEGIES)]) {
     const real = realized(db, name);
     const os = openStake(db, name);
     const mv = db.prepare("SELECT COALESCE(SUM(shares * COALESCE(last_mark, entry)),0) v FROM positions WHERE strategy=? AND status='open'").get(name).v;
@@ -497,6 +617,14 @@ async function tick() {
   } catch (e) { /* reasoner not running — ai_judge simply stays quiet */ }
   note += (note ? " | " : "") + "whale signals top/pro/month/ai: " + whales.top.size + "/" + whales.pro.size + "/" + whales.month.size + "/" + whales.ai.size;
   const opened = universe.length ? openNewPositions(db, universe, whales) : 0;
+  // patient execution: resolve resting orders first, then post new ones
+  let maker = { filled: 0, expired: 0 }, posted = 0;
+  if (universe.length) {
+    maker = resolveMakerOrders(db, universe);
+    posted = placeMakerOrders(db, universe, whales);
+    if (maker.filled || maker.expired || posted)
+      note += (note ? " | " : "") + "maker: " + posted + " posted, " + maker.filled + " filled, " + maker.expired + " expired";
+  }
   pruneDb(db);
   snapshotEquity(db);
   db.prepare("INSERT INTO ticks(ts, markets_seen, opened, settled, note) VALUES(?,?,?,?,?)")
@@ -589,7 +717,7 @@ function strategyStats(db, name) {
 function report(db) {
   db = db || openDb();
   const ticks = db.prepare("SELECT COUNT(*) n, MAX(ts) last FROM ticks").get();
-  const active = Object.keys(STRATEGIES);
+  const active = [...Object.keys(STRATEGIES), ...Object.keys(MAKER_STRATEGIES)];
   const inDb = db.prepare("SELECT DISTINCT strategy s FROM positions").all().map((r) => r.s);
   const allNames = [...new Set([...active, ...inDb])];
   const rows = allNames.map((n) => ({ ...strategyStats(db, n), retired: !active.includes(n) }))
@@ -614,6 +742,23 @@ function report(db) {
   for (const s of rows) {
     const unreal = Math.round((s.openValue - s.openStake) * 100) / 100;
     md.push(`| ${s.name}${s.retired ? " (retired)" : ""} | **$${s.equity}** | $${s.realized} | $${unreal} | ${s.closed} | ${s.winRate === null ? "—" : s.winRate + "%"} | $${s.exTopWin} | ${s.open} |`);
+  }
+  md.push("");
+  const makerRows = db.prepare(`SELECT strategy, SUM(status='filled') filled, SUM(status='expired') expired,
+    SUM(status='pending') pending, ROUND(AVG(CASE WHEN status='filled' THEN ask_at_signal - fill_price END)*100,2) saved
+    FROM pending_orders GROUP BY strategy`).all();
+  if (makerRows.length) {
+    md.push("");
+    md.push("### Patient (maker) execution");
+    md.push("");
+    md.push("| Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |");
+    md.push("|---|---|---|---|---|---|");
+    for (const r of makerRows) {
+      const done = r.filled + r.expired;
+      md.push(`| ${r.strategy} | ${r.filled} | ${r.expired} | ${r.pending} | ${done ? Math.round(100 * r.filled / done) + "%" : "—"} | ${r.saved === null ? "—" : r.saved + "¢"} |`);
+    }
+    md.push("");
+    md.push("These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.");
   }
   md.push("");
   md.push("**Equity is the only honest headline** — realized P&L alone hides losses sitting in open positions. In this lab unrealized has been negative 97% of the time, so a realized-only view systematically overstates performance.");

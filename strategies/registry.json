@@ -1,0 +1,51 @@
+{
+  "_purpose": "Pre-registration. Every strategy declares its hypothesis and its pass/fail bar BEFORE it accumulates evidence. evidence.js judges against this file, so a result can never be rationalised after the fact. Editing a hypothesis after seeing results is the one thing that invalidates this lab.",
+  "_bar": "A strategy is only 'proven' if it beats the entry-price-implied expectation with p < 0.0026 (Bonferroni across ~19 concurrent tests) on event-clustered errors, OR shows positive closing-line value at the same corrected threshold.",
+  "_registered": "2026-08-03",
+  "strategies": {
+    "mid_momentum": {
+      "hypothesis": "Buying the rising side in 30-70c markets beats the price because payoffs are symmetric there.",
+      "predicts": "positive extra wins vs entry-price expectation",
+      "status": "FAILED to reach bar",
+      "note": "Peaked at an apparent +$1,475 realized which was a reporting artifact; true peak equity +$754. Currently indistinguishable from the price."
+    },
+    "mm_sports": {
+      "hypothesis": "The momentum signal works in sports specifically, where the crowd reacts to team news.",
+      "predicts": "positive extra wins, larger than mid_momentum",
+      "status": "TESTING",
+      "note": "Best in lab but p=0.21 — fails correction. Needs ~1,000+ bets at the current effect size."
+    },
+    "mm_tight": { "hypothesis": "Cutting the sub-45c band improves mid_momentum.", "predicts": "beats mid_momentum", "status": "FAILED — walk-forward showed the cut band was profitable out-of-sample; this variant underperforms its parent." },
+    "mm_slow": { "hypothesis": "The edge is slow news, so 2+ day markets should be better.", "predicts": "beats mid_momentum", "status": "FAILED" },
+    "mm_strong": { "hypothesis": "A larger move (>=8c) is a stronger signal.", "predicts": "beats mid_momentum", "status": "FAILED" },
+    "mm_max": { "hypothesis": "All refinements combined compound.", "predicts": "best of the family", "status": "FAILED" },
+    "mm_cheap": { "hypothesis": "The edge is masked by execution cost; restricting to <=2c spreads should reveal it.", "predicts": "positive extra wins where mid_momentum has none", "status": "TESTING", "note": "24 bets only." },
+    "copy_top": { "hypothesis": "Mirroring top leaderboard wallets' pregame buys captures their edge.", "predicts": "positive extra wins", "status": "FAILED — negative extra wins; profit came from payoff structure, not selection." },
+    "copy_pro": { "hypothesis": "Filtered wallets, freshness limits and no-chasing improve copy trading.", "predicts": "beats copy_top", "status": "FAILED" },
+    "copy_month": { "hypothesis": "In-form (monthly leaderboard) traders are better to copy than all-time.", "predicts": "beats copy_top", "status": "FAILED" },
+    "whale_fade": { "hypothesis": "Control for copy_top — if copying works, fading must lose.", "predicts": "mirror of copy_top", "status": "CONTROL" },
+    "momentum": { "hypothesis": "Price continuation exists at any price level.", "predicts": "positive extra wins", "status": "FAILED" },
+    "mean_revert": { "hypothesis": "Large moves overshoot.", "predicts": "positive extra wins", "status": "FAILED" },
+    "strong_dip": { "hypothesis": "Buying knocked-down favourites captures overreaction.", "predicts": "positive extra wins", "status": "FAILED" },
+    "fade_longshot": { "hypothesis": "Longshots are systematically overpriced, so selling them wins.", "predicts": "positive extra wins", "status": "TESTING", "note": "97% win rate but only +0.4 wins above expectation — the win rate is an artifact of price, not skill." },
+    "longshot": { "hypothesis": "Control for fade_longshot.", "predicts": "loses", "status": "CONFIRMED — 2 wins in 81 bets." },
+    "favorite": { "hypothesis": "Favourites are underpriced.", "predicts": "positive extra wins", "status": "FAILED" },
+    "late_favorite": { "hypothesis": "Favourites near resolution are underpriced.", "predicts": "positive extra wins", "status": "FAILED" },
+    "super": { "hypothesis": "Requiring two agreeing signals (whale + momentum) filters noise.", "predicts": "best in lab", "status": "FAILED" },
+    "ai_judge": { "hypothesis": "A local LLM's probability estimate can find >4c mispricings.", "predicts": "positive extra wins", "status": "TESTING", "note": "Model mostly agrees with the market, so it rarely bets — honest but slow to accumulate evidence." },
+    "random_control": { "hypothesis": "Baseline. Everything must beat this.", "predicts": "zero edge", "status": "CONTROL" },
+    "maker_sports": {
+      "hypothesis": "STRUCTURAL, not predictive: mm_sports' signal loses ~0.6c per bet crossing the spread. Posting passively at the bid should convert that cost into a saving, so the same signal should outperform its taker twin by roughly the spread — IF fills are not adversely selected.",
+      "predicts": "beats mm_sports by ~1c per bet; fill rate above 30%",
+      "status": "TESTING",
+      "registered": "2026-08-03"
+    },
+    "maker_flat": {
+      "hypothesis": "STRUCTURAL, no forecasting at all: simply providing liquidity on liquid two-sided markets captures the spread. If this is profitable, edge exists without predicting anything.",
+      "predicts": "positive P&L with roughly random win rate; fill rate above 30%",
+      "status": "TESTING",
+      "registered": "2026-08-03",
+      "note": "The key test of Door 2. Adverse selection is the expected failure mode: fills cluster on the side about to be wrong."
+    }
+  }
+}
