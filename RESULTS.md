@@ -2,12 +2,12 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 27002 · Last run: 2026-08-03T17:50:05.175Z · Database: `tester/data/polymark.db`
+Ticks: 27003 · Last run: 2026-08-03T17:50:38.034Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
-| mm_sports | **$11385.5** | $1530.8 | $-145.3 | 284 | 57% | $1327.77 | 23 |
-| mm_tight | **$10514.86** | $683 | $-168.14 | 244 | 53% | $479.97 | 18 |
+| mm_sports | **$11385.5** | $1530.8 | $-145.3 | 284 | 57% | $1327.77 | 24 |
+| mm_tight | **$10514.86** | $683 | $-168.14 | 244 | 53% | $479.97 | 19 |
 | mm_cheap | **$10306.39** | $832.49 | $-526.1 | 24 | 71% | $654.71 | 25 |
 | mid_momentum | **$10258.93** | $608.28 | $-349.35 | 187 | 57% | $394.8 | 25 |
 | strong_dip | **$9990.05** | $-337.42 | $327.47 | 96 | 60% | $-429.73 | 25 |
@@ -15,7 +15,7 @@ Ticks: 27002 · Last run: 2026-08-03T17:50:05.175Z · Database: `tester/data/pol
 | maker_flat | **$9967.32** | $-100.32 | $67.64 | 5 | 40% | $-227.59 | 7 |
 | maker_sports | **$9852.99** | $24.93 | $-171.94 | 6 | 50% | $-102.34 | 8 |
 | copy_pro | **$9574.7** | $-834.75 | $409.45 | 365 | 51% | $-1684.75 | 25 |
-| mm_max | **$9559.85** | $-331.4 | $-108.75 | 83 | 51% | $-448.79 | 13 |
+| mm_max | **$9559.85** | $-331.4 | $-108.75 | 83 | 51% | $-448.79 | 14 |
 | super | **$9539.55** | $-445.84 | $-14.61 | 63 | 46% | $-661.69 | 12 |
 | copy_top | **$9466.52** | $-666.45 | $132.97 | 385 | 51% | $-1995.02 | 25 |
 | ai_judge | **$9394.45** | $-487.64 | $-117.91 | 6 | 17% | $-500 | 3 |
@@ -35,8 +35,8 @@ Ticks: 27002 · Last run: 2026-08-03T17:50:05.175Z · Database: `tester/data/pol
 
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
-| maker_flat | 12 | 9 | 7 | 57% | 2.58¢ |
-| maker_sports | 14 | 7 | 5 | 67% | 1.79¢ |
+| maker_flat | 12 | 10 | 6 | 55% | 2.58¢ |
+| maker_sports | 14 | 7 | 6 | 67% | 1.79¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
 
