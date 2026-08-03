@@ -2,18 +2,18 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 26706 · Last run: 2026-08-03T15:05:24.018Z · Database: `tester/data/polymark.db`
+Ticks: 26707 · Last run: 2026-08-03T15:05:57.248Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
-| mm_sports | **$11396.89** | $1236.17 | $160.72 | 272 | 57% | $1033.14 | 24 |
-| mm_tight | **$10624.07** | $460.71 | $163.36 | 232 | 53% | $257.68 | 19 |
+| mm_sports | **$11394.66** | $1236.17 | $158.49 | 272 | 57% | $1033.14 | 24 |
+| mm_tight | **$10621.83** | $460.71 | $161.12 | 232 | 53% | $257.68 | 19 |
 | mid_momentum | **$10318.52** | $608.28 | $-289.76 | 187 | 57% | $394.8 | 25 |
 | mm_cheap | **$10228.13** | $832.49 | $-604.36 | 24 | 71% | $654.71 | 25 |
 | strong_dip | **$10021.81** | $-337.42 | $359.23 | 96 | 60% | $-429.73 | 25 |
 | copy_pro | **$9983.52** | $-484.75 | $468.27 | 363 | 51% | $-1334.75 | 25 |
 | fade_longshot | **$9962.12** | $34.52 | $-72.4 | 105 | 95% | $23.78 | 25 |
-| maker_flat | **$9942.51** | $0 | $-57.49 | 0 | — | $0 | 5 |
+| maker_flat | **$9941.37** | $0 | $-58.63 | 0 | — | $0 | 5 |
 | maker_sports | **$9899.31** | $0 | $-100.69 | 0 | — | $0 | 4 |
 | copy_top | **$9624.42** | $-366.45 | $-9.13 | 382 | 52% | $-1695.02 | 25 |
 | super | **$9547.49** | $-445.84 | $-6.67 | 63 | 46% | $-661.69 | 12 |
@@ -35,7 +35,7 @@ Ticks: 26706 · Last run: 2026-08-03T15:05:24.018Z · Database: `tester/data/pol
 
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
-| maker_flat | 5 | 4 | 4 | 56% | 2.2¢ |
+| maker_flat | 5 | 4 | 5 | 56% | 2.2¢ |
 | maker_sports | 4 | 4 | 3 | 50% | 1.25¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
