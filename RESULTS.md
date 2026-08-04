@@ -2,18 +2,18 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 28758 · Last run: 2026-08-04T10:07:03.864Z · Database: `tester/data/polymark.db`
+Ticks: 28759 · Last run: 2026-08-04T10:07:37.522Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
 | mm_sports | **$10985.41** | $1115.92 | $-130.51 | 344 | 56% | $912.89 | 17 |
-| mm_tight | **$10687.82** | $789.14 | $-101.32 | 299 | 54% | $586.11 | 9 |
+| mm_tight | **$10687.82** | $789.14 | $-101.32 | 299 | 54% | $586.11 | 10 |
 | mm_cheap | **$10590.08** | $1054.47 | $-464.39 | 30 | 73% | $876.69 | 25 |
 | mid_momentum | **$10448.88** | $862.6 | $-413.72 | 201 | 58% | $649.12 | 25 |
 | copy_top | **$9975.17** | $-129.92 | $105.09 | 397 | 52% | $-1458.49 | 25 |
 | fade_longshot | **$9971.66** | $55.61 | $-83.95 | 108 | 95% | $44.87 | 25 |
 | strong_dip | **$9761.75** | $-463.45 | $225.2 | 99 | 60% | $-555.76 | 25 |
-| maker_flat | **$9746.7** | $-12.95 | $-240.35 | 29 | 48% | $-190.73 | 13 |
+| maker_flat | **$9746.7** | $-12.95 | $-240.35 | 29 | 48% | $-190.73 | 14 |
 | copy_pro | **$9633.14** | $-725.28 | $358.42 | 376 | 51% | $-1575.28 | 25 |
 | super | **$9605.74** | $-353.9 | $-40.36 | 64 | 47% | $-569.75 | 14 |
 | ai_judge | **$9422.87** | $-587.64 | $10.51 | 7 | 14% | $-600 | 2 |
@@ -35,7 +35,7 @@ Ticks: 28758 · Last run: 2026-08-04T10:07:03.864Z · Database: `tester/data/pol
 
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
-| maker_flat | 42 | 29 | 2 | 59% | 3.09¢ |
+| maker_flat | 43 | 29 | 1 | 60% | 3.06¢ |
 | maker_sports | 66 | 38 | 2 | 63% | 1.61¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
