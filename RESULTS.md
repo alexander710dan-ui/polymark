@@ -2,11 +2,11 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 28496 · Last run: 2026-08-04T07:41:17.770Z · Database: `tester/data/polymark.db`
+Ticks: 28497 · Last run: 2026-08-04T07:41:51.318Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
-| mm_sports | **$11143.74** | $1115.92 | $27.82 | 344 | 56% | $912.89 | 8 |
+| mm_sports | **$11143.74** | $1115.92 | $27.82 | 344 | 56% | $912.89 | 9 |
 | mm_tight | **$10849.7** | $789.14 | $60.56 | 299 | 54% | $586.11 | 5 |
 | mm_cheap | **$10563.47** | $1054.47 | $-491 | 30 | 73% | $876.69 | 25 |
 | mid_momentum | **$10418.16** | $862.6 | $-444.44 | 201 | 58% | $649.12 | 25 |
@@ -14,7 +14,7 @@ Ticks: 28496 · Last run: 2026-08-04T07:41:17.770Z · Database: `tester/data/pol
 | copy_top | **$9958.41** | $-129.92 | $88.33 | 397 | 52% | $-1458.49 | 25 |
 | maker_flat | **$9938.75** | $-12.95 | $-48.3 | 29 | 48% | $-190.73 | 9 |
 | strong_dip | **$9777.5** | $-463.45 | $240.95 | 99 | 60% | $-555.76 | 25 |
-| super | **$9623.4** | $-353.9 | $-22.7 | 64 | 47% | $-569.75 | 12 |
+| super | **$9623.4** | $-353.9 | $-22.7 | 64 | 47% | $-569.75 | 13 |
 | copy_pro | **$9609.06** | $-725.28 | $334.34 | 376 | 51% | $-1575.28 | 25 |
 | mm_max | **$9517.4** | $-482.6 | $0 | 124 | 52% | $-602.07 | 0 |
 | maker_sports | **$9455.93** | $-538.86 | $-5.21 | 55 | 49% | $-724.57 | 1 |
@@ -36,7 +36,7 @@ Ticks: 28496 · Last run: 2026-08-04T07:41:17.770Z · Database: `tester/data/pol
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
 | maker_flat | 38 | 28 | 1 | 58% | 2.96¢ |
-| maker_sports | 56 | 35 | 3 | 62% | 1.61¢ |
+| maker_sports | 56 | 35 | 4 | 62% | 1.61¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
 
