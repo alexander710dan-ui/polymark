@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 29735 · Last run: 2026-08-04T19:10:45.088Z · Database: `tester/data/polymark.db`
+Ticks: 29736 · Last run: 2026-08-04T19:11:08.552Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -12,11 +12,11 @@ Ticks: 29735 · Last run: 2026-08-04T19:10:45.088Z · Database: `tester/data/pol
 | mid_momentum | **$10431.72** | $862.6 | $-430.88 | 201 | 58% | $649.12 | 25 |
 | copy_top | **$10027.02** | $-193.36 | $220.38 | 401 | 52% | $-1521.93 | 25 |
 | copy_pro | **$10012.6** | $-592.99 | $605.59 | 380 | 51% | $-1442.99 | 25 |
-| fade_longshot | **$9891.28** | $55.61 | $-164.33 | 108 | 95% | $44.87 | 25 |
+| fade_longshot | **$9891.33** | $55.61 | $-164.28 | 108 | 95% | $44.87 | 25 |
 | mm_max | **$9742.01** | $-391.83 | $133.84 | 141 | 52% | $-558.95 | 3 |
 | strong_dip | **$9688.5** | $-463.45 | $151.95 | 99 | 60% | $-555.76 | 25 |
 | super | **$9671.63** | $-439.2 | $110.83 | 68 | 47% | $-655.05 | 15 |
-| maker_flat | **$9477.71** | $-408.2 | $-114.09 | 49 | 45% | $-585.98 | 19 |
+| maker_flat | **$9481.74** | $-408.2 | $-110.06 | 49 | 45% | $-585.98 | 19 |
 | ai_judge | **$9408** | $-587.64 | $-4.36 | 7 | 14% | $-600 | 2 |
 | maker_sports | **$9183.34** | $-653.19 | $-163.47 | 80 | 50% | $-838.9 | 11 |
 | mm_slow | **$9153.74** | $-468.35 | $-377.91 | 53 | 53% | $-654.06 | 25 |
@@ -28,7 +28,7 @@ Ticks: 29735 · Last run: 2026-08-04T19:10:45.088Z · Database: `tester/data/pol
 | favorite (retired) | **$9004.84** | $-942.24 | $-52.92 | 132 | 69% | $-1006.17 | 4 |
 | mean_revert (retired) | **$8469.58** | $-1937.09 | $406.67 | 146 | 25% | $-3964.75 | 1 |
 | late_favorite (retired) | **$8338.09** | $-1661.91 | $0 | 409 | 78% | $-1703.96 | 0 |
-| longshot (retired) | **$5096.24** | $-4691.55 | $-212.21 | 81 | 2% | $-6591.55 | 3 |
+| longshot (retired) | **$5094.24** | $-4691.55 | $-214.21 | 81 | 2% | $-6591.55 | 3 |
 
 
 ### Patient (maker) execution
