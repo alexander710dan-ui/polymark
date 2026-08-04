@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 28704 · Last run: 2026-08-04T09:37:00.622Z · Database: `tester/data/polymark.db`
+Ticks: 28705 · Last run: 2026-08-04T09:37:34.281Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -15,10 +15,10 @@ Ticks: 28704 · Last run: 2026-08-04T09:37:00.622Z · Database: `tester/data/pol
 | maker_flat | **$9807.91** | $-12.95 | $-179.14 | 29 | 48% | $-190.73 | 12 |
 | strong_dip | **$9767.3** | $-463.45 | $230.75 | 99 | 60% | $-555.76 | 25 |
 | super | **$9663.6** | $-353.9 | $17.5 | 64 | 47% | $-569.75 | 14 |
-| copy_pro | **$9651.06** | $-725.28 | $376.34 | 376 | 51% | $-1575.28 | 25 |
+| copy_pro | **$9650.9** | $-725.28 | $376.18 | 376 | 51% | $-1575.28 | 25 |
 | mm_max | **$9417.42** | $-482.6 | $-99.98 | 124 | 52% | $-602.07 | 2 |
 | ai_judge | **$9415.09** | $-587.64 | $2.73 | 7 | 14% | $-600 | 2 |
-| maker_sports | **$9364.63** | $-538.86 | $-96.51 | 55 | 49% | $-724.57 | 7 |
+| maker_sports | **$9353.02** | $-538.86 | $-108.12 | 55 | 49% | $-724.57 | 8 |
 | mm_slow | **$9143.55** | $-468.35 | $-388.1 | 53 | 53% | $-654.06 | 25 |
 | random_control | **$8922.95** | $-561.85 | $-515.2 | 128 | 57% | $-1176.14 | 25 |
 | mm_strong | **$8594.85** | $-920.12 | $-485.03 | 75 | 48% | $-1124.07 | 25 |
@@ -36,7 +36,7 @@ Ticks: 28704 · Last run: 2026-08-04T09:37:00.622Z · Database: `tester/data/pol
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
 | maker_flat | 41 | 29 | 1 | 59% | 3.06¢ |
-| maker_sports | 62 | 37 | 3 | 63% | 1.55¢ |
+| maker_sports | 63 | 37 | 2 | 63% | 1.59¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
 
