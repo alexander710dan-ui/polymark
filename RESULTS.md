@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 32482 · Last run: 2026-08-05T20:48:57.779Z · Database: `tester/data/polymark.db`
+Ticks: 32483 · Last run: 2026-08-05T20:49:33.305Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -20,9 +20,9 @@ Ticks: 32482 · Last run: 2026-08-05T20:48:57.779Z · Database: `tester/data/pol
 | strong_dip | **$9504.25** | $-482.76 | $-12.99 | 103 | 59% | $-575.07 | 25 |
 | ai_judge | **$9358.34** | $-587.64 | $-54.02 | 7 | 14% | $-600 | 2 |
 | random_control | **$8972.31** | $-1000.59 | $-27.1 | 143 | 57% | $-1614.88 | 25 |
-| mm_slow | **$8959.32** | $-444.42 | $-596.26 | 56 | 54% | $-630.13 | 25 |
+| mm_slow | **$8950.39** | $-444.42 | $-605.19 | 56 | 54% | $-630.13 | 25 |
+| maker_flat | **$8801.15** | $-1049 | $-149.85 | 83 | 42% | $-1243.12 | 17 |
 | mm_sports_v2 | **$8791.71** | $-1092.76 | $-115.53 | 29 | 38% | $-1218.78 | 19 |
-| maker_flat | **$8789.53** | $-1049 | $-161.47 | 83 | 42% | $-1243.12 | 17 |
 | mm_strong | **$8679.11** | $-804.21 | $-516.68 | 82 | 49% | $-1008.16 | 25 |
 | maker_sports | **$8352.24** | $-1465.21 | $-182.55 | 148 | 49% | $-1668.24 | 13 |
 | momentum | **$8216.18** | $-1059.12 | $-724.7 | 261 | 68% | $-1547.36 | 25 |
@@ -38,7 +38,7 @@ Ticks: 32482 · Last run: 2026-08-05T20:48:57.779Z · Database: `tester/data/pol
 
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
-| maker_flat | 100 | 66 | 2 | 60% | 2.98¢ |
+| maker_flat | 100 | 66 | 3 | 60% | 2.98¢ |
 | maker_sports | 161 | 103 | 3 | 61% | 1.6¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
