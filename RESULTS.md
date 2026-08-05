@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 31340 · Last run: 2026-08-05T10:03:35.777Z · Database: `tester/data/polymark.db`
+Ticks: 31341 · Last run: 2026-08-05T10:04:10.188Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -18,10 +18,10 @@ Ticks: 31340 · Last run: 2026-08-05T10:03:35.777Z · Database: `tester/data/pol
 | strong_dip | **$9464.04** | $-528.32 | $-7.64 | 102 | 59% | $-620.63 | 25 |
 | ai_judge | **$9387.06** | $-587.64 | $-25.3 | 7 | 14% | $-600 | 2 |
 | maker_sports | **$9167.17** | $-655.39 | $-177.44 | 116 | 51% | $-858.42 | 11 |
-| mm_slow | **$9074.95** | $-516.83 | $-408.22 | 55 | 53% | $-702.54 | 25 |
-| random_control | **$8952.7** | $-955.81 | $-91.49 | 138 | 57% | $-1570.1 | 25 |
+| mm_slow | **$9075.85** | $-516.83 | $-407.32 | 55 | 53% | $-702.54 | 25 |
+| random_control | **$8950.43** | $-955.81 | $-93.76 | 138 | 57% | $-1570.1 | 25 |
 | mm_strong | **$8699.18** | $-876.62 | $-424.2 | 81 | 48% | $-1080.57 | 25 |
-| maker_flat | **$8672.67** | $-1017.63 | $-309.7 | 69 | 41% | $-1211.75 | 18 |
+| maker_flat | **$8671.51** | $-1017.63 | $-310.86 | 69 | 41% | $-1211.75 | 19 |
 | momentum | **$8232.32** | $-1076.77 | $-690.91 | 260 | 68% | $-1565.01 | 25 |
 | whale_fade | **$7136.95** | $-2200.96 | $-662.09 | 409 | 48% | $-2555.51 | 25 |
 | copy_month (retired) | **$9419.64** | $-730.36 | $150 | 164 | 48% | $-1539.45 | 1 |
@@ -35,7 +35,7 @@ Ticks: 31340 · Last run: 2026-08-05T10:03:35.777Z · Database: `tester/data/pol
 
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
-| maker_flat | 87 | 59 | 3 | 60% | 2.98¢ |
+| maker_flat | 88 | 59 | 2 | 60% | 2.96¢ |
 | maker_sports | 127 | 80 | 4 | 61% | 1.59¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
