@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 30476 · Last run: 2026-08-05T02:02:53.190Z · Database: `tester/data/polymark.db`
+Ticks: 30477 · Last run: 2026-08-05T02:03:27.012Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -11,8 +11,8 @@ Ticks: 30476 · Last run: 2026-08-05T02:02:53.190Z · Database: `tester/data/pol
 | mm_tight | **$10649.24** | $1049.88 | $-400.64 | 350 | 54% | $846.85 | 15 |
 | mm_cheap | **$10386.79** | $746.87 | $-360.08 | 34 | 65% | $569.09 | 25 |
 | copy_pro | **$10175.07** | $-643.53 | $818.6 | 383 | 51% | $-1493.53 | 25 |
-| copy_top | **$10070.19** | $-222.82 | $293.01 | 403 | 52% | $-1551.39 | 25 |
-| fade_longshot | **$9931.15** | $89.79 | $-158.64 | 114 | 96% | $79.05 | 25 |
+| copy_top | **$10060.19** | $-222.82 | $283.01 | 403 | 52% | $-1551.39 | 25 |
+| fade_longshot | **$9928.58** | $89.79 | $-161.21 | 114 | 96% | $79.05 | 25 |
 | super | **$9750.4** | $-387.2 | $137.6 | 71 | 48% | $-603.05 | 13 |
 | strong_dip | **$9595.58** | $-426.02 | $21.6 | 101 | 59% | $-518.33 | 25 |
 | mm_max | **$9524.6** | $-473.6 | $-1.8 | 154 | 53% | $-640.72 | 5 |
@@ -23,7 +23,7 @@ Ticks: 30476 · Last run: 2026-08-05T02:02:53.190Z · Database: `tester/data/pol
 | random_control | **$8921.06** | $-991.45 | $-87.49 | 137 | 56% | $-1605.74 | 25 |
 | mm_strong | **$8731.99** | $-1029.67 | $-238.34 | 79 | 47% | $-1233.62 | 25 |
 | momentum | **$8316.07** | $-1113.4 | $-570.53 | 256 | 68% | $-1601.64 | 25 |
-| whale_fade | **$7059.55** | $-2397.18 | $-543.27 | 404 | 48% | $-2751.73 | 25 |
+| whale_fade | **$7074.19** | $-2397.18 | $-528.63 | 404 | 48% | $-2751.73 | 25 |
 | copy_month (retired) | **$9415.48** | $-730.36 | $145.84 | 164 | 48% | $-1539.45 | 1 |
 | favorite (retired) | **$9010.76** | $-931.5 | $-57.74 | 133 | 69% | $-995.43 | 3 |
 | mean_revert (retired) | **$8452.91** | $-1937.09 | $390 | 146 | 25% | $-3964.75 | 1 |
