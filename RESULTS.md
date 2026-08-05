@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 32614 · Last run: 2026-08-05T22:02:32.655Z · Database: `tester/data/polymark.db`
+Ticks: 32615 · Last run: 2026-08-05T22:03:07.385Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -11,7 +11,7 @@ Ticks: 32614 · Last run: 2026-08-05T22:02:32.655Z · Database: `tester/data/pol
 | mid_momentum | **$10455.78** | $763.13 | $-307.35 | 209 | 57% | $549.65 | 25 |
 | mm_cheap_v2 | **$10011.18** | $-41.54 | $52.72 | 22 | 55% | $-153.46 | 25 |
 | super | **$9998.03** | $-425.73 | $423.76 | 73 | 48% | $-641.58 | 13 |
-| fade_longshot | **$9847.13** | $22.92 | $-175.79 | 122 | 95% | $12.18 | 25 |
+| fade_longshot | **$9847.34** | $22.92 | $-175.58 | 122 | 95% | $12.18 | 25 |
 | copy_top | **$9835.06** | $-387.99 | $223.05 | 416 | 52% | $-1716.56 | 25 |
 | copy_pro | **$9738.89** | $-801.45 | $540.34 | 396 | 51% | $-1651.45 | 25 |
 | mid_momentum_v2 | **$9687.28** | $-181.29 | $-131.43 | 22 | 50% | $-293.21 | 25 |
@@ -19,7 +19,7 @@ Ticks: 32614 · Last run: 2026-08-05T22:02:32.655Z · Database: `tester/data/pol
 | mm_max | **$9563.66** | $-289.7 | $-146.64 | 174 | 53% | $-456.82 | 2 |
 | strong_dip | **$9518.53** | $-482.76 | $1.29 | 103 | 59% | $-575.07 | 25 |
 | ai_judge | **$9346.21** | $-587.64 | $-66.15 | 7 | 14% | $-600 | 2 |
-| random_control | **$8976.06** | $-1000.59 | $-23.35 | 143 | 57% | $-1614.88 | 25 |
+| random_control | **$8976.11** | $-1000.59 | $-23.3 | 143 | 57% | $-1614.88 | 25 |
 | mm_slow | **$8752.79** | $-548.67 | $-698.54 | 58 | 52% | $-734.38 | 25 |
 | maker_flat | **$8585.15** | $-1049 | $-365.85 | 83 | 42% | $-1243.12 | 19 |
 | mm_strong | **$8495.41** | $-908.46 | $-596.13 | 84 | 48% | $-1112.41 | 25 |
@@ -31,7 +31,7 @@ Ticks: 32614 · Last run: 2026-08-05T22:02:32.655Z · Database: `tester/data/pol
 | favorite (retired) | **$8996.91** | $-931.5 | $-71.59 | 133 | 69% | $-995.43 | 3 |
 | mean_revert (retired) | **$8539.58** | $-1937.09 | $476.67 | 146 | 25% | $-3964.75 | 1 |
 | late_favorite (retired) | **$8338.09** | $-1661.91 | $0 | 409 | 78% | $-1703.96 | 0 |
-| longshot (retired) | **$5109.49** | $-4791.55 | $-98.96 | 82 | 2% | $-6691.55 | 2 |
+| longshot (retired) | **$5103.49** | $-4791.55 | $-104.96 | 82 | 2% | $-6691.55 | 2 |
 
 
 ### Patient (maker) execution
