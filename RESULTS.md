@@ -2,29 +2,29 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 31925 · Last run: 2026-08-05T15:38:30.105Z · Database: `tester/data/polymark.db`
+Ticks: 31926 · Last run: 2026-08-05T15:39:04.720Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
 | mm_tight | **$11018.96** | $1207.06 | $-188.1 | 374 | 55% | $1004.03 | 15 |
 | mm_sports | **$10803.13** | $1259 | $-455.87 | 436 | 56% | $1039.87 | 24 |
-| mid_momentum | **$10755.55** | $967.28 | $-211.73 | 206 | 58% | $753.8 | 25 |
-| mm_cheap | **$10527.46** | $887.82 | $-360.36 | 35 | 66% | $710.04 | 25 |
+| mid_momentum | **$10758.77** | $967.28 | $-208.51 | 206 | 58% | $753.8 | 25 |
+| mm_cheap | **$10526.03** | $887.82 | $-361.79 | 35 | 66% | $710.04 | 25 |
 | fade_longshot | **$9919.55** | $111.17 | $-191.62 | 118 | 96% | $100.43 | 25 |
 | super | **$9900.39** | $-425.73 | $326.12 | 73 | 48% | $-641.58 | 12 |
-| mm_cheap_v2 | **$9894.51** | $173.24 | $-278.73 | 5 | 80% | $75.74 | 25 |
+| mm_cheap_v2 | **$9897.36** | $173.24 | $-275.88 | 5 | 80% | $75.74 | 25 |
 | copy_top | **$9793.67** | $-477.25 | $270.92 | 410 | 51% | $-1805.82 | 25 |
 | mm_max | **$9710.07** | $-330.56 | $40.63 | 163 | 53% | $-497.68 | 2 |
-| mid_momentum_v2 | **$9670.32** | $64.9 | $-394.58 | 6 | 67% | $-32.6 | 25 |
+| mid_momentum_v2 | **$9673.1** | $64.9 | $-391.8 | 6 | 67% | $-32.6 | 25 |
 | mm_sports_v2 | **$9636.15** | $64.9 | $-428.75 | 6 | 67% | $-32.6 | 19 |
-| strong_dip | **$9438.41** | $-528.32 | $-33.27 | 102 | 59% | $-620.63 | 25 |
+| strong_dip | **$9436.62** | $-528.32 | $-35.06 | 102 | 59% | $-620.63 | 25 |
 | ai_judge | **$9383.64** | $-587.64 | $-28.72 | 7 | 14% | $-600 | 2 |
 | copy_pro | **$9381.02** | $-937.88 | $318.9 | 390 | 51% | $-1787.88 | 25 |
-| mm_slow | **$9119.63** | $-516.83 | $-363.54 | 55 | 53% | $-702.54 | 25 |
-| maker_sports | **$8838.95** | $-664.88 | $-496.17 | 127 | 51% | $-867.91 | 11 |
+| mm_slow | **$9122.86** | $-516.83 | $-360.31 | 55 | 53% | $-702.54 | 25 |
+| maker_sports | **$8838.95** | $-664.88 | $-496.17 | 127 | 51% | $-867.91 | 12 |
 | random_control | **$8810.53** | $-1058.61 | $-130.86 | 139 | 56% | $-1672.9 | 25 |
-| mm_strong | **$8767.9** | $-876.62 | $-355.48 | 81 | 48% | $-1080.57 | 25 |
-| maker_flat | **$8464.03** | $-1380.33 | $-155.64 | 76 | 39% | $-1574.45 | 19 |
+| mm_strong | **$8771.13** | $-876.62 | $-352.25 | 81 | 48% | $-1080.57 | 25 |
+| maker_flat | **$8501.98** | $-1380.33 | $-117.69 | 76 | 39% | $-1574.45 | 19 |
 | momentum | **$8231.5** | $-1076.77 | $-691.73 | 260 | 68% | $-1565.01 | 25 |
 | whale_fade | **$7293.26** | $-2055.23 | $-651.51 | 411 | 48% | $-2409.78 | 25 |
 | copy_month (retired) | **$9422.42** | $-730.36 | $152.78 | 164 | 48% | $-1539.45 | 1 |
@@ -38,8 +38,8 @@ Ticks: 31925 · Last run: 2026-08-05T15:38:30.105Z · Database: `tester/data/pol
 
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
-| maker_flat | 95 | 62 | 0 | 61% | 3¢ |
-| maker_sports | 138 | 91 | 8 | 60% | 1.59¢ |
+| maker_flat | 95 | 62 | 1 | 61% | 3¢ |
+| maker_sports | 139 | 91 | 7 | 60% | 1.59¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
 
