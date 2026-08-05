@@ -9,3 +9,5 @@ reasoner/data/ai.db
 app/node_modules/
 app/config.json
 app/dist/
+nul
+NUL

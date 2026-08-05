@@ -163,7 +163,21 @@ const STRATEGIES = {
     if (-edge > costs + 0.04) return "no";
     return null;
   },
-  random_control:(m) => (Math.random() < 0.12 ? (Math.random() < 0.5 ? "yes" : "no") : null)
+  random_control:(m) => (Math.random() < 0.12 ? (Math.random() < 0.5 ? "yes" : "no") : null),
+
+  /* ---- REPLICATION SET (registered 2026-08-05) ----
+     Byte-identical copies of the three strategies currently showing positive
+     numbers, started fresh with no history. A real edge replicates; luck does
+     not. Because these start today, their record is fully out-of-sample with
+     respect to every decision that shaped the originals — the cleanest test
+     available without waiting months. Do not edit these rules; if the parent
+     changes, the replication is void. */
+  mm_sports_v2:    (m) => (m.tag === "sports" && m.yes >= 0.30 && m.yes <= 0.70
+    ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null),
+  mid_momentum_v2: (m) => (m.yes >= 0.30 && m.yes <= 0.70
+    ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null),
+  mm_cheap_v2:     (m) => (m.spread !== null && m.spread <= 0.02 && m.yes >= 0.30 && m.yes <= 0.70
+    ? (m.change24 >= 0.05 ? "yes" : m.change24 <= -0.05 ? "no" : null) : null)
 };
 
 /* ---------------- infrastructure ---------------- */

@@ -40,6 +40,25 @@
       "status": "TESTING",
       "registered": "2026-08-03"
     },
+    "mm_sports_v2": {
+      "hypothesis": "REPLICATION. Byte-identical to mm_sports, started fresh 2026-08-05 with no history. If mm_sports' +6.2 extra wins reflect a real edge, this copy should show the same effect on entirely new bets. If it was luck, this copy will drift to zero.",
+      "predicts": "positive extra wins of similar magnitude to the parent (~+2.3% ROI after fees)",
+      "status": "TESTING",
+      "registered": "2026-08-05",
+      "note": "Verified behaviourally identical to the parent across 504 decision cases before launch. Rule is frozen — editing it voids the replication."
+    },
+    "mid_momentum_v2": {
+      "hypothesis": "REPLICATION of mid_momentum, fresh start 2026-08-05.",
+      "predicts": "positive extra wins similar to the parent",
+      "status": "TESTING",
+      "registered": "2026-08-05"
+    },
+    "mm_cheap_v2": {
+      "hypothesis": "REPLICATION of mm_cheap, fresh start 2026-08-05. The parent's 32% ROI rests on 24 bets, so this is the most likely of the three to be pure noise.",
+      "predicts": "positive extra wins; expected to be the weakest replication",
+      "status": "TESTING",
+      "registered": "2026-08-05"
+    },
     "maker_flat": {
       "hypothesis": "STRUCTURAL, no forecasting at all: simply providing liquidity on liquid two-sided markets captures the spread. If this is profitable, edge exists without predicting anything.",
       "predicts": "positive P&L with roughly random win rate; fill rate above 30%",
