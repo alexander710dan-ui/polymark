@@ -2,37 +2,37 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 34417 · Last run: 2026-08-06T15:15:28.165Z · Database: `tester/data/polymark.db`
+Ticks: 34418 · Last run: 2026-08-06T15:15:57.811Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
 | super | **$10322.84** | $46.83 | $276.01 | 79 | 51% | $-217.5 | 13 |
 | mid_momentum | **$10288.87** | $456.72 | $-167.85 | 216 | 56% | $243.24 | 25 |
 | mm_cheap | **$10264.22** | $583.27 | $-319.05 | 38 | 61% | $405.49 | 25 |
-| mm_tight | **$10133** | $259.49 | $-126.49 | 451 | 53% | $50.39 | 20 |
-| maker_sports | **$10019.27** | $0 | $19.27 | 0 | — | $0 | 7 |
+| mm_tight | **$10122.23** | $259.49 | $-137.26 | 451 | 53% | $50.39 | 20 |
+| maker_sports | **$10032.73** | $0 | $32.73 | 0 | — | $0 | 7 |
 | maker_flat | **$10017.91** | $0 | $17.91 | 0 | — | $0 | 5 |
 | copy_top | **$9994.17** | $-219.6 | $213.77 | 425 | 52% | $-1548.17 | 25 |
-| mm_max | **$9924.36** | $29.41 | $-105.05 | 196 | 54% | $-179.69 | 4 |
+| mm_max | **$9914.22** | $29.41 | $-115.19 | 196 | 54% | $-179.69 | 4 |
 | fade_longshot | **$9864.81** | $25.97 | $-161.16 | 123 | 95% | $15.23 | 25 |
-| copy_pro | **$9800.62** | $-1073.61 | $874.23 | 405 | 51% | $-1923.61 | 25 |
+| copy_pro | **$9801.08** | $-1073.61 | $874.69 | 405 | 51% | $-1923.61 | 25 |
 | mid_momentum_v2 | **$9760.53** | $-174.04 | $-65.43 | 51 | 51% | $-364.86 | 25 |
 | strong_dip | **$9635.9** | $-517.26 | $153.16 | 108 | 59% | $-609.57 | 25 |
 | mm_cheap_v2 | **$9544.71** | $-381.21 | $-74.08 | 55 | 51% | $-572.03 | 25 |
 | ai_judge | **$9371.5** | $-587.64 | $-40.86 | 7 | 14% | $-600 | 2 |
 | random_control | **$9131.92** | $-979.49 | $111.41 | 147 | 56% | $-1593.78 | 25 |
-| mm_sports | **$8947.84** | $-691.33 | $-360.83 | 532 | 55% | $-910.46 | 22 |
+| mm_sports | **$8937.7** | $-691.33 | $-370.97 | 532 | 55% | $-910.46 | 22 |
 | mm_slow | **$8641.07** | $-809.59 | $-549.34 | 62 | 50% | $-995.3 | 25 |
 | mm_strong | **$8325.34** | $-1184.03 | $-490.63 | 94 | 47% | $-1387.98 | 25 |
 | momentum | **$7924.51** | $-1478.77 | $-596.72 | 270 | 67% | $-1967.01 | 25 |
-| mm_sports_v2 | **$7772.77** | $-1915.8 | $-311.43 | 102 | 46% | $-2134.93 | 21 |
+| mm_sports_v2 | **$7762** | $-1915.8 | $-322.2 | 102 | 46% | $-2134.93 | 21 |
 | whale_fade | **$6728.84** | $-2758.9 | $-512.26 | 426 | 47% | $-3113.45 | 25 |
 | copy_month (retired) | **$9418.25** | $-730.36 | $148.61 | 164 | 48% | $-1539.45 | 1 |
 | favorite (retired) | **$8995.87** | $-931.5 | $-72.63 | 133 | 69% | $-995.43 | 3 |
 | mean_revert (retired) | **$8532.91** | $-1937.09 | $470 | 146 | 25% | $-3964.75 | 1 |
-| maker_flat_badsim (retired) | **$8350.19** | $-1290.97 | $-358.84 | 96 | 42% | $-1485.09 | 22 |
+| maker_flat_badsim (retired) | **$8338.9** | $-1290.97 | $-370.13 | 96 | 42% | $-1485.09 | 22 |
 | late_favorite (retired) | **$8338.09** | $-1661.91 | $0 | 409 | 78% | $-1703.96 | 0 |
-| maker_sports_badsim (retired) | **$6762.07** | $-2926.59 | $-311.34 | 202 | 46% | $-3129.62 | 15 |
+| maker_sports_badsim (retired) | **$6750.78** | $-2926.59 | $-322.63 | 202 | 46% | $-3129.62 | 15 |
 | longshot (retired) | **$5082.74** | $-4791.55 | $-125.71 | 82 | 2% | $-6691.55 | 2 |
 
 
@@ -40,9 +40,9 @@ Ticks: 34417 · Last run: 2026-08-06T15:15:28.165Z · Database: `tester/data/pol
 
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
-| maker_flat | 5 | 0 | 0 | 100% | 2.84¢ |
+| maker_flat | 5 | 0 | 1 | 100% | 2.84¢ |
 | maker_flat_badsim | 118 | 84 | 1 | 58% | 2.9¢ |
-| maker_sports | 7 | 0 | 0 | 100% | 1.71¢ |
+| maker_sports | 7 | 0 | 1 | 100% | 1.71¢ |
 | maker_sports_badsim | 217 | 135 | 3 | 62% | 1.59¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
