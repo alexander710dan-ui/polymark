@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 34760 · Last run: 2026-08-06T18:02:12.604Z · Database: `tester/data/polymark.db`
+Ticks: 34761 · Last run: 2026-08-06T18:02:42.611Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -15,11 +15,11 @@ Ticks: 34760 · Last run: 2026-08-06T18:02:12.604Z · Database: `tester/data/pol
 | fade_longshot | **$9894.27** | $25.97 | $-131.7 | 123 | 95% | $15.23 | 25 |
 | copy_top | **$9776.56** | $-322.25 | $98.81 | 426 | 52% | $-1650.82 | 25 |
 | copy_pro | **$9723.61** | $-706.11 | $429.72 | 406 | 51% | $-1556.11 | 25 |
-| strong_dip | **$9678.1** | $-517.26 | $195.36 | 108 | 59% | $-609.57 | 25 |
+| strong_dip | **$9677.25** | $-517.26 | $194.51 | 108 | 59% | $-609.57 | 25 |
 | mm_max | **$9640.57** | $-285.81 | $-73.62 | 201 | 53% | $-494.91 | 6 |
-| mid_momentum_v2 | **$9469.79** | $-48.14 | $-482.07 | 55 | 53% | $-238.96 | 25 |
+| mid_momentum_v2 | **$9470.92** | $-48.14 | $-480.94 | 55 | 53% | $-238.96 | 25 |
 | ai_judge | **$9371.68** | $-587.64 | $-40.68 | 7 | 14% | $-600 | 2 |
-| mm_cheap_v2 | **$9308.12** | $-414.69 | $-277.19 | 59 | 51% | $-605.51 | 25 |
+| mm_cheap_v2 | **$9307.32** | $-414.69 | $-277.99 | 59 | 51% | $-605.51 | 25 |
 | random_control | **$9091.44** | $-979.49 | $70.93 | 147 | 56% | $-1593.78 | 25 |
 | mm_sports | **$9085.11** | $-1059.92 | $145.03 | 543 | 54% | $-1279.05 | 25 |
 | mm_slow | **$8543.24** | $-809.59 | $-647.17 | 62 | 50% | $-995.3 | 25 |
@@ -31,7 +31,7 @@ Ticks: 34760 · Last run: 2026-08-06T18:02:12.604Z · Database: `tester/data/pol
 | favorite (retired) | **$9005.96** | $-931.5 | $-62.54 | 133 | 69% | $-995.43 | 3 |
 | mean_revert (retired) | **$8486.25** | $-1937.09 | $423.34 | 146 | 25% | $-3964.75 | 1 |
 | late_favorite (retired) | **$8338.09** | $-1661.91 | $0 | 409 | 78% | $-1703.96 | 0 |
-| maker_flat_badsim (retired) | **$8135.96** | $-1590.97 | $-273.07 | 99 | 40% | $-1785.09 | 19 |
+| maker_flat_badsim (retired) | **$8135.14** | $-1590.97 | $-273.89 | 99 | 40% | $-1785.09 | 19 |
 | maker_sports_badsim (retired) | **$6552.71** | $-3401.72 | $-45.57 | 211 | 45% | $-3604.75 | 6 |
 | longshot (retired) | **$5078.49** | $-4791.55 | $-129.96 | 82 | 2% | $-6691.55 | 2 |
 
