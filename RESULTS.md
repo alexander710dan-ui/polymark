@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 33776 · Last run: 2026-08-06T08:49:24.301Z · Database: `tester/data/polymark.db`
+Ticks: 33777 · Last run: 2026-08-06T08:50:00.225Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -39,7 +39,7 @@ Ticks: 33776 · Last run: 2026-08-06T08:49:24.301Z · Database: `tester/data/pol
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
 | maker_flat | 111 | 77 | 0 | 59% | 2.95¢ |
-| maker_sports | 192 | 121 | 2 | 61% | 1.55¢ |
+| maker_sports | 192 | 122 | 1 | 61% | 1.55¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
 
