@@ -184,8 +184,10 @@ const feeAgg = {};
 for (const r of feeRows) {
   const a = (feeAgg[r.strategy] = feeAgg[r.strategy] || { n: 0, pnl: 0, feeCharged: 0, feeImplied: 0, stake: 0, makers: 0 });
   a.n++; a.pnl += r.pnl; a.stake += r.stake; a.feeCharged += r.fee; a.makers += r.mk;
-  // what a taker WOULD pay, for bets recorded before fees were modelled
-  if (!r.mk) a.feeImplied += r.shares * (FEE_RATE[r.tag] ?? 0.05) * r.entry * (1 - r.entry);
+  // impute the fee PER BET for taker bets booked before fees existed.
+  // (Was gated per strategy, so one fee-booked bet zeroed the whole
+  //  strategy's adjustment and the "fee-adjusted" column printed gross.)
+  if (!r.mk && r.fee === 0) a.feeImplied += r.shares * (FEE_RATE[r.tag] ?? 0.05) * r.entry * (1 - r.entry);
 }
 console.log("\n\nFEES — Polymarket charges takers  fee = shares × rate × p × (1−p);  MAKERS PAY ZERO");
 console.log("strategy          bets   reported P&L   fees (modelled+implied)   fee-adjusted   ROI");
@@ -193,8 +195,8 @@ console.log("-".repeat(94));
 for (const r of results.slice(0, 10)) {
   const a = feeAgg[r.name];
   if (!a) continue;
-  const totalFee = a.feeCharged + Math.max(0, a.feeImplied - a.feeCharged);
-  const net = a.pnl - (a.feeCharged > 0 ? 0 : a.feeImplied); // avoid double-counting once fees are booked
+  // pnl already nets fees that WERE booked; subtract only the imputed ones
+  const net = a.pnl - a.feeImplied;
   console.log(r.name.padEnd(17) + String(a.n).padStart(5) + ("$" + Math.round(a.pnl)).padStart(15) +
     ("$" + Math.round(a.feeImplied)).padStart(25) + ("$" + Math.round(net)).padStart(15) +
     ((a.stake ? (100 * net / a.stake).toFixed(1) : "0") + "%").padStart(8));

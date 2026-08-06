@@ -30,8 +30,10 @@ function saveConfig() { fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, nul
 
 let tray = null, win = null, children = [], blockerId = null, viewerTimer = null;
 let startHead = null, lastSync = 0, lastSyncOk = true;
+/* Track the CODE revision, not HEAD: the runner commits data constantly, and
+   watching HEAD made the app SIGTERM all its children every few minutes. */
 function gitHead(cb) {
-  const g = spawn("git", ["rev-parse", "HEAD"], { cwd: ROOT });
+  const g = spawn("git", ["log", "-1", "--format=%H", "--", "tester", "collector", "reasoner", "app", "index.html"], { cwd: ROOT });
   let o = "";
   g.stdout.on("data", (d) => (o += d));
   g.on("exit", (c) => cb(c === 0 ? o.trim() : null));
@@ -171,10 +173,17 @@ function applyRole() {
   } else {
     log("role: VIEWER — pulling every 60s");
     const pull = () => {
-      const git = spawn("git", ["pull", "--rebase", "--autostash", "origin", "main"], { cwd: ROOT });
+      /* Viewers must never merge — a half-written database from the runner
+         produces unmergeable conflicts that wedge sync permanently. Fetch and
+         hard-reset: the viewer owns no local changes worth keeping. */
+      const git = spawn("git", ["fetch", "origin", "main"], { cwd: ROOT });
       git.on("exit", (code) => {
-        lastSync = Date.now(); lastSyncOk = code === 0;
-        if (code !== 0) log("[sync] git pull failed (" + code + ")");
+        if (code !== 0) { lastSync = Date.now(); lastSyncOk = false; log("[sync] fetch failed (" + code + ")"); return; }
+        const reset = spawn("git", ["reset", "--hard", "origin/main"], { cwd: ROOT });
+        reset.on("exit", (rc) => {
+          lastSync = Date.now(); lastSyncOk = rc === 0;
+          if (rc !== 0) log("[sync] reset failed (" + rc + ")");
+        });
       });
     };
     pull();

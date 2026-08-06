@@ -529,15 +529,24 @@ function openNewPositions(db, universe, whales) {
   return opened;
 }
 
-/* keep the synced db small — it is committed on every tick, so growth
-   directly bloats the repo. Old closed positions and equity points are
-   already summarized in RESULTS.md and results.json. */
+/* Keep the synced db small WITHOUT destroying the record.
+   The old version deleted closed positions after 30 days — but realized() is a
+   live SUM over that table, so deleting a losing bet would have RAISED realized
+   P&L and refunded bankroll. On 2026-08-15 that would have started silently
+   erasing $26k of losses. Positions are now permanent; only the high-frequency
+   equity curve is thinned, and always by downsampling rather than deletion. */
 function pruneDb(db) {
   try {
-    const cutoff = new Date(Date.now() - 30 * 86400000).toISOString();
-    db.prepare("DELETE FROM positions WHERE status='closed' AND closed_at < ?").run(cutoff);
-    db.prepare("DELETE FROM equity WHERE ts < ?").run(cutoff);
-    db.prepare("DELETE FROM ticks WHERE ts < ?").run(cutoff);
+    // keep every equity point for 3 days, then 1 per hour, then 1 per day
+    const h3 = new Date(Date.now() - 3 * 86400000).toISOString();
+    const d30 = new Date(Date.now() - 30 * 86400000).toISOString();
+    db.prepare(`DELETE FROM equity WHERE ts < ? AND ts >= ?
+                AND rowid NOT IN (SELECT MIN(rowid) FROM equity WHERE ts < ? AND ts >= ?
+                               GROUP BY strategy, substr(ts,1,13))`).run(h3, d30, h3, d30);
+    db.prepare(`DELETE FROM equity WHERE ts < ?
+                AND rowid NOT IN (SELECT MIN(rowid) FROM equity WHERE ts < ? GROUP BY strategy, substr(ts,1,10))`)
+      .run(d30, d30);
+    db.prepare("DELETE FROM ticks WHERE ts < ?").run(d30);
   } catch (e) { /* next tick */ }
 }
 
@@ -591,9 +600,17 @@ function resolveMakerOrders(db, universe) {
   for (const o of pending) {
     const m = byId.get(o.market_id);
     if (m && m.ask !== null && m.bid !== null) {
-      // the market's current cost to buy our side
+      /* CORRECT MAKER FILL (fixed 2026-08-06 — see audit):
+         A resting buy at P fills when a seller crosses down INTO it. The
+         previous rule fired when ask <= P, but P was the bid at placement and
+         ask >= bid always — so it could only trigger after the whole book slid
+         a full spread against us, guaranteeing every fill was already a loser.
+         That made the maker experiment measure the simulator, not the market.
+         Correct proxy from snapshots: the market traded down to our level
+         (bid <= P) while still quoting above it (ask > P). */
+      const bidNow = o.side === "yes" ? m.bid : 1 - m.ask;
       const askNow = o.side === "yes" ? m.ask : 1 - m.bid;
-      if (askNow <= o.limit_price + 1e-9) {
+      if (bidNow <= o.limit_price + 1e-9 && askNow > o.limit_price + 1e-9) {
         // someone sold down to our price — we get filled at our limit
         const shares = o.stake / o.limit_price;
         // maker fill: zero fee by Polymarket's own rule — this is the whole point
@@ -621,7 +638,11 @@ function resolveMakerOrders(db, universe) {
 
 function snapshotEquity(db) {
   const ts = new Date().toISOString();
-  for (const name of [...Object.keys(STRATEGIES), ...Object.keys(MAKER_STRATEGIES)]) {
+  // must cover every strategy that still holds positions, including retired
+  // ones — otherwise the equity curve and the standings table diverge
+  const known = new Set([...Object.keys(STRATEGIES), ...Object.keys(MAKER_STRATEGIES),
+    ...db.prepare("SELECT DISTINCT strategy s FROM positions").all().map((r) => r.s)]);
+  for (const name of known) {
     const real = realized(db, name);
     const os = openStake(db, name);
     const mv = db.prepare("SELECT COALESCE(SUM(shares * COALESCE(last_mark, entry)),0) v FROM positions WHERE strategy=? AND status='open'").get(name).v;
@@ -678,9 +699,15 @@ function sh(cmd) {
 async function loop(intervalSec) {
   console.log("fast loop: tick every " + intervalSec + "s, pushing when bets open or settle. Ctrl+C stops it.");
   process.env.PM_SOURCE = "runner"; // stamps the feed so viewers can tell runner data from cloud-backup data
-  let lastPush = 0;
-  const headRes = sh("git rev-parse HEAD");
-  const loopStartHead = headRes.ok ? headRes.out.trim() : null;
+  let lastPush = 0, lastDbPush = Date.now() - 5 * 3600000;
+  /* Watch the CODE revision, not HEAD. Watching HEAD meant the loop detected
+     its own data commits and restarted — 7,713 restarts in 3 days, each
+     re-committing a 42MB database. */
+  const codeRev = () => {
+    const r = sh('git log -1 --format=%H -- tester collector reasoner app index.html');
+    return r.ok ? r.out.trim() : null;
+  };
+  const loopStartHead = codeRev();
   for (;;) {
     const pull = sh("git pull --rebase --autostash origin main");
     if (!pull.ok) {
@@ -689,9 +716,9 @@ async function loop(intervalSec) {
     }
     // self-refresh: if the pull brought new code, exit — the app restarts us
     // on the new version within 15s. Works even when app-level restart fails.
-    const nowHead = sh("git rev-parse HEAD");
-    if (loopStartHead && nowHead.ok && nowHead.out.trim() !== loopStartHead) {
-      console.log("new code pulled (" + nowHead.out.trim().slice(0, 7) + ") — exiting for restart");
+    const nowRev = codeRev();
+    if (loopStartHead && nowRev && nowRev !== loopStartHead) {
+      console.log("new code pulled (" + nowRev.slice(0, 7) + ") — exiting for restart");
       process.exit(0);
     }
     let counts = { opened: 0, settled: 0 };
@@ -699,7 +726,10 @@ async function loop(intervalSec) {
     // push on activity, or a heartbeat push every 20 min so the cloud cron
     // knows a live Runner exists and skips its own tick
     if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 10 * 60000) {
-      sh("git add tester/data/polymark.db tester/data/results.json RESULTS.md");
+      // the 42MB database is heavy: commit it every 6h, not every tick.
+      // results.json/RESULTS.md are what the dashboards actually read.
+      if (Date.now() - lastDbPush > 6 * 3600000) { sh("git add tester/data/polymark.db"); lastDbPush = Date.now(); }
+      sh("git add tester/data/results.json RESULTS.md");
       sh("git add collector/data/latency.json collector/data/collector-status.json"); // latency report + health (raw db stays local)
       sh("git add reasoner/data/ai-scores.json"); // local-AI opinions for the AI tab
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');

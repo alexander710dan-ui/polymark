@@ -179,11 +179,14 @@ async function run() {
   try {
     const { execSync } = require("node:child_process");
     const repo = path.join(__dirname, "..");
-    const startHead = execSync("git rev-parse HEAD", { cwd: repo }).toString().trim();
+    // watch the CODE revision, not HEAD — watching HEAD meant every data
+    // commit killed the collector, so its 15min/60min snapshot tiers could
+    // never fire (they had zero rows)
+    const rev = () => execSync("git log -1 --format=%H -- tester collector reasoner app", { cwd: repo }).toString().trim();
+    const startHead = rev();
     setInterval(() => {
       try {
-        const h = execSync("git rev-parse HEAD", { cwd: repo }).toString().trim();
-        if (h !== startHead) { console.log("new code pulled — exiting for restart"); process.exit(0); }
+        if (rev() !== startHead) { console.log("new code pulled — exiting for restart"); process.exit(0); }
       } catch (e) { /* git hiccup — try next check */ }
     }, 10 * 60000);
   } catch (e) { /* not a git checkout — fine */ }
