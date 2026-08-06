@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 34498 · Last run: 2026-08-06T15:55:32.010Z · Database: `tester/data/polymark.db`
+Ticks: 34499 · Last run: 2026-08-06T15:56:01.841Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -13,8 +13,8 @@ Ticks: 34498 · Last run: 2026-08-06T15:55:32.010Z · Database: `tester/data/pol
 | mm_tight | **$10089.73** | $141.52 | $-51.79 | 454 | 53% | $-67.58 | 20 |
 | maker_flat | **$10075.9** | $0 | $75.9 | 0 | — | $0 | 10 |
 | copy_top | **$9999.58** | $-219.6 | $219.18 | 425 | 52% | $-1548.17 | 25 |
-| fade_longshot | **$9867.07** | $25.97 | $-158.9 | 123 | 95% | $15.23 | 25 |
-| copy_pro | **$9825.99** | $-706.11 | $532.1 | 406 | 51% | $-1556.11 | 25 |
+| fade_longshot | **$9867.12** | $25.97 | $-158.85 | 123 | 95% | $15.23 | 25 |
+| copy_pro | **$9825.54** | $-706.11 | $531.65 | 406 | 51% | $-1556.11 | 25 |
 | mid_momentum_v2 | **$9769.74** | $-117.16 | $-113.1 | 52 | 52% | $-307.98 | 25 |
 | mm_cheap_v2 | **$9692.77** | $-324.33 | $17.1 | 56 | 52% | $-515.15 | 25 |
 | mm_max | **$9689.79** | $-72.84 | $-237.37 | 197 | 53% | $-281.94 | 5 |
@@ -33,14 +33,14 @@ Ticks: 34498 · Last run: 2026-08-06T15:55:32.010Z · Database: `tester/data/pol
 | late_favorite (retired) | **$8338.09** | $-1661.91 | $0 | 409 | 78% | $-1703.96 | 0 |
 | maker_flat_badsim (retired) | **$8188.45** | $-1390.97 | $-420.58 | 97 | 41% | $-1585.09 | 21 |
 | maker_sports_badsim (retired) | **$6758.44** | $-3034.28 | $-207.28 | 205 | 46% | $-3237.31 | 12 |
-| longshot (retired) | **$5082.74** | $-4791.55 | $-125.71 | 82 | 2% | $-6691.55 | 2 |
+| longshot (retired) | **$5081.7** | $-4791.55 | $-126.75 | 82 | 2% | $-6691.55 | 2 |
 
 
 ### Patient (maker) execution
 
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
-| maker_flat | 10 | 0 | 0 | 100% | 2.72¢ |
+| maker_flat | 10 | 0 | 1 | 100% | 2.72¢ |
 | maker_flat_badsim | 118 | 85 | 0 | 58% | 2.9¢ |
 | maker_sports | 12 | 0 | 0 | 100% | 1.42¢ |
 | maker_sports_badsim | 217 | 137 | 1 | 61% | 1.59¢ |
