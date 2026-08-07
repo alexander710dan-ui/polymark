@@ -165,6 +165,64 @@ const STRATEGIES = {
   },
   random_control:(m) => (Math.random() < 0.12 ? (Math.random() < 0.5 ? "yes" : "no") : null),
 
+  /* ================= CONVICTION =================
+     The synthesis strategy. Every rule is something this lab LEARNED, not
+     something assumed. Built to trade RARELY: most markets fail a gate, and
+     most survivors fail the agreement test. Few trades is the feature —
+     5,500 indiscriminate bets found nothing.
+
+     GATES (each closes a documented money pit):
+       in-play        whale edge there is seconds-scale and uncopyable
+       35-65c         sub-10c bets went 2-for-81; high prices pay pennies to win
+       spread <= 2c   crossing cost measured ~0.6c, paid on 74% of lab bets
+       liquidity      thin books are where mispricing AND cost both live
+       1-14 days      long-dated ties capital; same-day is noise
+     AGREEMENT: >= 2 INDEPENDENT sources, unanimous. Any dissent kills it.
+     ARITHMETIC: fees take rate x (1-p) of stake, so when the model has an
+       opinion it must clear price x (1+fee) plus a 3-point margin. */
+  conviction: (m, ctx) => {
+    if (m.inPlay) return null;
+    if (m.yes < 0.35 || m.yes > 0.65) return null;
+    if (m.spread === null || m.spread > 0.02) return null;
+    if (m.liq < 20000 || m.vol24 < 5000) return null;
+    if (m.days < 1 || m.days > 14) return null;
+
+    const votes = [];
+    if (m.change24 >= 0.06) votes.push({ side: "yes", src: "momentum", w: 1 });
+    else if (m.change24 <= -0.06) votes.push({ side: "no", src: "momentum", w: 1 });
+    if (ctx.whale && ctx.whale.usd >= 2000) {
+      votes.push({ side: ctx.whale.index === 0 ? "yes" : "no", src: "whales",
+                   w: ctx.whale.traders >= 2 ? 2 : 1 });
+    }
+    let aiEdge = null;
+    if (ctx.ai && Date.now() - ctx.ai.ts < 45 * 60000) {
+      const d = ctx.ai.ai - m.yes;
+      if (Math.abs(d) >= 0.06) { votes.push({ side: d > 0 ? "yes" : "no", src: "model", w: 1 }); aiEdge = d; }
+    }
+
+    const srcs = new Set(votes.map((v) => v.src));
+    if (srcs.size < 2) return null;
+    const side = votes[0].side;
+    if (!votes.every((v) => v.side === side)) return null;
+
+    const price = side === "yes" ? m.yes : 1 - m.yes;
+    const feeFrac = (FEE_RATE[m.tag] ?? 0.05) * (1 - price);
+    if (aiEdge !== null) {
+      const est = side === "yes" ? ctx.ai.ai : 1 - ctx.ai.ai;
+      if (est < price * (1 + feeFrac) + 0.03) return null;
+    }
+
+    /* Confidence, and a genuinely graduated stake. Two agreeing signals is the
+       ENTRY bar, not the top — max size is reserved for three independent
+       sources with real strength behind them. Sizing is deliberately timid
+       because nothing in this lab has yet earned the right to be sized up. */
+    const weight = votes.reduce((s, v) => s + v.w, 0);
+    const conf = Math.min(100, 30 + srcs.size * 10 + weight * 4 +
+      (aiEdge !== null ? Math.min(12, Math.abs(aiEdge) * 100) : 0));
+    const stake = conf >= 85 ? 200 : conf >= 72 ? 150 : STAKE;
+    return { side, stake, conf, why: votes.map((v) => v.src).sort().join("+") };
+  },
+
   /* ---- REPLICATION SET (registered 2026-08-05) ----
      Byte-identical copies of the three strategies currently showing positive
      numbers, started fresh with no history. A real edge replicates; luck does
@@ -236,7 +294,10 @@ function openDb() {
                         what makes edge measurable in hours instead of weeks. */
                      "clv_mark REAL", "clv_mark_ts TEXT", "mark_1h REAL", "mark_24h REAL",
                      /* taker fee paid on entry; 0 for maker (patient) fills */
-                     "fee REAL DEFAULT 0", "is_maker INTEGER DEFAULT 0"]) {
+                     "fee REAL DEFAULT 0", "is_maker INTEGER DEFAULT 0",
+                     /* self-assessed confidence and its reason, so we can test
+                        whether our own confidence predicts anything at all */
+                     "confidence REAL", "reason TEXT"]) {
     try { db.exec("ALTER TABLE positions ADD COLUMN " + col); } catch (e) { /* exists */ }
   }
   return db;
@@ -502,6 +563,15 @@ function openNewPositions(db, universe, whales) {
       const side = typeof res === "string" ? res : res.side;
       const stakeAmt = typeof res === "object" && res.stake ? res.stake : STAKE;
       if (!side || budgetLeft < stakeAmt) continue;
+      /* Correlation guard for the selective strategy: nine bets that all hinged
+         on "does something happen before July 31" were one bet wearing nine
+         hats, and they lost together. Cap exposure per resolution day. */
+      if (name === "conviction" && m.endDate) {
+        const sameDay = db.prepare(
+          "SELECT COUNT(*) n FROM positions WHERE strategy=? AND status='open' AND substr(end_date,1,10)=?"
+        ).get(name, m.endDate.slice(0, 10)).n;
+        if (sameDay >= 3) continue;
+      }
       // buy at the ask of the chosen side when the book is available
       const price = side === "yes"
         ? (m.ask !== null ? m.ask : m.yes)
@@ -518,11 +588,13 @@ function openNewPositions(db, universe, whales) {
       const sigMeta = sig && sig.wallets ? sig.wallets.join(",") : null;
       const mTag = tag(m.question);
       const fee = takerFee(mTag, price, shares);
-      db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares, opened_at, end_date, last_mark, outcome_name, condition_id, signal_meta, signal_price, spread_at_entry, fee, is_maker)
-                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)`)
+      const conf = typeof res === "object" && res.conf != null ? res.conf : null;
+      const why = typeof res === "object" && res.why ? res.why : null;
+      db.prepare(`INSERT INTO positions(strategy, market_id, question, tag, side, entry, stake, shares, opened_at, end_date, last_mark, outcome_name, condition_id, signal_meta, signal_price, spread_at_entry, fee, is_maker, confidence, reason)
+                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)`)
         .run(name, m.id, m.question, mTag, side, Math.round(price * 10000) / 10000, stakeAmt,
              Math.round(shares * 100) / 100, now, m.endDate, Math.round(price * 10000) / 10000, outcomeName, m.conditionId, sigMeta,
-             Math.round(signalPrice * 10000) / 10000, m.spread === null ? null : Math.round(m.spread * 10000) / 10000, fee);
+             Math.round(signalPrice * 10000) / 10000, m.spread === null ? null : Math.round(m.spread * 10000) / 10000, fee, conf, why);
       opened++; slots--; budgetLeft -= stakeAmt;
     }
   }
