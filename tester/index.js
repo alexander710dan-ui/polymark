@@ -783,6 +783,29 @@ async function tick() {
   return { opened, settled };
 }
 
+/* Supervise the collector from the tick loop. The app is supposed to keep it
+   alive, but app-level code only reloads when the Electron shell restarts —
+   so the collector sat dead for 25 hours with every dashboard green. The loop
+   is the most reliably-running process in the system, so it adopts the job:
+   if the collector's heartbeat is stale, spawn a fresh one, detached. */
+function superviseCollector() {
+  const statusPath = path.join(__dirname, "..", "collector", "data", "collector-status.json");
+  let stale = true;
+  try {
+    const s = JSON.parse(fs.readFileSync(statusPath, "utf8"));
+    stale = Date.now() - Date.parse(s.ts) > 30 * 60000;
+  } catch (e) { /* no heartbeat at all counts as stale */ }
+  if (!stale) return false;
+  try {
+    const { spawn } = require("node:child_process");
+    const child = spawn(process.execPath, [path.join(__dirname, "..", "collector", "index.js"), "run"],
+      { detached: true, stdio: "ignore", cwd: path.join(__dirname, "..") });
+    child.unref();
+    console.log("collector heartbeat stale — started a fresh collector");
+    return true;
+  } catch (e) { console.error("could not start collector:", e.message); return false; }
+}
+
 /* ---------------- fast loop (run on your own machine / a VPS) ----------------
    Ticks continuously. Pushes to the repo only when a bet opened or settled,
    so the live page updates within seconds of real activity. Safe alongside
@@ -797,7 +820,7 @@ function sh(cmd) {
 async function loop(intervalSec) {
   console.log("fast loop: tick every " + intervalSec + "s, pushing when bets open or settle. Ctrl+C stops it.");
   process.env.PM_SOURCE = "runner"; // stamps the feed so viewers can tell runner data from cloud-backup data
-  let lastPush = 0, lastDbPush = Date.now() - 5 * 3600000;
+  let lastPush = 0, lastSupervise = 0;
   /* Watch the CODE revision, not HEAD. Watching HEAD meant the loop detected
      its own data commits and restarted — 7,713 restarts in 3 days, each
      re-committing a 42MB database. */
@@ -819,15 +842,14 @@ async function loop(intervalSec) {
       console.log("new code pulled (" + nowRev.slice(0, 7) + ") — exiting for restart");
       process.exit(0);
     }
+    if (Date.now() - lastSupervise > 10 * 60000) { lastSupervise = Date.now(); superviseCollector(); }
     let counts = { opened: 0, settled: 0 };
     try { counts = await tick(); } catch (e) { console.error("tick failed:", e.message); }
     // push on activity, or a heartbeat push every 20 min so the cloud cron
     // knows a live Runner exists and skips its own tick
     if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 10 * 60000) {
-      // the 42MB database is heavy: commit it every 6h, not every tick.
-      // results.json/RESULTS.md are what the dashboards actually read.
-      if (Date.now() - lastDbPush > 6 * 3600000) { sh("git add tester/data/polymark.db"); lastDbPush = Date.now(); }
-      sh("git add tester/data/results.json RESULTS.md");
+      // Publish TEXT artifacts only. The database stays local to the runner.
+      sh("git add tester/data/results.json tester/data/positions.json RESULTS.md");
       sh("git add collector/data/latency.json collector/data/collector-status.json"); // latency report + health (raw db stays local)
       sh("git add reasoner/data/ai-scores.json"); // local-AI opinions for the AI tab
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');
@@ -944,6 +966,20 @@ function report(db) {
   md.push("");
   md.push("_Runs on a 15-minute GitHub Actions schedule; GitHub throttles this in practice to roughly every 1–2 hours. Live view: [alexander710dan-ui.github.io/polymark/live.html](https://alexander710dan-ui.github.io/polymark/live.html)_");
   fs.writeFileSync(RESULTS_PATH, md.join("\n") + "\n");
+
+  /* Full position export — text, diff-friendly, and the ONLY analysis data
+     that crosses machines. The SQLite file itself is no longer synced: a live
+     binary database written by one machine and reset by another corrupted
+     twice and silently ate edits three times. The runner owns the database
+     outright; everyone else reads these published artifacts. */
+  try {
+    const all = db.prepare(`SELECT id, strategy, tag, side, outcome_name, entry, stake, shares,
+        opened_at, end_date, status, exit, closed_at, pnl, close_reason, fee, is_maker,
+        confidence, reason, signal_price, spread_at_entry, clv_mark, condition_id, question
+      FROM positions ORDER BY id`).all();
+    fs.writeFileSync(path.join(DATA_DIR, "positions.json"),
+      JSON.stringify({ generated_at: new Date().toISOString(), count: all.length, positions: all }));
+  } catch (e) { console.error("positions export failed:", e.message); }
 
   /* JSON feed for the live web view (served via GitHub Pages) */
   const recent = db.prepare(`SELECT strategy, side, entry, pnl, close_reason, closed_at, question, tag, outcome_name

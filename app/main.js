@@ -178,13 +178,27 @@ function applyRole() {
       /* Viewers must never merge — a half-written database from the runner
          produces unmergeable conflicts that wedge sync permanently. Fetch and
          hard-reset: the viewer owns no local changes worth keeping. */
+      /* Fetch, then hard-reset — but NEVER over uncommitted source edits.
+         The reset silently destroyed work-in-progress three times before this
+         guard existed. Data files are expendable; source files are not. */
       const git = spawn("git", ["fetch", "origin", "main"], { cwd: ROOT });
       git.on("exit", (code) => {
         if (code !== 0) { lastSync = Date.now(); lastSyncOk = false; log("[sync] fetch failed (" + code + ")"); return; }
-        const reset = spawn("git", ["reset", "--hard", "origin/main"], { cwd: ROOT });
-        reset.on("exit", (rc) => {
-          lastSync = Date.now(); lastSyncOk = rc === 0;
-          if (rc !== 0) log("[sync] reset failed (" + rc + ")");
+        const status = spawn("git", ["status", "--porcelain", "--", "*.js", "*.html", "*.json", "*.md"], { cwd: ROOT });
+        let dirty = "";
+        status.stdout.on("data", (d) => (dirty += d));
+        status.on("exit", () => {
+          const edits = dirty.split("\n").filter((l) => l.trim() && !l.includes("tester/data/") && !l.includes("collector/data/") && !l.includes("reasoner/data/"));
+          if (edits.length) {
+            lastSync = Date.now(); lastSyncOk = false;
+            log("[sync] PAUSED — uncommitted source edits present, refusing to reset: " + edits.slice(0, 3).map((e) => e.trim()).join(", "));
+            return;
+          }
+          const reset = spawn("git", ["reset", "--hard", "origin/main"], { cwd: ROOT });
+          reset.on("exit", (rc) => {
+            lastSync = Date.now(); lastSyncOk = rc === 0;
+            if (rc !== 0) log("[sync] reset failed (" + rc + ")");
+          });
         });
       });
     };

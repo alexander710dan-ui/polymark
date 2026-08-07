@@ -11,3 +11,8 @@ app/config.json
 app/dist/
 nul
 NUL
+
+# the live database is owned by the runner and never synced —
+# a binary file written by one machine and reset by another corrupts.
+# Analysis data crosses machines as tester/data/positions.json instead.
+tester/data/polymark.db
