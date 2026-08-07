@@ -259,6 +259,14 @@ function draw(){
   v.innerHTML=tab==="standings"?vStandings():tab==="open"?vOpen():tab==="settled"?vSettled():tab==="ai"?vAI():vLab();
   if(tab==="standings")chart();
   if(tab==="lab"){var i=document.getElementById("bank");i.oninput=function(){localStorage.setItem("pm_bank",this.value);draw()}}
+  /* surface silent component death — the collector once sat dead for 17h
+     with every dashboard still showing green */
+  fetch("collector/data/collector-status.json?t="+Date.now()).then(function(r){return r.json()}).then(function(c){
+    var mins=(Date.now()-Date.parse(c.ts))/6e4;
+    var el=document.getElementById("state");
+    if(mins>60&&el&&el.textContent.indexOf("collector")<0)
+      el.textContent+=" · collector silent "+(mins<1440?Math.round(mins/60)+"h":Math.round(mins/1440)+"d");
+  }).catch(function(){});
   var age=(Date.now()-Date.parse(D.generated_at))/6e4;
   var st=D.source==="cloud"?["cloud backup","var(--no)"]:age<15?["live","var(--yes)"]:age<45?["delayed","var(--brass)"]:["silent","var(--no)"];
   document.getElementById("dot").style.background=st[1];

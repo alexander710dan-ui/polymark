@@ -88,7 +88,8 @@ function startServer() {
     }
     if (req.url && req.url.split("?")[0] === "/__app_status") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ role: config.role, lastSync: lastSync, lastSyncOk: lastSyncOk, children: children.length }));
+      res.end(JSON.stringify({ role: config.role, lastSync: lastSync, lastSyncOk: lastSyncOk,
+        children: children.length, childFailures: quickFails }));
       return;
     }
     const urlPath = decodeURIComponent((req.url || "/").split("?")[0]);
@@ -142,12 +143,13 @@ function startChild(label, args) {
     if (!children.includes(child) || config.role !== "runner") return;
     if (Date.now() - startedAt < 10000) quickFails[label] = (quickFails[label] || 0) + 1;
     else quickFails[label] = 0;
-    if (quickFails[label] >= 5) {
-      log("[" + label + "] crashed 5x fast — giving up; fix the cause, then toggle the role to retry");
-      return;
-    }
-    log("[" + label + "] restarting in 15s");
-    setTimeout(() => { if (config.role === "runner") replaceChild(child, label, args); }, 15000);
+    /* Never give up permanently — a child that stays dead is invisible for
+       hours (the collector was dead 17h under the old rule). Back off instead:
+       15s, then doubling to a 10-minute ceiling, forever. */
+    const delay = Math.min(600000, 15000 * Math.pow(2, Math.max(0, quickFails[label] - 1)));
+    if (quickFails[label] >= 5) log("[" + label + "] crashed " + quickFails[label] + "x — retrying every " + Math.round(delay / 1000) + "s");
+    else log("[" + label + "] restarting in " + Math.round(delay / 1000) + "s");
+    setTimeout(() => { if (config.role === "runner") replaceChild(child, label, args); }, delay);
   });
   children.push(child);
   return child;
