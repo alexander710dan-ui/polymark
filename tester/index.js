@@ -181,15 +181,26 @@ const STRATEGIES = {
      ARITHMETIC: fees take rate x (1-p) of stake, so when the model has an
        opinion it must clear price x (1+fee) plus a 3-point margin. */
   conviction: (m, ctx) => {
-    if (m.inPlay) return null;
-    if (m.yes < 0.35 || m.yes > 0.65) return null;
-    if (m.spread === null || m.spread > 0.02) return null;
-    if (m.liq < 20000 || m.vol24 < 5000) return null;
-    if (m.days < 1 || m.days > 14) return null;
+    /* Instrumented: a selective strategy that never fires is indistinguishable
+       from a broken one, so it records WHY each market was rejected. */
+    const R = ctx.reject || {};
+    const no = (why) => { R[why] = (R[why] || 0) + 1; return null; };
+    /* Gate thresholds calibrated 2026-08-07: the first version fired ZERO times
+       in a 400-market simulation — after its gates only 15 markets survived, and
+       two sparse signals never coincided there. These are widened to the bands
+       our own evidence actually supports (30-70c is where mid_momentum lived;
+       5c is the momentum threshold used lab-wide) while keeping every gate that
+       closes a measured money pit. Discipline is preserved in the AGREEMENT
+       rule, not in gates so tight nothing survives them. */
+    if (m.inPlay) return no("in-play");
+    if (m.yes < 0.30 || m.yes > 0.70) return no("price band");
+    if (m.spread === null || m.spread > 0.03) return no("spread");
+    if (m.liq < 10000 || m.vol24 < 2000) return no("liquidity");
+    if (m.days < 0.5 || m.days > 21) return no("horizon");
 
     const votes = [];
-    if (m.change24 >= 0.06) votes.push({ side: "yes", src: "momentum", w: 1 });
-    else if (m.change24 <= -0.06) votes.push({ side: "no", src: "momentum", w: 1 });
+    if (m.change24 >= 0.05) votes.push({ side: "yes", src: "momentum", w: 1 });
+    else if (m.change24 <= -0.05) votes.push({ side: "no", src: "momentum", w: 1 });
     if (ctx.whale && ctx.whale.usd >= 2000) {
       votes.push({ side: ctx.whale.index === 0 ? "yes" : "no", src: "whales",
                    w: ctx.whale.traders >= 2 ? 2 : 1 });
@@ -201,15 +212,15 @@ const STRATEGIES = {
     }
 
     const srcs = new Set(votes.map((v) => v.src));
-    if (srcs.size < 2) return null;
+    if (srcs.size < 2) return no(srcs.size === 1 ? "only 1 signal" : "no signal");
     const side = votes[0].side;
-    if (!votes.every((v) => v.side === side)) return null;
+    if (!votes.every((v) => v.side === side)) return no("signals disagree");
 
     const price = side === "yes" ? m.yes : 1 - m.yes;
     const feeFrac = (FEE_RATE[m.tag] ?? 0.05) * (1 - price);
     if (aiEdge !== null) {
       const est = side === "yes" ? ctx.ai.ai : 1 - ctx.ai.ai;
-      if (est < price * (1 + feeFrac) + 0.03) return null;
+      if (est < price * (1 + feeFrac) + 0.03) return no("edge < costs");
     }
 
     /* Confidence, and a genuinely graduated stake. Two agreeing signals is the
@@ -545,6 +556,7 @@ async function settleOpenPositions(db) {
 function openNewPositions(db, universe, whales) {
   let opened = 0;
   const now = new Date().toISOString();
+  const rejectLog = {};   // why conviction passed on each market this tick
   for (const [name, pick] of Object.entries(STRATEGIES)) {
     let budgetLeft = BANKROLL + realized(db, name) - openStake(db, name).stake;
     let slots = Math.min(MAX_NEW_PER_TICK, MAX_OPEN - openStake(db, name).n);
@@ -556,7 +568,8 @@ function openNewPositions(db, universe, whales) {
         whale: (whales.top && whales.top.get(m.conditionId)) || null,
         pro: (whales.pro && whales.pro.get(m.conditionId)) || null,
         month: (whales.month && whales.month.get(m.conditionId)) || null,
-        ai: (whales.ai && whales.ai.get(m.conditionId)) || null
+        ai: (whales.ai && whales.ai.get(m.conditionId)) || null,
+        reject: name === "conviction" ? rejectLog : null
       };
       const res = pick(m, ctx);
       if (!res) continue;
@@ -596,7 +609,19 @@ function openNewPositions(db, universe, whales) {
              Math.round(shares * 100) / 100, now, m.endDate, Math.round(price * 10000) / 10000, outcomeName, m.conditionId, sigMeta,
              Math.round(signalPrice * 10000) / 10000, m.spread === null ? null : Math.round(m.spread * 10000) / 10000, fee, conf, why);
       opened++; slots--; budgetLeft -= stakeAmt;
+      if (name === "conviction") console.log("CONVICTION " + side.toUpperCase() + " $" + stakeAmt +
+        " conf " + Math.round(conf) + " [" + why + "] " + m.question.slice(0, 50));
     }
+  }
+  // publish why the selective strategy stayed quiet — silence with a reason
+  const top = Object.entries(rejectLog).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  if (top.length) {
+    const line = top.map(([k, v]) => k + ":" + v).join(" ");
+    try {
+      fs.writeFileSync(path.join(DATA_DIR, "conviction-gates.json"),
+        JSON.stringify({ ts: new Date().toISOString(), rejects: rejectLog }));
+    } catch (e) { /* best effort */ }
+    openNewPositions.lastRejects = line;
   }
   return opened;
 }
@@ -740,6 +765,7 @@ async function tick() {
   } catch (e) { /* reasoner not running — ai_judge simply stays quiet */ }
   note += (note ? " | " : "") + "whale signals top/pro/month/ai: " + whales.top.size + "/" + whales.pro.size + "/" + whales.month.size + "/" + whales.ai.size;
   const opened = universe.length ? openNewPositions(db, universe, whales) : 0;
+  if (openNewPositions.lastRejects) note += (note ? " | " : "") + "conviction gates: " + openNewPositions.lastRejects;
   // patient execution: resolve resting orders first, then post new ones
   let maker = { filled: 0, expired: 0 }, posted = 0;
   if (universe.length) {
