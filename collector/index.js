@@ -33,18 +33,30 @@ const PING_MS = 5000;                   // protocol keepalive
 
 function openDb() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
-  // self-heal: a corrupt or oversized whale db must never wedge the collector
+  /* Self-heal a corrupt or oversized whale db.
+     CRITICAL: the probe connection must be closed on EVERY path. The original
+     closed it only on success, so when the db WAS bad the file stayed locked,
+     rmSync threw EBUSY, and the collector crashed on every single start — a
+     permanent death loop that looked like "the collector is just down". */
+  let probe = null;
   try {
     const st = fs.statSync(DB_PATH);
     if (st.size > 2 * 1024 * 1024 * 1024) throw new Error("db over 2GB");
-    const probe = new DatabaseSync(DB_PATH);
+    probe = new DatabaseSync(DB_PATH);
     probe.prepare("SELECT COUNT(*) n FROM whale_trades").get();
-    probe.close();
   } catch (e) {
+    try { if (probe) probe.close(); } catch (e2) { /* already gone */ }
+    probe = null;
     if (fs.existsSync(DB_PATH)) {
       console.log("whale db unusable (" + e.message + ") — starting a fresh one");
-      for (const f of [DB_PATH, DB_PATH + "-wal", DB_PATH + "-shm"]) fs.rmSync(f, { force: true });
+      for (const f of [DB_PATH, DB_PATH + "-wal", DB_PATH + "-shm"]) {
+        // never let cleanup failure kill the process; a leftover file is
+        // survivable, an exception at startup is not
+        try { fs.rmSync(f, { force: true }); } catch (e3) { console.error("could not remove " + f + ": " + e3.code); }
+      }
     }
+  } finally {
+    try { if (probe) probe.close(); } catch (e) { /* fine */ }
   }
   const db = new DatabaseSync(DB_PATH);
   db.exec(`
@@ -287,15 +299,13 @@ async function run() {
 
 /* read commands work on the live db when healthy, else the synced snapshot
    (viewers only ever have the snapshot) */
-function openReadDb() {
-  try {
-    const d = new DatabaseSync(DB_PATH);
-    d.prepare("SELECT COUNT(*) n FROM whale_trades").get();
-    return d;
-  } catch (e) {
-    return new DatabaseSync(SYNC_PATH);
-  }
-}
+/* openDb already self-heals a corrupt db and guarantees the schema, so read
+   commands simply use it. The old version fell back to the sync-snapshot file
+   when the live db failed — but that file is gitignored and usually absent, so
+   the fallback silently produced an EMPTY database with no tables and every
+   read command died with "no such table". That false failure is what made the
+   collector look unstartable to its own health probe. */
+function openReadDb() { return openDb(); }
 
 function stats() {
   const db = openReadDb();

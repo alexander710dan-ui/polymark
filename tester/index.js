@@ -821,14 +821,40 @@ function superviseCollector() {
     stale = Date.now() - Date.parse(s.ts) > 30 * 60000;
   } catch (e) { /* no heartbeat at all counts as stale */ }
   if (!stale) return false;
+  /* Capture WHY it dies. Two "it will self-heal" promises failed because the
+     collector's death was invisible: spawned detached with stdio ignored, any
+     crash vanished. Its output now goes to a file that is published, so the
+     next failure explains itself instead of needing another guess. */
+  const logPath = path.join(DATA_DIR, "collector-launch.log");
   try {
-    const { spawn } = require("node:child_process");
+    const { spawnSync, spawn } = require("node:child_process");
+    // run one short foreground probe first — this is what actually reveals the error
+    const probe = spawnSync(process.execPath,
+      [path.join(__dirname, "..", "collector", "index.js"), "stats"],
+      { cwd: path.join(__dirname, ".."), timeout: 30000, encoding: "utf8" });
+    const diag = [
+      "attempt: " + new Date().toISOString(),
+      "node: " + process.execPath,
+      "probe exit: " + probe.status,
+      "probe stdout: " + String(probe.stdout || "").slice(0, 600),
+      "probe stderr: " + String(probe.stderr || "").slice(0, 900)
+    ].join("\n");
+    fs.writeFileSync(logPath, diag);
+    if (probe.status !== 0) {
+      console.error("collector probe FAILED — see collector-launch.log");
+      return false;   // do not spawn a process that cannot even read its own db
+    }
+    const out = fs.openSync(path.join(DATA_DIR, "collector-run.log"), "a");
     const child = spawn(process.execPath, [path.join(__dirname, "..", "collector", "index.js"), "run"],
-      { detached: true, stdio: "ignore", cwd: path.join(__dirname, "..") });
+      { detached: true, stdio: ["ignore", out, out], cwd: path.join(__dirname, "..") });
     child.unref();
-    console.log("collector heartbeat stale — started a fresh collector");
+    console.log("collector heartbeat stale — started a fresh collector (probe passed)");
     return true;
-  } catch (e) { console.error("could not start collector:", e.message); return false; }
+  } catch (e) {
+    try { fs.writeFileSync(logPath, "spawn threw: " + e.message + "\n" + (e.stack || "")); } catch (e2) {}
+    console.error("could not start collector:", e.message);
+    return false;
+  }
 }
 
 /* ---------------- fast loop (run on your own machine / a VPS) ----------------
@@ -875,6 +901,7 @@ async function loop(intervalSec) {
     if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 10 * 60000) {
       // Publish TEXT artifacts only. The database stays local to the runner.
       sh("git add tester/data/results.json tester/data/positions.json RESULTS.md");
+      sh("git add tester/data/collector-launch.log");   // so failures are visible from anywhere
       sh("git add collector/data/latency.json collector/data/collector-status.json"); // latency report + health (raw db stays local)
       sh("git add reasoner/data/ai-scores.json"); // local-AI opinions for the AI tab
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');
