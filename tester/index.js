@@ -305,7 +305,12 @@ function openDb() {
      runner history once; the export exists so it cannot cost it twice. */
   try {
     const have = db.prepare("SELECT COUNT(*) n FROM positions").get().n;
-    const seedPath = path.join(DATA_DIR, "positions.json");
+    /* Seed from a DEDICATED, never-overwritten file. The first attempt read
+       positions.json — which the runner itself republishes every tick, so the
+       empty runner overwrote the 5,463-row recovery export before it could
+       ever be used. A recovery seed must not share a filename with a live
+       output. */
+    const seedPath = path.join(DATA_DIR, "seed-positions.json");
     if (have === 0 && fs.existsSync(seedPath)) {
       const seed = JSON.parse(fs.readFileSync(seedPath, "utf8"));
       const rows = seed.positions || [];
