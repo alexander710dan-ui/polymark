@@ -1,0 +1,9 @@
+# Git was mangling binary files: core.autocrlf=true with no attributes file
+# meant every committed .db blob had CRLF/LF substituted INSIDE binary data.
+# That is why databases restored from history are corrupt and why "database
+# disk image is malformed" kept appearing. Never let git touch these as text.
+*.db binary
+*.db-wal binary
+*.db-shm binary
+*.png binary
+*.ico binary

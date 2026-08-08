@@ -297,6 +297,31 @@ function openDb() {
     );
     CREATE INDEX IF NOT EXISTS idx_pend ON pending_orders(status, market_id);
   `);
+  /* Seed from the published text export when the database is empty.
+     This is the recovery path for a lost or reset runner: positions.json is
+     the durable record (text, consistent, diff-safe), the .db file is not.
+     A live WAL database committed to git captures a torn snapshot — same byte
+     count, internally inconsistent, unreadable. That cost this project its
+     runner history once; the export exists so it cannot cost it twice. */
+  try {
+    const have = db.prepare("SELECT COUNT(*) n FROM positions").get().n;
+    const seedPath = path.join(DATA_DIR, "positions.json");
+    if (have === 0 && fs.existsSync(seedPath)) {
+      const seed = JSON.parse(fs.readFileSync(seedPath, "utf8"));
+      const rows = seed.positions || [];
+      if (rows.length) {
+        const cols = ["id", "strategy", "tag", "side", "outcome_name", "entry", "stake", "shares",
+          "opened_at", "end_date", "status", "exit", "closed_at", "pnl", "close_reason",
+          "fee", "is_maker", "confidence", "reason", "signal_price", "spread_at_entry",
+          "clv_mark", "condition_id", "question"];
+        const stmt = db.prepare("INSERT OR IGNORE INTO positions(" + cols.join(",") + ") VALUES(" +
+          cols.map(() => "?").join(",") + ")");
+        for (const r of rows) stmt.run(...cols.map((c) => (r[c] === undefined ? null : r[c])));
+        console.log("seeded " + rows.length + " positions from positions.json (empty database recovered)");
+      }
+    }
+  } catch (e) { console.error("seed failed:", e.message); }
+
   // migrations for columns added after the first release
   for (const col of ["outcome_name TEXT", "condition_id TEXT", "signal_meta TEXT",
                      "signal_price REAL", "spread_at_entry REAL",
