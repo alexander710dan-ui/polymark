@@ -644,6 +644,7 @@ function openNewPositions(db, universe, whales) {
     }
   }
   // publish why the selective strategy stayed quiet — silence with a reason
+  // (see also runner-status.json, which reports the RUNNING code revision)
   const top = Object.entries(rejectLog).sort((a, b) => b[1] - a[1]).slice(0, 4);
   if (top.length) {
     const line = top.map(([k, v]) => k + ":" + v).join(" ");
@@ -808,6 +809,27 @@ async function tick() {
   snapshotEquity(db);
   db.prepare("INSERT INTO ticks(ts, markets_seen, opened, settled, note) VALUES(?,?,?,?,?)")
     .run(new Date().toISOString(), universe.length, opened, settled, note);
+  /* Report what the RUNNING process actually is. Diagnosing this runner has
+     repeatedly meant guessing whether it had picked up a given commit — the
+     repo said one thing, behaviour said another. It now states its own code
+     revision, uptime and last sync result, so "is it on the new code" is a
+     fact rather than an inference. */
+  try {
+    const rev = (() => { const r = sh("git log -1 --format=%h%x20%s -- tester/*.js collector/*.js reasoner/*.js app/*.js index.html"); return r.ok ? r.out.trim() : "unknown"; })();
+    const head = (() => { const r = sh("git rev-parse --short HEAD"); return r.ok ? r.out.trim() : "?"; })();
+    let seeded = null;
+    try { seeded = db.prepare("SELECT COUNT(*) n FROM positions").get().n; } catch (e) {}
+    fs.writeFileSync(path.join(DATA_DIR, "runner-status.json"), JSON.stringify({
+      ts: new Date().toISOString(),
+      codeRevision: rev, head: head,
+      pid: process.pid,
+      uptimeMin: Math.round(process.uptime() / 60),
+      nodeVersion: process.version,
+      positionsInDb: seeded,
+      lastPull: (globalThis.__lastPull || "not attempted yet")
+    }, null, 1));
+  } catch (e) { /* status is best effort */ }
+
   console.log(`tick done: ${universe.length} markets seen, ${opened} positions opened, ${settled} settled${note ? " | " + note : ""}`);
   report(db);
   return { opened, settled };
@@ -881,12 +903,13 @@ async function loop(intervalSec) {
      its own data commits and restarted — 7,713 restarts in 3 days, each
      re-committing a 42MB database. */
   const codeRev = () => {
-    const r = sh('git log -1 --format=%H -- tester collector reasoner app index.html');
+    const r = sh("git log -1 --format=%H -- tester/*.js collector/*.js reasoner/*.js app/*.js index.html");
     return r.ok ? r.out.trim() : null;
   };
   const loopStartHead = codeRev();
   for (;;) {
     const pull = sh("git pull --rebase --autostash origin main");
+    globalThis.__lastPull = pull.ok ? "ok" : ("FAILED: " + pull.out.replace(/\s+/g, " ").slice(0, 200));
     if (!pull.ok) {
       console.log("pull failed, resetting to remote:", pull.out.slice(0, 120));
       sh("git fetch origin main"); sh("git reset --hard origin/main");
@@ -905,7 +928,7 @@ async function loop(intervalSec) {
     // knows a live Runner exists and skips its own tick
     if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 10 * 60000) {
       // Publish TEXT artifacts only. The database stays local to the runner.
-      sh("git add tester/data/results.json tester/data/positions.json RESULTS.md");
+      sh("git add tester/data/results.json tester/data/positions.json tester/data/runner-status.json RESULTS.md");
       sh("git add tester/data/collector-launch.log");   // so failures are visible from anywhere
       sh("git add collector/data/latency.json collector/data/collector-status.json"); // latency report + health (raw db stays local)
       sh("git add reasoner/data/ai-scores.json"); // local-AI opinions for the AI tab

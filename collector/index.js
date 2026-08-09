@@ -194,7 +194,7 @@ async function run() {
     // watch the CODE revision, not HEAD — watching HEAD meant every data
     // commit killed the collector, so its 15min/60min snapshot tiers could
     // never fire (they had zero rows)
-    const rev = () => execSync("git log -1 --format=%H -- tester collector reasoner app", { cwd: repo }).toString().trim();
+    const rev = () => execSync("git log -1 --format=%H -- tester/*.js collector/*.js reasoner/*.js app/*.js index.html", { cwd: repo }).toString().trim();
     const startHead = rev();
     setInterval(() => {
       try {
