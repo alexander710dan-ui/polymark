@@ -297,6 +297,20 @@ function openDb() {
     );
     CREATE INDEX IF NOT EXISTS idx_pend ON pending_orders(status, market_id);
   `);
+  // migrations for columns added after the first release
+  for (const col of ["outcome_name TEXT", "condition_id TEXT", "signal_meta TEXT",
+                     "signal_price REAL", "spread_at_entry REAL",
+                     /* closing-line tracking: the last price seen while the market was
+                        still genuinely tradeable, plus fixed-horizon markouts. This is
+                        what makes edge measurable in hours instead of weeks. */
+                     "clv_mark REAL", "clv_mark_ts TEXT", "mark_1h REAL", "mark_24h REAL",
+                     /* taker fee paid on entry; 0 for maker (patient) fills */
+                     "fee REAL DEFAULT 0", "is_maker INTEGER DEFAULT 0",
+                     /* self-assessed confidence and its reason, so we can test
+                        whether our own confidence predicts anything at all */
+                     "confidence REAL", "reason TEXT"]) {
+    try { db.exec("ALTER TABLE positions ADD COLUMN " + col); } catch (e) { /* exists */ }
+
   /* Seed from the published text export when the database is empty.
      This is the recovery path for a lost or reset runner: positions.json is
      the durable record (text, consistent, diff-safe), the .db file is not.
@@ -315,10 +329,14 @@ function openDb() {
       const seed = JSON.parse(fs.readFileSync(seedPath, "utf8"));
       const rows = seed.positions || [];
       if (rows.length) {
-        const cols = ["id", "strategy", "tag", "side", "outcome_name", "entry", "stake", "shares",
-          "opened_at", "end_date", "status", "exit", "closed_at", "pnl", "close_reason",
-          "fee", "is_maker", "confidence", "reason", "signal_price", "spread_at_entry",
-          "clv_mark", "condition_id", "question"];
+        /* Derive columns from the LIVE schema, intersected with what the seed
+           file actually carries. A hardcoded list referenced "fee" before the
+           connection had refreshed its schema view, so every insert failed with
+           OR IGNORE swallowing the error and the seed reported success while
+           importing nothing. */
+        const live = new Set(db.prepare("SELECT name FROM pragma_table_info(?)").all("positions").map((r) => r.name));
+        const cols = Object.keys(rows[0]).filter((c) => live.has(c));
+        if (!cols.includes("market_id")) { console.error("seed aborted: schema not ready"); throw new Error("schema not ready"); }
         const stmt = db.prepare("INSERT OR IGNORE INTO positions(" + cols.join(",") + ") VALUES(" +
           cols.map(() => "?").join(",") + ")");
         for (const r of rows) stmt.run(...cols.map((c) => (r[c] === undefined ? null : r[c])));
@@ -327,19 +345,6 @@ function openDb() {
     }
   } catch (e) { console.error("seed failed:", e.message); }
 
-  // migrations for columns added after the first release
-  for (const col of ["outcome_name TEXT", "condition_id TEXT", "signal_meta TEXT",
-                     "signal_price REAL", "spread_at_entry REAL",
-                     /* closing-line tracking: the last price seen while the market was
-                        still genuinely tradeable, plus fixed-horizon markouts. This is
-                        what makes edge measurable in hours instead of weeks. */
-                     "clv_mark REAL", "clv_mark_ts TEXT", "mark_1h REAL", "mark_24h REAL",
-                     /* taker fee paid on entry; 0 for maker (patient) fills */
-                     "fee REAL DEFAULT 0", "is_maker INTEGER DEFAULT 0",
-                     /* self-assessed confidence and its reason, so we can test
-                        whether our own confidence predicts anything at all */
-                     "confidence REAL", "reason TEXT"]) {
-    try { db.exec("ALTER TABLE positions ADD COLUMN " + col); } catch (e) { /* exists */ }
   }
   return db;
 }
@@ -1053,7 +1058,7 @@ function report(db) {
      twice and silently ate edits three times. The runner owns the database
      outright; everyone else reads these published artifacts. */
   try {
-    const all = db.prepare(`SELECT id, strategy, tag, side, outcome_name, entry, stake, shares,
+    const all = db.prepare(`SELECT id, strategy, market_id, tag, side, outcome_name, entry, stake, shares, last_mark,
         opened_at, end_date, status, exit, closed_at, pnl, close_reason, fee, is_maker,
         confidence, reason, signal_price, spread_at_entry, clv_mark, condition_id, question
       FROM positions ORDER BY id`).all();
