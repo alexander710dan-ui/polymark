@@ -1,10 +1,10 @@
 {
- "ts": "2026-08-11T15:32:32.248Z",
- "codeRevision": "28a94ece9d Restart storm: watcher matched its own data commits; add runner self-report",
- "head": "ebe6b04fbf",
- "pid": 87452,
- "uptimeMin": 2,
+ "ts": "2026-08-11T15:43:52.040Z",
+ "codeRevision": "3437cc4a34 Fix the seed silently importing nothing; make it schema-driven",
+ "head": "3437cc4a34",
+ "pid": 87639,
+ "uptimeMin": 8,
  "nodeVersion": "v24.18.0",
- "positionsInDb": 0,
+ "positionsInDb": 5463,
  "lastPull": "ok"
 }
