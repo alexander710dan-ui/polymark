@@ -1,8 +1,8 @@
 {
- "ts": "2026-08-11T03:51:32.728Z",
+ "ts": "2026-08-11T03:56:33.054Z",
  "codeRevision": "28a94ece9d Restart storm: watcher matched its own data commits; add runner self-report",
- "head": "19d9a0a0d7",
- "pid": 63798,
+ "head": "52903880a3",
+ "pid": 63980,
  "uptimeMin": 2,
  "nodeVersion": "v24.18.0",
  "positionsInDb": 0,
