@@ -1,0 +1,16 @@
+attempt: 2026-08-12T17:57:01.981Z
+node: /usr/local/bin/node
+probe exit: 0
+probe stdout: whale trades captured: 641078 from 308 wallets
+window: 2026-07-22T17:17:26.718Z -> 2026-08-06T18:15:09.467Z
+by source: rest=156, ws=640922
+trades with snapshots: 640876
+  swisstony                151207 trades  $11920930
+  RN1                      88409 trades  $14395934
+  ferrariChampions2026     61933 trades  $15807155
+  Corlys                   32108 trades  $515180
+  0x95F51617E900F7d4df2894D77A73c1b2B269779F-1767804195553 24655 trades  $240338
+  suntori                  23169 trades  $2112357
+  cigarettes               22795 trades  $1229601
+  mooseborzoi              22384 trades  $25619
+probe stderr: 
