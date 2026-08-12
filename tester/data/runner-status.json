@@ -1,8 +1,8 @@
 {
- "ts": "2026-08-12T23:05:19.010Z",
+ "ts": "2026-08-12T23:15:19.333Z",
  "codeRevision": "3437cc4a34 Fix the seed silently importing nothing; make it schema-driven",
- "head": "4ca220dafe",
- "pid": 93049,
+ "head": "6bc1c45f7e",
+ "pid": 93386,
  "uptimeMin": 8,
  "nodeVersion": "v24.18.0",
  "positionsInDb": 5463,
