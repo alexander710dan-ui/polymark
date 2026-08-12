@@ -16,3 +16,8 @@ NUL
 # a binary file written by one machine and reset by another corrupts.
 # Analysis data crosses machines as tester/data/positions.json instead.
 tester/data/polymark.db
+
+# diagnostics that MUST be visible across machines — *.log above would
+# otherwise silently discard them, which hid the collector failure for days
+!tester/data/collector-launch.log
+!collector/data/collector-run.log
