@@ -934,7 +934,7 @@ async function loop(intervalSec) {
     if (counts.opened > 0 || counts.settled > 0 || Date.now() - lastPush > 10 * 60000) {
       // Publish TEXT artifacts only. The database stays local to the runner.
       sh("git add tester/data/results.json tester/data/positions.json tester/data/runner-status.json RESULTS.md");
-      sh("git add tester/data/collector-launch.log");   // so failures are visible from anywhere
+      sh("git add tester/data/collector-launch.log collector/data/collector-run.log");   // so failures are visible from anywhere
       sh("git add collector/data/latency.json collector/data/collector-status.json"); // latency report + health (raw db stays local)
       sh("git add reasoner/data/ai-scores.json"); // local-AI opinions for the AI tab
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');

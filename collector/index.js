@@ -185,8 +185,21 @@ async function reconcile(db) {
 
 /* ---------------- main run loop ---------------- */
 
+/* Keep the published runtime log small — it exists to be read, not archived */
+function trimRunLog() {
+  try {
+    const p = path.join(DATA_DIR, "collector-run.log");
+    if (fs.existsSync(p) && fs.statSync(p).size > 64 * 1024) {
+      const lines = fs.readFileSync(p, "utf8").split("\n");
+      fs.writeFileSync(p, lines.slice(-200).join("\n"));
+    }
+  } catch (e) { /* best effort */ }
+}
+
 async function run() {
   const db = openDb();
+  trimRunLog();
+  setInterval(trimRunLog, 10 * 60000);
   // self-refresh: exit when the repo gains new code — the app restarts us
   try {
     const { execSync } = require("node:child_process");
