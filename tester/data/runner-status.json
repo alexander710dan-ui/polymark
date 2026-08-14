@@ -1,10 +1,13 @@
 {
- "ts": "2026-08-14T15:47:11.270Z",
- "codeRevision": "d5920c3a4b Publish the collector runtime log",
- "head": "6b3fcc2b25",
- "pid": 63585,
+ "ts": "2026-08-14T16:02:11.946Z",
+ "codeRevision": "7dc9a4b40c Record what the collector supervisor actually decides",
+ "head": "7dc9a4b40c",
+ "pid": 64011,
  "uptimeMin": 8,
  "nodeVersion": "v24.18.0",
  "positionsInDb": 5463,
- "lastPull": "ok"
+ "lastPull": "ok",
+ "superviseLast": "2026-08-14T15:54:07.384Z",
+ "superviseNote": "probe ok, spawning collector",
+ "mode": "loop"
 }
