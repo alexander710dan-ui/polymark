@@ -831,7 +831,12 @@ async function tick() {
       uptimeMin: Math.round(process.uptime() / 60),
       nodeVersion: process.version,
       positionsInDb: seeded,
-      lastPull: (globalThis.__lastPull || "not attempted yet")
+      lastPull: (globalThis.__lastPull || "not attempted yet"),
+      // supervisor state — the collector has been down for days and every
+      // theory so far has been wrong; this records what it actually decided
+      superviseLast: (globalThis.__superviseLast || "never ran"),
+      superviseNote: (globalThis.__superviseNote || "no decision recorded"),
+      mode: (globalThis.__mode || "unknown")
     }, null, 1));
   } catch (e) { /* status is best effort */ }
 
@@ -851,7 +856,9 @@ function superviseCollector() {
   try {
     const s = JSON.parse(fs.readFileSync(statusPath, "utf8"));
     stale = Date.now() - Date.parse(s.ts) > 30 * 60000;
-  } catch (e) { /* no heartbeat at all counts as stale */ }
+    globalThis.__superviseNote = "heartbeat " + Math.round((Date.now() - Date.parse(s.ts)) / 60000) + "min old, stale=" + stale;
+  } catch (e) { globalThis.__superviseNote = "no heartbeat file: " + e.message; }
+  globalThis.__superviseLast = new Date().toISOString();
   if (!stale) return false;
   /* Capture WHY it dies. Two "it will self-heal" promises failed because the
      collector's death was invisible: spawned detached with stdio ignored, any
@@ -873,9 +880,11 @@ function superviseCollector() {
     ].join("\n");
     fs.writeFileSync(logPath, diag);
     if (probe.status !== 0) {
+      globalThis.__superviseNote = "probe FAILED exit=" + probe.status;
       console.error("collector probe FAILED — see collector-launch.log");
       return false;   // do not spawn a process that cannot even read its own db
     }
+    globalThis.__superviseNote = "probe ok, spawning collector";
     const out = fs.openSync(path.join(DATA_DIR, "collector-run.log"), "a");
     const child = spawn(process.execPath, [path.join(__dirname, "..", "collector", "index.js"), "run"],
       { detached: true, stdio: ["ignore", out, out], cwd: path.join(__dirname, "..") });
@@ -1109,6 +1118,7 @@ if (process.argv.includes("--managed")) {
 }
 
 const cmd = process.argv[2] || "tick";
+globalThis.__mode = cmd;   // 'loop' supervises the collector; 'tick' does not
 if (cmd === "tick") {
   tick().catch((e) => { console.error("tick failed:", e); process.exit(1); });
 } else if (cmd === "loop") {
