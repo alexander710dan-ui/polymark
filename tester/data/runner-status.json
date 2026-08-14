@@ -1,8 +1,8 @@
 {
- "ts": "2026-08-14T03:26:36.885Z",
+ "ts": "2026-08-14T03:36:37.385Z",
  "codeRevision": "d5920c3a4b Publish the collector runtime log",
- "head": "a49d8a24c6",
- "pid": 42167,
+ "head": "13c94b0b27",
+ "pid": 42468,
  "uptimeMin": 8,
  "nodeVersion": "v24.18.0",
  "positionsInDb": 5463,
