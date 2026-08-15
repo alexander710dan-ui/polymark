@@ -1,13 +1,13 @@
 {
- "ts": "2026-08-15T03:02:42.629Z",
+ "ts": "2026-08-15T03:12:43.016Z",
  "codeRevision": "7dc9a4b40c Record what the collector supervisor actually decides",
- "head": "888ed997f6",
- "pid": 83177,
+ "head": "771138e152",
+ "pid": 83472,
  "uptimeMin": 8,
  "nodeVersion": "v24.18.0",
  "positionsInDb": 5463,
  "lastPull": "ok",
- "superviseLast": "2026-08-15T02:54:37.882Z",
+ "superviseLast": "2026-08-15T03:04:38.457Z",
  "superviseNote": "probe ok, spawning collector",
  "mode": "loop"
 }
