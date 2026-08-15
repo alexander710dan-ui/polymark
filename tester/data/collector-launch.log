@@ -1,4 +1,4 @@
-attempt: 2026-08-15T21:20:30.132Z
+attempt: 2026-08-15T21:30:30.690Z
 node: /usr/local/bin/node
 probe exit: 0
 probe stdout: whale trades captured: 641078 from 308 wallets
