@@ -52,6 +52,35 @@ check("local model (AI)", () => {
   return age < 120 ? true : "stale " + human(age) + " (" + (j.scores || []).length + " opinions)";
 });
 
+/* The check this whole system was missing. Nine days of green ticks ran on a
+   dead feed because "no markets qualified" and "cannot reach Polymarket" were
+   the same empty list. A Danish ISP DNS block was the cause: the domain
+   resolved to a TDC redirect server instead of Cloudflare. */
+check("polymarket API reachable", () => {
+  const probe = execSync(
+    'node -e "fetch(\'https://gamma-api.polymarket.com/markets?limit=1\',{signal:AbortSignal.timeout(15000)})' +
+    '.then(r=>console.log(\'ok \'+r.status)).catch(e=>console.log(\'fail \'+(e.cause&&e.cause.code||e.message)))"',
+    { cwd: ROOT, timeout: 25000 }).toString().trim();
+  if (probe.startsWith("ok")) return true;
+  // distinguish a blocked domain from a plain outage — they need different fixes
+  let hint = "";
+  try {
+    const dns = require("node:dns");
+    const sys = execSync('node -e "require(\'dns\').promises.resolve4(\'gamma-api.polymarket.com\').then(a=>console.log(a.join(\',\'))).catch(e=>console.log(e.code))"',
+      { cwd: ROOT, timeout: 15000 }).toString().trim();
+    if (!/^(104\.|172\.6)/.test(sys)) hint = " — DNS returns " + sys + ", not Cloudflare: the domain is being blocked by your DNS resolver";
+  } catch (e) { /* hint is best effort */ }
+  return probe + hint;
+});
+
+check("runner is seeing live markets", () => {
+  const p = path.join(__dirname, "data", "runner-status.json");
+  if (!fs.existsSync(p)) return "no runner status yet";
+  const j = JSON.parse(fs.readFileSync(p, "utf8"));
+  if (!j.dataFeed) return "runner is on old code that cannot report feed health";
+  return j.dataFeed.startsWith("ok") ? true : j.dataFeed;
+});
+
 check("database not tracked by git", () => {
   const tracked = execSync("git ls-files tester/data/polymark.db", { cwd: ROOT }).toString().trim();
   return tracked ? "still tracked — binary sync corrupts across machines" : true;
@@ -94,7 +123,16 @@ check("fees charged on new taker bets", () => {
 console.log("POLYMARK DOCTOR — " + new Date().toISOString().slice(0, 16).replace("T", " ") + "\n");
 for (const name of ok) console.log("  ok    " + name);
 for (const p of problems) console.log("  FAIL  " + p.name + " — " + p.detail);
-console.log("\n" + (problems.length === 0
-  ? "All checks passed."
-  : problems.length + " problem(s). Most fix themselves within a tick; a stale collector is"
-    + "\nrestarted automatically by the tick loop within 10 minutes."));
+if (problems.length === 0) console.log("\nAll checks passed.");
+else {
+  console.log("\n" + problems.length + " problem(s).");
+  // do not promise self-healing for things that cannot self-heal — that claim
+  // is exactly why a nine-day outage was left alone
+  if (problems.some((p) => p.name === "polymarket API reachable")) {
+    console.log("\nThe API check is the one that matters: with no market feed the runner keeps"
+      + "\nticking, settles nothing, places nothing, and every other number goes stale."
+      + "\nNothing downstream can recover until it is reachable again.");
+  } else if (problems.some((p) => p.name === "collector heartbeat")) {
+    console.log("A stale collector is restarted by the tick loop within 10 minutes.");
+  }
+}

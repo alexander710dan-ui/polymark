@@ -432,9 +432,14 @@ function parseMarket(raw) {
 async function fetchUniverse() {
   const pages = await pmap([0, 1, 2], 3, (page) =>
     fetchJson(GAMMA + "/markets?closed=false&order=volume24hr&ascending=false&limit=100&offset=" + page * 100));
+  /* pmap turns a failed request into null and the loop below skips non-arrays,
+     so a dead feed used to return [] — indistinguishable from "no market
+     qualified today". A DNS block cost nine days of green ticks that way.
+     Every page failing is a broken feed, not an empty market. Say so. */
+  const live = pages.filter(Array.isArray);
+  if (live.length === 0) throw new Error("market feed unreachable — all " + pages.length + " page requests failed");
   const out = [];
-  for (const batch of pages) {
-    if (!Array.isArray(batch)) continue;
+  for (const batch of live) {
     for (const raw of batch) {
       const m = parseMarket(raw);
       if (!m) continue;
@@ -790,8 +795,14 @@ async function tick() {
   const settled = await settleOpenPositions(db);
   let universe = [];
   let note = "";
-  try { universe = await fetchUniverse(); }
-  catch (e) { note = "universe fetch failed: " + e.message; }
+  let feedError = null;
+  try { universe = await fetchUniverse(); globalThis.__feedDownTicks = 0; }
+  catch (e) {
+    feedError = e.message;
+    note = "universe fetch failed: " + e.message;
+    globalThis.__feedDownTicks = (globalThis.__feedDownTicks || 0) + 1;
+    console.error("MARKET FEED DOWN (" + globalThis.__feedDownTicks + " consecutive ticks): " + e.message);
+  }
   const whales = await fetchWhaleData();
   // local-AI opinions, if the reasoner is running on this machine
   whales.ai = new Map();
@@ -827,6 +838,11 @@ async function tick() {
     fs.writeFileSync(path.join(DATA_DIR, "runner-status.json"), JSON.stringify({
       ts: new Date().toISOString(),
       codeRevision: rev, head: head,
+      /* the single most important field: a healthy-looking runner on a dead
+         feed places no bets and reports nothing wrong. State it outright. */
+      dataFeed: feedError
+        ? "DOWN for " + (globalThis.__feedDownTicks || 1) + " tick(s) — " + feedError
+        : "ok — " + universe.length + " markets qualified",
       pid: process.pid,
       uptimeMin: Math.round(process.uptime() / 60),
       nodeVersion: process.version,
