@@ -1,14 +1,14 @@
 {
- "ts": "2026-08-16T10:59:11.167Z",
+ "ts": "2026-08-16T11:09:11.487Z",
  "codeRevision": "97a1dfa611 Fail loudly when the market feed is unreachable",
- "head": "7826b71308",
+ "head": "db120e1d2b",
  "dataFeed": "DOWN for 1 tick(s) — market feed unreachable — all 3 page requests failed",
- "pid": 40219,
+ "pid": 40550,
  "uptimeMin": 8,
  "nodeVersion": "v24.18.0",
  "positionsInDb": 5463,
  "lastPull": "ok",
- "superviseLast": "2026-08-16T10:51:06.463Z",
+ "superviseLast": "2026-08-16T11:01:06.876Z",
  "superviseNote": "probe ok, spawning collector",
  "mode": "loop"
 }
