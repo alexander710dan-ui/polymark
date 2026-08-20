@@ -1,14 +1,14 @@
 {
- "ts": "2026-08-20T21:34:05.609Z",
+ "ts": "2026-08-20T21:44:05.801Z",
  "codeRevision": "97a1dfa611 Fail loudly when the market feed is unreachable",
- "head": "b57ed40aee",
+ "head": "0de54a4df5",
  "dataFeed": "DOWN for 1 tick(s) — market feed unreachable — all 3 page requests failed",
- "pid": 40250,
+ "pid": 40579,
  "uptimeMin": 8,
  "nodeVersion": "v24.18.0",
  "positionsInDb": 5463,
- "lastPull": "ok",
- "superviseLast": "2026-08-20T21:26:00.991Z",
+ "lastPull": "FAILED: fatal: unable to access 'https://github.com/alexander710dan-ui/polymark.git/': Could not resolve host: github.com ",
+ "superviseLast": "2026-08-20T21:36:01.200Z",
  "superviseNote": "probe ok, spawning collector",
  "mode": "loop"
 }
