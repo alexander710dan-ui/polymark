@@ -22,3 +22,4 @@ tester/data/polymark.db
 !tester/data/collector-launch.log
 !tester/data/collector-run.log
 !collector/data/collector-run.log
+!tester/data/runner-exit.log

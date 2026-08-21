@@ -349,19 +349,32 @@ function openDb() {
   return db;
 }
 
+/* Circuit breaker. Settling 461 open positions against an unreachable host
+   costs 461 x 3 attempts x a 10s connect timeout — the tick took eight
+   minutes and the desk app restarted the process before it ever finished a
+   loop cycle. Once the host has refused to connect this many times running,
+   stop dialling it for the rest of the tick.
+   Only connection-level failures count: an HTTP 404 proves the network works. */
+const BREAKER_AT = 8;
+let connectFailStreak = 0;
+const breakerOpen = () => connectFailStreak >= BREAKER_AT;
+
 async function fetchJson(url, tries) {
   tries = tries || 3;
+  if (breakerOpen()) throw new Error("circuit open — host unreachable this tick");
   for (let i = 1; i <= tries; i++) {
     try {
       const res = await fetch(url, {
         headers: { "User-Agent": "polymark-paper-tester (fake money, read-only)", Accept: "application/json" },
         signal: AbortSignal.timeout(20000)
       });
+      connectFailStreak = 0;   // a reply of any status means the host is up
       if (res.status === 429) { await sleep(2000 * i); continue; }
       if (!res.ok) throw new Error("HTTP " + res.status);
       return await res.json();
     } catch (e) {
-      if (i === tries) throw e;
+      if (!/HTTP \d/.test(e.message)) connectFailStreak++;
+      if (i === tries || breakerOpen()) throw e;
       await sleep(1000 * i);
     }
   }
@@ -791,17 +804,26 @@ function snapshotEquity(db) {
 const r2 = (v) => Math.round(v * 100) / 100;
 
 async function tick() {
+  connectFailStreak = 0;   // one fresh probe of the host per tick, before any work
   const db = openDb();
   const settled = await settleOpenPositions(db);
   let universe = [];
   let note = "";
-  let feedError = null;
-  try { universe = await fetchUniverse(); globalThis.__feedDownTicks = 0; }
-  catch (e) {
+  let feedError = null, downSince = null;
+  /* On disk, not in memory: this process is replaced every ten minutes, so an
+     in-process counter reported a fifteen-day outage as "down for 1 tick". */
+  const feedStatePath = path.join(DATA_DIR, "feed-state.json");
+  const readFeedState = () => { try { return JSON.parse(fs.readFileSync(feedStatePath, "utf8")); } catch (e) { return {}; } };
+  try {
+    universe = await fetchUniverse();
+    fs.writeFileSync(feedStatePath, JSON.stringify({ down: false, ok_at: new Date().toISOString() }));
+  } catch (e) {
     feedError = e.message;
     note = "universe fetch failed: " + e.message;
-    globalThis.__feedDownTicks = (globalThis.__feedDownTicks || 0) + 1;
-    console.error("MARKET FEED DOWN (" + globalThis.__feedDownTicks + " consecutive ticks): " + e.message);
+    const prev = readFeedState();
+    downSince = prev.down && prev.since ? prev.since : new Date().toISOString();
+    fs.writeFileSync(feedStatePath, JSON.stringify({ down: true, since: downSince }));
+    console.error("MARKET FEED DOWN since " + downSince + ": " + e.message);
   }
   const whales = await fetchWhaleData();
   // local-AI opinions, if the reasoner is running on this machine
@@ -841,7 +863,8 @@ async function tick() {
       /* the single most important field: a healthy-looking runner on a dead
          feed places no bets and reports nothing wrong. State it outright. */
       dataFeed: feedError
-        ? "DOWN for " + (globalThis.__feedDownTicks || 1) + " tick(s) — " + feedError
+        ? "DOWN since " + downSince.slice(0, 16).replace("T", " ") + " ("
+          + Math.round((Date.now() - Date.parse(downSince)) / 3600000) + " h) — " + feedError
         : "ok — " + universe.length + " markets qualified",
       pid: process.pid,
       uptimeMin: Math.round(process.uptime() / 60),
@@ -960,6 +983,7 @@ async function loop(intervalSec) {
       // Publish TEXT artifacts only. The database stays local to the runner.
       sh("git add tester/data/results.json tester/data/positions.json tester/data/runner-status.json RESULTS.md");
       sh("git add tester/data/collector-launch.log tester/data/collector-run.log");   // so failures are visible from anywhere
+      sh("git add tester/data/runner-exit.log tester/data/feed-state.json");        // why the runner dies, and how long the feed has been down
       sh("git add collector/data/latency.json collector/data/collector-status.json"); // latency report + health (raw db stays local)
       sh("git add reasoner/data/ai-scores.json"); // local-AI opinions for the AI tab
       sh('git commit -m "tick: ' + new Date().toISOString() + '"');
@@ -1131,6 +1155,27 @@ if (process.argv.includes("--managed")) {
     try { process.kill(parentPid, 0); }
     catch (e) { console.log("parent app gone — exiting"); process.exit(0); }
   }, 30000);
+}
+
+/* Why did this process end? The desk app restarts children on exit, but its
+   log is an in-memory ring buffer printed to a stdout that a macOS GUI launch
+   discards — so "the runner is replaced every ten minutes" had no recorded
+   cause and stayed a guess for a week. Record one. */
+function recordExit(reason) {
+  try {
+    const p = path.join(DATA_DIR, "runner-exit.log");
+    let prior = "";
+    try { const s = fs.statSync(p); if (s.size < 120000) prior = fs.readFileSync(p, "utf8"); } catch (e) {}
+    fs.writeFileSync(p, prior + new Date().toISOString() + "  pid=" + process.pid
+      + "  alive=" + Math.round(process.uptime()) + "s  mode=" + (globalThis.__mode || "?")
+      + "  " + reason + "\n");
+  } catch (e) { /* never let diagnostics break the run */ }
+}
+process.on("exit", (code) => recordExit("exited normally, code=" + code));
+process.on("uncaughtException", (e) => { recordExit("uncaughtException: " + e.message); process.exit(1); });
+process.on("unhandledRejection", (e) => recordExit("unhandledRejection: " + ((e && e.message) || e)));
+for (const sig of ["SIGTERM", "SIGINT", "SIGHUP"]) {
+  process.on(sig, () => { recordExit("killed by " + sig); process.exit(0); });
 }
 
 const cmd = process.argv[2] || "tick";
