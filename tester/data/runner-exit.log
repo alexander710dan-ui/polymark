@@ -396,3 +396,5 @@
 2026-09-08T14:34:53.861Z  pid=86841  alive=300s  mode=loop  exited normally, code=0
 2026-09-08T14:39:55.560Z  pid=87090  alive=301s  mode=loop  exited normally, code=0
 2026-09-08T14:44:55.857Z  pid=87345  alive=301s  mode=loop  exited normally, code=0
+2026-09-08T14:49:55.144Z  pid=87589  alive=300s  mode=loop  killed by SIGTERM
+2026-09-08T14:49:55.145Z  pid=87589  alive=300s  mode=loop  exited normally, code=0
