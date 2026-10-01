@@ -1,14 +1,14 @@
 {
- "ts": "2026-10-01T15:01:45.017Z",
+ "ts": "2026-10-01T15:10:02.473Z",
  "codeRevision": "363750f984 Stop the runner burning 8 minutes per tick on a dead feed",
- "head": "024b6bcb7a",
+ "head": "f59daf287e",
  "dataFeed": "DOWN since 2026-08-21 15:10 (984 h) — market feed unreachable — all 3 page requests failed",
- "pid": 26799,
- "uptimeMin": 0,
+ "pid": 27154,
+ "uptimeMin": 4,
  "nodeVersion": "v24.18.0",
  "positionsInDb": 5463,
- "lastPull": "ok",
- "superviseLast": "2026-10-01T15:01:21.452Z",
+ "lastPull": "FAILED: From https://github.com/alexander710dan-ui/polymark * branch main -> FETCH_HEAD fatal: Cannot rebase onto multiple branches. ",
+ "superviseLast": "2026-10-01T15:09:38.889Z",
  "superviseNote": "probe ok, spawning collector",
  "mode": "loop"
 }
