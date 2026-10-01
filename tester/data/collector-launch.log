@@ -1,5 +1,9 @@
-attempt: 2026-10-01T11:06:28.009Z
+attempt: 2026-10-01T11:11:28.788Z
 node: /usr/local/bin/node
 probe exit: null
-probe stdout: 
+probe stdout: whale trades captured: 641078 from 308 wallets
+window: 2026-07-22T17:17:26.718Z -> 2026-08-06T18:15:09.467Z
+by source: rest=156, ws=640922
+trades with snapshots: 640876
+
 probe stderr: 
