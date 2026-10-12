@@ -790,3 +790,5 @@
 2026-10-12T12:50:17.294Z  pid=28534  alive=301s  mode=loop  exited normally, code=0
 2026-10-12T12:55:18.256Z  pid=28886  alive=301s  mode=loop  exited normally, code=0
 2026-10-12T13:00:18.576Z  pid=29253  alive=301s  mode=loop  exited normally, code=0
+2026-10-12T13:05:17.881Z  pid=29612  alive=300s  mode=loop  killed by SIGTERM
+2026-10-12T13:05:17.882Z  pid=29612  alive=300s  mode=loop  exited normally, code=0
