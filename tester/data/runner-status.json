@@ -1,14 +1,14 @@
 {
- "ts": "2026-10-17T08:06:40.666Z",
+ "ts": "2026-10-17T08:11:41.090Z",
  "codeRevision": "363750f984 Stop the runner burning 8 minutes per tick on a dead feed",
- "head": "9e62d0f26f",
+ "head": "67255aa7e5",
  "dataFeed": "DOWN since 2026-08-21 15:10 (1361 h) — market feed unreachable — all 3 page requests failed",
- "pid": 23820,
+ "pid": 24165,
  "uptimeMin": 0,
  "nodeVersion": "v24.18.0",
  "positionsInDb": 5463,
  "lastPull": "ok",
- "superviseLast": "2026-10-17T08:06:16.889Z",
+ "superviseLast": "2026-10-17T08:11:17.312Z",
  "superviseNote": "probe ok, spawning collector",
  "mode": "loop"
 }
