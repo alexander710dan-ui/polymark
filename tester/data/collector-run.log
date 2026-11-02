@@ -51754,3 +51754,6 @@ no whale wallets loaded — check network
 leaderboard fetch failed: HTTP 410 https://data-api.polymarket.com/v1/leaderboard?window=all&limit=25
 leaderboard fetch failed: HTTP 410 https://data-api.polymarket.com/v1/leaderboard?window=month&limit=10
 no whale wallets loaded — check network
+leaderboard fetch failed: HTTP 410 https://data-api.polymarket.com/v1/leaderboard?window=all&limit=25
+leaderboard fetch failed: HTTP 410 https://data-api.polymarket.com/v1/leaderboard?window=month&limit=10
+no whale wallets loaded — check network
