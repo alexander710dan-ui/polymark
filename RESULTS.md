@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 79933 · Last run: 2026-11-11T10:09:08.674Z · Database: `tester/data/polymark.db`
+Ticks: 79933 · Last run: 2026-11-11T10:09:41.419Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -16,7 +16,7 @@ Ticks: 79933 · Last run: 2026-11-11T10:09:08.674Z · Database: `tester/data/pol
 | mm_sports | **$10554.01** | $692.81 | $-138.8 | 862 | 55% | $473.68 | 10 |
 | mid_momentum_v2 | **$10434.64** | $82.85 | $351.79 | 200 | 52% | $-136.97 | 25 |
 | mm_max | **$10245.26** | $263.29 | $-18.03 | 293 | 54% | $54.19 | 1 |
-| fade_longshot | **$9947.72** | $-66.36 | $14.08 | 224 | 95% | $-77.1 | 25 |
+| fade_longshot | **$9939.34** | $-66.36 | $5.7 | 224 | 95% | $-77.1 | 25 |
 | conviction | **$9591.76** | $-408.24 | $0 | 4 | 0% | $-306.99 | 0 |
 | mm_strong | **$9447.55** | $-589.47 | $37.02 | 270 | 53% | $-808.6 | 23 |
 | mm_slow | **$9406.69** | $-454.77 | $-138.54 | 177 | 52% | $-673.9 | 18 |
@@ -25,8 +25,8 @@ Ticks: 79933 · Last run: 2026-11-11T10:09:08.674Z · Database: `tester/data/pol
 | strong_dip | **$8772.88** | $-1242.86 | $15.74 | 232 | 58% | $-1336.49 | 16 |
 | super | **$8574.36** | $-1425.64 | $0 | 133 | 50% | $-1707.54 | 0 |
 | copy_top | **$8376.93** | $-1470.79 | $-152.28 | 564 | 53% | $-2799.36 | 4 |
-| random_control | **$7501.99** | $-2427.27 | $-70.74 | 241 | 54% | $-3041.56 | 25 |
-| momentum | **$7470.22** | $-2625.55 | $95.77 | 359 | 66% | $-3113.79 | 25 |
+| random_control | **$7508.11** | $-2427.27 | $-64.62 | 241 | 54% | $-3041.56 | 25 |
+| momentum | **$7468.83** | $-2625.55 | $94.38 | 359 | 66% | $-3113.79 | 25 |
 | whale_fade | **$6003.16** | $-4244.08 | $247.24 | 563 | 46% | $-4695.54 | 4 |
 | copy_month (retired) | **$9447.42** | $-552.58 | $0 | 165 | 48% | $-1361.67 | 0 |
 | favorite (retired) | **$9001.19** | $-998.81 | $0 | 136 | 69% | $-1062.74 | 0 |
