@@ -1,14 +1,14 @@
 {
- "ts": "2026-11-15T17:45:15.741Z",
+ "ts": "2026-11-15T17:49:10.009Z",
  "codeRevision": "363750f984 Stop the runner burning 8 minutes per tick on a dead feed",
- "head": "7465647f61",
- "dataFeed": "ok — 95 markets qualified",
- "pid": 47936,
- "uptimeMin": 1,
+ "head": "10b946ef38",
+ "dataFeed": "ok — 94 markets qualified",
+ "pid": 48386,
+ "uptimeMin": 0,
  "nodeVersion": "v24.18.0",
  "positionsInDb": 10496,
- "lastPull": "FAILED: fatal: unable to access 'https://github.com/alexander710dan-ui/polymark.git/': Could not resolve host: github.com ",
- "superviseLast": "2026-11-15T17:44:00.322Z",
+ "lastPull": "ok",
+ "superviseLast": "2026-11-15T17:49:01.042Z",
  "superviseNote": "probe ok, spawning collector",
  "mode": "loop"
 }
