@@ -1,14 +1,14 @@
 {
- "ts": "2026-11-17T21:23:55.276Z",
+ "ts": "2026-11-17T21:28:56.558Z",
  "codeRevision": "363750f984 Stop the runner burning 8 minutes per tick on a dead feed",
- "head": "3cdd7900a5",
- "dataFeed": "ok — 111 markets qualified",
- "pid": 94774,
+ "head": "1b7e845947",
+ "dataFeed": "ok — 110 markets qualified",
+ "pid": 95179,
  "uptimeMin": 0,
  "nodeVersion": "v24.18.0",
- "positionsInDb": 11286,
- "lastPull": "ok",
- "superviseLast": "2026-11-17T21:23:45.078Z",
+ "positionsInDb": 11288,
+ "lastPull": "FAILED: From https://github.com/alexander710dan-ui/polymark * branch main -> FETCH_HEAD warning: fetch updated the current branch head. fast-forwarding your working tree from commit 1b7e8459470d32998244860d7c",
+ "superviseLast": "2026-11-17T21:28:46.220Z",
  "superviseNote": "probe ok, spawning collector",
  "mode": "loop"
 }
