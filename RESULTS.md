@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 93731 · Last run: 2026-11-19T13:47:09.314Z · Database: `tester/data/polymark.db`
+Ticks: 93731 · Last run: 2026-11-19T13:47:24.980Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -22,7 +22,7 @@ Ticks: 93731 · Last run: 2026-11-19T13:47:09.314Z · Database: `tester/data/pol
 | ai_judge | **$9212.36** | $-787.64 | $0 | 9 | 11% | $-800 | 0 |
 | super | **$8574.36** | $-1425.64 | $0 | 133 | 50% | $-1707.54 | 0 |
 | mm_sports_v2 | **$8559.78** | $-1522.88 | $82.66 | 946 | 52% | $-1746.21 | 13 |
-| strong_dip | **$8403.71** | $-1735.06 | $138.77 | 319 | 56% | $-1828.69 | 25 |
+| strong_dip | **$8405.95** | $-1735.06 | $141.01 | 319 | 56% | $-1828.69 | 25 |
 | mm_strong | **$8291.38** | $-1671.3 | $-37.32 | 483 | 51% | $-1890.43 | 25 |
 | copy_top | **$8224.8** | $-1775.2 | $0 | 568 | 52% | $-3103.77 | 0 |
 | momentum | **$7859.51** | $-2246.02 | $105.53 | 393 | 66% | $-2734.26 | 25 |
