@@ -2,7 +2,7 @@
 
 **Fake money.** Read-only Polymarket public data; no wallet, no real orders. Each strategy starts with a simulated $10,000 and bets $100 per position on markets resolving within 45 days.
 
-Ticks: 102909 · Last run: 2026-11-24T08:27:52.613Z · Database: `tester/data/polymark.db`
+Ticks: 102910 · Last run: 2026-11-24T08:29:00.330Z · Database: `tester/data/polymark.db`
 
 | Strategy | **Equity** | Realized | Unrealized | Closed | Win rate | Minus best win | Open |
 |---|---|---|---|---|---|---|---|
@@ -14,7 +14,7 @@ Ticks: 102909 · Last run: 2026-11-24T08:27:52.613Z · Database: `tester/data/po
 | mid_momentum_v2 | **$10483.55** | $175.58 | $307.97 | 354 | 52% | $-44.24 | 25 |
 | mm_cheap_v2 | **$10409.89** | $-34.53 | $444.42 | 416 | 51% | $-254.35 | 25 |
 | mm_max | **$10092.48** | $92.48 | $0 | 499 | 54% | $-116.62 | 0 |
-| mm_tight | **$9944.96** | $42.62 | $-97.66 | 1403 | 52% | $-176.51 | 4 |
+| mm_tight | **$9944.96** | $42.62 | $-97.66 | 1403 | 52% | $-176.51 | 5 |
 | mm_slow | **$9789.02** | $-387.43 | $176.45 | 245 | 52% | $-606.56 | 25 |
 | fade_longshot | **$9782.72** | $-267.67 | $50.39 | 249 | 94% | $-278.41 | 25 |
 | conviction | **$9591.76** | $-408.24 | $0 | 4 | 0% | $-306.99 | 0 |
@@ -42,7 +42,7 @@ Ticks: 102909 · Last run: 2026-11-24T08:27:52.613Z · Database: `tester/data/po
 | Strategy | Filled | Expired | Pending | Fill rate | Spread saved per fill |
 |---|---|---|---|---|---|
 | maker_flat | 215 | 0 | 0 | 100% | 2.66¢ |
-| maker_sports | 1062 | 10 | 0 | 99% | 1.41¢ |
+| maker_sports | 1062 | 10 | 1 | 99% | 1.41¢ |
 
 These post passively at the bid instead of crossing to the ask. Unfilled orders are counted — a strategy that only fills when it is about to be wrong (adverse selection) will show a high fill rate with poor results.
 
