@@ -1,10 +1,10 @@
 {
- "ts": "2026-11-26T18:13:01.408Z",
+ "ts": "2026-11-26T18:13:28.258Z",
  "codeRevision": "363750f984 Stop the runner burning 8 minutes per tick on a dead feed",
- "head": "064fe46b14",
+ "head": "cdb4e89c11",
  "dataFeed": "ok — 102 markets qualified",
  "pid": 57603,
- "uptimeMin": 0,
+ "uptimeMin": 1,
  "nodeVersion": "v24.18.0",
  "positionsInDb": 13673,
  "lastPull": "ok",
